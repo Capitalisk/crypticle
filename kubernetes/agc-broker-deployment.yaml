@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agc-broker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: agc-broker
+  template:
+    metadata:
+      labels:
+        component: agc-broker
+    spec:
+      containers:
+        -
+          name: agc-broker
+          image: 'socketcluster/agc-broker:v5.3.2'
+          ports:
+            -
+              name: agc-broker
+              containerPort: 8888
+          env:
+            -
+              name: AGC_STATE_SERVER_HOST
+              value: agc-state
+            -
+              name: AGC_INSTANCE_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            -
+              name: AGC_BROKER_SERVER_LOG_LEVEL
+              value: '2'
+          readinessProbe:
+            httpGet:
+              path: /health-check
+              port: agc-broker
+            initialDelaySeconds: 5
+            timeoutSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health-check
+              port: agc-broker
+            initialDelaySeconds: 15
+            timeoutSeconds: 20

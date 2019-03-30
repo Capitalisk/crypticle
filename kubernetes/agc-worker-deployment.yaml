@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agc-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: agc-worker
+  template:
+    metadata:
+      labels:
+        component: agc-worker
+    spec:
+      containers:
+        -
+          name: agc-worker
+          image: 'socketcluster/asyngular:v5.4.2'
+          ports:
+            -
+              name: agc-worker
+              containerPort: 8000
+          env:
+            -
+              name: AGC_STATE_SERVER_HOST
+              value: agc-state
+            -
+              name: AGC_INSTANCE_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            -
+              name: ENV
+              value: prod
+          readinessProbe:
+            httpGet:
+              path: /health-check
+              port: agc-worker
+            initialDelaySeconds: 5
+            timeoutSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health-check
+              port: agc-worker
+            initialDelaySeconds: 15
+            timeoutSeconds: 20
+          volumeMounts:
+            -
+              mountPath: /usr/src/app
+              name: app-src-volume
+      volumes:
+        -
+          name: app-src-volume
+          emptyDir: {}
+      initContainers:
+        -
+          name: app-src-container
+          image: ""
+          volumeMounts:
+            -
+              mountPath: /usr/dest
+              name: app-src-volume
+          command:
+            - cp
+            - '-a'
+            - /usr/src/.
+            - /usr/dest/

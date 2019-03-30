@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agc-state
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: agc-state
+  template:
+    metadata:
+      labels:
+        component: agc-state
+    spec:
+      containers:
+        -
+          name: agc-state
+          image: 'socketcluster/agc-state:v5.3.2'
+          ports:
+            -
+              name: agc-state
+              containerPort: 7777
+          readinessProbe:
+            httpGet:
+              path: /health-check
+              port: agc-state
+            initialDelaySeconds: 5
+            timeoutSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health-check
+              port: agc-state
+            initialDelaySeconds: 15
+            timeoutSeconds: 20
