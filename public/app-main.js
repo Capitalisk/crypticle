@@ -1,3 +1,4 @@
+import getHomePageComponent from '/pages/home.js';
 import getLoginPageComponent from '/pages/page-login.js';
 import getDashboardPageComponent from '/pages/page-dashboard.js';
 
@@ -7,21 +8,15 @@ let pageOptions = {
   socket
 };
 
+let PageHome = getHomePageComponent(pageOptions);
 let PageDashboard = getDashboardPageComponent(pageOptions);
 let PageLogin = getLoginPageComponent(pageOptions);
 
-let routes = [
-  // { path: '/category/:categoryId/product/:productId', component: PageProductDetails, props: true }, // TODO 2
-  { path: '/', component: PageDashboard, props: true }
-];
+function isSocketAuthenticated() {
+  return socket.authState === 'authenticated';
+}
 
-let router = new VueRouter({
-  routes
-});
-
-new Vue({
-  el: '#app',
-  router,
+const Console = {
   components: {
     'page-login': PageLogin
   },
@@ -31,11 +26,11 @@ new Vue({
     };
   },
   created: function () {
-    this.isAuthenticated = this.isSocketAuthenticated();
+    this.isAuthenticated = isSocketAuthenticated();
 
     (async () => {
       for await (let event of socket.listener('authStateChange')) {
-        this.isAuthenticated = this.isSocketAuthenticated();
+        this.isAuthenticated = isSocketAuthenticated();
       }
     })();
 
@@ -56,13 +51,8 @@ new Vue({
   destroyed: function () {
     window.removeEventListener('storage', this._localStorageAuthHandler);
   },
-  methods: {
-    isSocketAuthenticated: function () {
-      return socket.authState === 'authenticated';
-    }
-  },
   template: `
-    <div>
+    <div class="console">
       <div v-if="isAuthenticated" style="padding: 10px;">
         <router-view></router-view>
       </div>
@@ -70,5 +60,33 @@ new Vue({
         <page-login></page-login>
       </div>
     </div>
+  `
+};
+
+let routes = [
+  { path: '/', component: PageHome, props: true },
+  // { path: '/category/:categoryId/product/:productId', component: PageProductDetails, props: true }, // TODO 2
+  {
+    path: '/console',
+    component: Console,
+    props: true,
+    children: [
+      { path: 'dashboard', component: PageDashboard, props: true }
+    ]
+  }
+];
+
+let router = new VueRouter({
+  routes
+});
+
+new Vue({
+  el: '#app',
+  router,
+  data: function () {
+    return {};
+  },
+  template: `
+    <router-view></router-view>
   `
 });
