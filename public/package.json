@@ -1,0 +1,20 @@
+{
+  "name": "public",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.html",
+  "dependencies": {
+    "ag-collection": "^1.0.3",
+    "ag-model": "^1.0.1",
+    "async-stream-emitter": "^3.0.3",
+    "asyngular-client": "^5.4.1",
+    "vue": "^2.5.17",
+    "vue-router": "^3.0.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Jonathan Gros-Dubois",
+  "license": "MIT"
+}

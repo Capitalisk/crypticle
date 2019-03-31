@@ -32,7 +32,7 @@ const AGC_STATE_SERVER_RECONNECT_RANDOMNESS = Number(process.env.AGC_STATE_SERVE
 const AGC_PUB_SUB_BATCH_DURATION = Number(process.env.AGC_PUB_SUB_BATCH_DURATION) || null;
 const AGC_BROKER_RETRY_DELAY = Number(process.env.AGC_BROKER_RETRY_DELAY) || null;
 
-const FE_DB_NAME = process.env.FE_DB_NAME || 'fiat-exchange';
+const FE_DB_NAME = process.env.FE_DB_NAME || 'fiat_exchange';
 
 const conf = configuration[ENVIRONMENT];
 
