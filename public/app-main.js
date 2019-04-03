@@ -1,5 +1,6 @@
 import getHomePageComponent from '/pages/home.js';
 import getLoginPageComponent from '/pages/page-login.js';
+import getSignupPageComponent from '/pages/page-signup.js';
 import getDashboardPageComponent from '/pages/page-dashboard.js';
 
 let socket = window.socket = asyngularClient.create();
@@ -11,6 +12,7 @@ let pageOptions = {
 let PageHome = getHomePageComponent(pageOptions);
 let PageDashboard = getDashboardPageComponent(pageOptions);
 let PageLogin = getLoginPageComponent(pageOptions);
+let PageSignup = getSignupPageComponent(pageOptions);
 
 function isSocketAuthenticated() {
   return socket.authState === 'authenticated';
@@ -18,7 +20,8 @@ function isSocketAuthenticated() {
 
 const Console = {
   components: {
-    'page-login': PageLogin
+    'page-login': PageLogin,
+    'page-dashboard': PageDashboard
   },
   data: function () {
     return {
@@ -65,13 +68,14 @@ const Console = {
 
 let routes = [
   { path: '/', component: PageHome, props: true },
+  { path: '/signup', component: PageSignup, props: true },
   // { path: '/category/:categoryId/product/:productId', component: PageProductDetails, props: true }, // TODO 2
   {
     path: '/console',
     component: Console,
     props: true,
     children: [
-      { path: 'dashboard', component: PageDashboard, props: true }
+      { path: '/', component: PageDashboard, props: true }
     ]
   }
 ];

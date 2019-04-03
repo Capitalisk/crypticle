@@ -11,6 +11,7 @@ const agCrudRethink = require('ag-crud-rethink');
 
 const dataSchema = require('./schema');
 const configuration = require('./config');
+const AccountStore = require('./account-store');
 
 const ENVIRONMENT = process.env.ENV || 'dev';
 const ASYNGULAR_PORT = process.env.ASYNGULAR_PORT || 8000;
@@ -33,6 +34,7 @@ const AGC_PUB_SUB_BATCH_DURATION = Number(process.env.AGC_PUB_SUB_BATCH_DURATION
 const AGC_BROKER_RETRY_DELAY = Number(process.env.AGC_BROKER_RETRY_DELAY) || null;
 
 const FE_DB_NAME = process.env.FE_DB_NAME || 'fiat_exchange';
+const TOKEN_EXPIRY_SECONDS = 60 * 60;
 
 const conf = configuration[ENVIRONMENT];
 
@@ -59,7 +61,8 @@ let crudOptions = {
 };
 
 let crud = agCrudRethink.attach(agServer, crudOptions);
-agServer.thinky = crud.thinky;
+
+let accountStore = new AccountStore(crud.thinky);
 
 let expressApp = express();
 if (ENVIRONMENT === 'dev') {
@@ -85,6 +88,35 @@ expressApp.get('/health-check', (req, res) => {
 (async () => {
   for await (let {socket} of agServer.listener('connection')) {
     // Handle socket connection.
+
+    (async () => {
+      for await (let request of socket.procedure('login')) {
+        let accountData;
+        try {
+          accountData = await accountStore.validateLoginDetails(request.data);
+        } catch (error) {
+          if (
+            error.name === 'InvalidCredentialsError' ||
+            error.name === 'AccountInactiveError'
+          ) {
+            request.error(error);
+          } else {
+            let clientError = new Error('Failed to login.');
+            clientError.name = 'FailedToLoginError';
+            request.error(clientError);
+          }
+          console.error(error);
+          continue;
+        }
+        let token = {
+          email: accountData.email,
+          userId: accountData.id
+        };
+        socket.setAuthToken(token, {expiresIn: TOKEN_EXPIRY_SECONDS});
+        request.end();
+      }
+    })();
+
   }
 })();
 
