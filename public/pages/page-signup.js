@@ -5,7 +5,7 @@ function getPageComponent(pageOptions) {
 
   return Vue.extend({
     data: function () {
-      this.accountsCollection = new AGCollection({
+      this.accountCollection = new AGCollection({
         socket: pageOptions.socket,
         type: 'Account',
         fields: ['email', 'password']
@@ -24,7 +24,7 @@ function getPageComponent(pageOptions) {
           password: this.password
         };
         try {
-          await this.accountsCollection.create(details);
+          await this.accountCollection.create(details);
         } catch (error) {
           this.error = `Failed to sign up due to error: ${error}`;
           return;
