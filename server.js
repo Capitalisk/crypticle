@@ -11,7 +11,7 @@ const agCrudRethink = require('ag-crud-rethink');
 
 const dataSchema = require('./schema');
 const configuration = require('./config');
-const AccountStore = require('./account-store');
+const AccountService = require('./account-service');
 
 const ENVIRONMENT = process.env.ENV || 'dev';
 const ASYNGULAR_PORT = process.env.ASYNGULAR_PORT || 8000;
@@ -57,12 +57,19 @@ let crudOptions = {
     host: '127.0.0.1',
     db: FE_DB_NAME,
     port: 28015
+  },
+  middleware: {
+    invoke: async function (action) {
+      let isAccountSignUp = action.procedure == 'create' && action.data.type == 'Account';
+      if (isAccountSignUp) {
+        action.data.value = await accountService.sanitizeSignupCredentials(action.data.value);
+      }
+    }
   }
 };
 
 let crud = agCrudRethink.attach(agServer, crudOptions);
-
-let accountStore = new AccountStore(crud.thinky);
+let accountService = new AccountService(crud.thinky);
 
 let expressApp = express();
 if (ENVIRONMENT === 'dev') {
@@ -93,7 +100,7 @@ expressApp.get('/health-check', (req, res) => {
       for await (let request of socket.procedure('login')) {
         let accountData;
         try {
-          accountData = await accountStore.validateLoginDetails(request.data);
+          accountData = await accountService.verifyLoginCredentials(request.data);
         } catch (error) {
           if (
             error.name === 'InvalidCredentialsError' ||
