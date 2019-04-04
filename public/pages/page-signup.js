@@ -8,7 +8,8 @@ function getPageComponent(pageOptions) {
       this.accountCollection = new AGCollection({
         socket: pageOptions.socket,
         type: 'Account',
-        fields: ['email', 'password']
+        fields: ['email', 'password'],
+        writeOnly: true
       });
 
       return {
