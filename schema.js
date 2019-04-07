@@ -9,8 +9,11 @@ module.exports = {
       password: type.string(),
       passwordSalt: type.string(),
       stripeCustomerId: type.string().optional(),
-      paymentSetup: type.boolean().default(false),
+      stripePaymentSetup: type.boolean().default(false),
       nationalCurrency: type.string().default('USD'),
+      cryptoWalletAddress: type.string().optional(),
+      cryptoWalletVerified: type.boolean().default(false),
+      cryptoWalletVerificationKey: type.string(),
       emailVerified: type.boolean().default(false),
       emailVerificationKey: type.string().optional(),
       emailVerificationExpiry: type.date().optional(),
@@ -19,11 +22,23 @@ module.exports = {
       active: type.boolean().default(true),
       created: type.date()
     },
-    filters: {
-      pre: accountPrefilter
+    indexes: ['email'],
+    access: {
+      pre: accountAccessPrefilter
     }
   },
-  ActivityLog: {
+  CryptoTransaction: {
+    fields: {
+      accountId: type.string(),
+      type: type.string(), // Can be 'deposit', 'withdrawal', 'credit', 'debit'
+      amount: type.string(),
+      balance: type.string(),
+      settled: type.date().optional(),
+      created: type.date()
+    },
+    indexes: ['accountId']
+  },
+  Activity: {
     fields: {
       type: type.string(),
       action: type.string().optional(),
@@ -31,7 +46,7 @@ module.exports = {
       created: type.date()
     }
   },
-  MailLog: {
+  Mail: {
     fields: {
       data: type.object(),
       created: type.date()
@@ -39,11 +54,11 @@ module.exports = {
   }
 };
 
-async function accountPrefilter(req, next) {
+async function accountAccessPrefilter(req) {
   if (req.action == 'create') {
     return;
   }
-  if (!req.authToken || !req.query || !req.authToken.userId || req.authToken.userId != req.query.id) {
-    throw new Error('A user can only access their own account');
+  if (!req.authToken || !req.query || !req.authToken.accountId || req.authToken.accountId != req.query.id) {
+    throw new Error('A user can only access and modify their own account');
   }
 }

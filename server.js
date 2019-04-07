@@ -33,7 +33,7 @@ const AGC_STATE_SERVER_RECONNECT_RANDOMNESS = Number(process.env.AGC_STATE_SERVE
 const AGC_PUB_SUB_BATCH_DURATION = Number(process.env.AGC_PUB_SUB_BATCH_DURATION) || null;
 const AGC_BROKER_RETRY_DELAY = Number(process.env.AGC_BROKER_RETRY_DELAY) || null;
 
-const FE_DB_NAME = process.env.FE_DB_NAME || 'fiat_exchange';
+const DB_NAME = process.env.DB_NAME || 'crypticle';
 const TOKEN_EXPIRY_SECONDS = 60 * 60;
 
 const conf = configuration[ENVIRONMENT];
@@ -55,7 +55,7 @@ let crudOptions = {
   schema: dataSchema,
   thinkyOptions: {
     host: '127.0.0.1',
-    db: FE_DB_NAME,
+    db: DB_NAME,
     port: 28015
   },
   middleware: {
@@ -117,7 +117,7 @@ expressApp.get('/health-check', (req, res) => {
         }
         let token = {
           email: accountData.email,
-          userId: accountData.id
+          accountId: accountData.id
         };
         socket.setAuthToken(token, {expiresIn: TOKEN_EXPIRY_SECONDS});
         request.end();

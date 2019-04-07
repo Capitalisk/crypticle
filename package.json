@@ -9,7 +9,7 @@
     }
   ],
   "dependencies": {
-    "ag-crud-rethink": "^1.1.0",
+    "ag-crud-rethink": "^2.0.0",
     "agc-broker-client": "^5.3.2",
     "asyngular-client": "^5.4.1",
     "asyngular-server": "^5.4.0",

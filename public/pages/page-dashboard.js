@@ -1,8 +1,12 @@
+import getWalletComponent from '/components/component-wallet.js';
 
 function getPageComponent(pageOptions) {
-  let socket = pageOptions.socket;
+  let {socket} = pageOptions;
 
-  return Vue.extend({
+  return {
+    components: {
+      'component-wallet': getWalletComponent({socket})
+    },
     data: function () {
       return {};
     },
@@ -11,11 +15,11 @@ function getPageComponent(pageOptions) {
       <div class="page-container">
         <h2 class="content-row heading">Dashboard</h2>
         <div class="content-body">
-          Coming soon...
+          <component-wallet></component-wallet>
         </div>
       </div>
     `
-  });
+  };
 }
 
 export default getPageComponent;

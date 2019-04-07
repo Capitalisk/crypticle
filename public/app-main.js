@@ -1,4 +1,4 @@
-import getHomePageComponent from '/pages/home.js';
+import getHomePageComponent from '/pages/page-home.js';
 import getLoginPageComponent from '/pages/page-login.js';
 import getSignupPageComponent from '/pages/page-signup.js';
 import getDashboardPageComponent from '/pages/page-dashboard.js';
@@ -56,10 +56,10 @@ const Console = {
   },
   template: `
     <div class="console">
-      <div v-if="isAuthenticated" style="padding: 10px;">
+      <div v-if="isAuthenticated">
         <router-view></router-view>
       </div>
-      <div v-if="!isAuthenticated" style="padding: 10px;">
+      <div v-if="!isAuthenticated">
         <page-login></page-login>
       </div>
     </div>
@@ -91,6 +91,8 @@ new Vue({
     return {};
   },
   template: `
-    <router-view></router-view>
+    <div class="app-wrapper">
+      <router-view></router-view>
+    </div>
   `
 });

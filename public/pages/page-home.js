@@ -1,8 +1,8 @@
 
 function getPageComponent(pageOptions) {
-  let socket = pageOptions.socket;
+  let {socket} = pageOptions;
 
-  return Vue.extend({
+  return {
     data: function () {
       return {};
     },
@@ -15,7 +15,7 @@ function getPageComponent(pageOptions) {
         </div>
       </div>
     `
-  });
+  };
 }
 
 export default getPageComponent;

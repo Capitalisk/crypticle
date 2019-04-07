@@ -1,0 +1,16 @@
+.app-wrapper {
+  padding: 20px;
+}
+
+.error-container {
+  color: #990000;
+}
+
+.success-container {
+  color: #009900;
+}
+
+.content-body {
+  display: flex;
+  flex-direction: column;
+}

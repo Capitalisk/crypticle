@@ -2,6 +2,7 @@ const uuid = require('uuid');
 const crypto = require('crypto');
 
 const SALT_SIZE = 32;
+const WALLET_VERIFICATION_SECRET_SIZE = 4;
 
 class AccountService {
   constructor(thinky) {
@@ -47,9 +48,19 @@ class AccountService {
       credentials.email = credentials.email.toLowerCase();
     }
 
-    // Generate a new unique serviceKey for each account which gets created.
-    credentials.serviceKey = uuid.v4();
     credentials.active = true;
+
+    let randomBytes = await new Promise((resolve, reject) => {
+      crypto.randomBytes(WALLET_VERIFICATION_SECRET_SIZE, (err, result) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        resolve(result);
+      });
+    });
+
+    credentials.cryptoWalletVerificationKey = randomBytes.readUIntBE(0, WALLET_VERIFICATION_SECRET_SIZE).toString();
 
     credentials.emailVerificationKey = uuid.v4();
     credentials.emailVerificationExpiry = this.thinky.r.now().add(30 * 24 * 60 * 60);
@@ -79,11 +90,10 @@ class AccountService {
       // let emailBody = emails.accountCreatedAdmin(emailOptions);
       // sendEmailToAdmin(req.socket.remoteAddress, 'New Baasil.io signup (' + credentials.plan + '): ' + credentials.email, emailBody);
     } else {
-      let accountEmailTakenError = new Error(`A account with the email ${credentials.email} already exists.`);
+      let accountEmailTakenError = new Error(`An account with the email ${credentials.email} already exists.`);
       accountEmailTakenError.name = 'SignUpEmailTakenError';
       throw accountEmailTakenError;
     }
-    
     return credentials;
   }
 
