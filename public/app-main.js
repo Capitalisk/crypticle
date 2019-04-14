@@ -6,8 +6,19 @@ import getDashboardPageComponent from '/pages/page-dashboard.js';
 let socket = window.socket = asyngularClient.create();
 
 let pageOptions = {
-  socket
+  socket,
+  nodeInfo: {}
 };
+
+(async () => {
+  let nodeInfo;
+  try {
+    nodeInfo = await socket.invoke('getNodeInfo');
+  } catch (error) {
+    console.error(error);
+  }
+  Object.assign(pageOptions.nodeInfo, nodeInfo);
+})();
 
 let PageHome = getHomePageComponent(pageOptions);
 let PageDashboard = getDashboardPageComponent(pageOptions);

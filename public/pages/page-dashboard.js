@@ -1,11 +1,14 @@
 import getWalletComponent from '/components/component-wallet.js';
 
 function getPageComponent(pageOptions) {
-  let {socket} = pageOptions;
+  let {socket, nodeInfo} = pageOptions;
 
   return {
     components: {
-      'component-wallet': getWalletComponent({socket})
+      'component-wallet': getWalletComponent({
+        socket,
+        nodeInfo
+      })
     },
     data: function () {
       return {};

@@ -5,8 +5,8 @@ const SALT_SIZE = 32;
 const WALLET_VERIFICATION_SECRET_SIZE = 4;
 
 class AccountService {
-  constructor(thinky) {
-    this.thinky = thinky;
+  constructor(options) {
+    this.thinky = options.thinky;
   }
 
   hashPassword(password, salt) {

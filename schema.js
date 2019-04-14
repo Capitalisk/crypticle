@@ -22,7 +22,7 @@ module.exports = {
       active: type.boolean().default(true),
       created: type.date()
     },
-    indexes: ['email'],
+    indexes: ['email', 'cryptoWalletAddress'],
     access: {
       pre: accountAccessPrefilter
     }

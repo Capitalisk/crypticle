@@ -10,8 +10,10 @@ const agcBrokerClient = require('agc-broker-client');
 const agCrudRethink = require('ag-crud-rethink');
 
 const dataSchema = require('./schema');
-const configuration = require('./config');
-const AccountService = require('./account-service');
+const config = require('./config');
+
+const AccountService = require('./services/account-service');
+const BlockchainService = require('./services/blockchain-service');
 
 const ENVIRONMENT = process.env.ENV || 'dev';
 const ASYNGULAR_PORT = process.env.ASYNGULAR_PORT || 8000;
@@ -36,7 +38,7 @@ const AGC_BROKER_RETRY_DELAY = Number(process.env.AGC_BROKER_RETRY_DELAY) || nul
 const DB_NAME = process.env.DB_NAME || 'crypticle';
 const TOKEN_EXPIRY_SECONDS = 60 * 60;
 
-const conf = configuration[ENVIRONMENT];
+const envConfig = config[ENVIRONMENT];
 
 let agOptions = {};
 
@@ -60,7 +62,7 @@ let crudOptions = {
   },
   middleware: {
     invoke: async function (action) {
-      if (action.data.type === 'Account') {
+      if (action.data && action.data.type === 'Account') {
         if (action.procedure === 'create') {
           action.data.value = await accountService.sanitizeSignupCredentials(action.data.value);
           return;
@@ -80,7 +82,23 @@ let crudOptions = {
 };
 
 let crud = agCrudRethink.attach(agServer, crudOptions);
-let accountService = new AccountService(crud.thinky);
+let accountService = new AccountService({thinky: crud.thinky});
+let blockchainService = new BlockchainService({
+  ...envConfig.services.blockchain,
+  accountService
+});
+
+(async () => {
+  for await (let {error} of blockchainService.listener('error')) {
+    console.error('[BlockchainService]', error);
+  }
+})();
+
+(async () => {
+  for await (let {syncFromBlockHeight} of blockchainService.listener('processBlocks')) {
+    console.log('[BlockchainService]', `Processing new blocks from height ${syncFromBlockHeight}`);
+  }
+})();
 
 let expressApp = express();
 if (ENVIRONMENT === 'dev') {
@@ -132,6 +150,12 @@ expressApp.get('/health-check', (req, res) => {
         };
         socket.setAuthToken(token, {expiresIn: TOKEN_EXPIRY_SECONDS});
         request.end();
+      }
+    })();
+
+    (async () => {
+      for await (let request of socket.procedure('getNodeInfo')) {
+        request.end(envConfig.nodeInfo);
       }
     })();
 

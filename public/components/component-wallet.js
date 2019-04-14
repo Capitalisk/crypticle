@@ -1,8 +1,7 @@
 import AGModel from '/node_modules/ag-model/ag-model.js';
-import config from '/config.js';
 
 function getComponent(options) {
-  let {socket} = options;
+  let {socket, nodeInfo} = options;
 
   return {
     data: function () {
@@ -17,7 +16,7 @@ function getComponent(options) {
         ]
       });
       return {
-        config,
+        nodeInfo,
         account: this.accountModel.value,
         newCryptoWalletAddress: null
       };
@@ -52,9 +51,10 @@ function getComponent(options) {
           </p>
           <p v-if="!account.cryptoWalletVerified" class="error-container">
             To verify ownership of the wallet address above, you will need to make a transfer of exactly
-            0.{{account.cryptoWalletVerificationKey}} <span>{{config.cryptocurrency.symbol}}</span> (not counting the transaction fee) from that wallet
-            to the following wallet address: <b>{{config.nodeWalletAddress}}</b>.
-            Your wallet will be verified once the transaction has been added to a block on the <span>{{config.cryptocurrency.name}}</span> blockchain.
+            0.{{account.cryptoWalletVerificationKey}} <span>{{nodeInfo.cryptocurrency.symbol}}</span> (not counting the transaction fee) from that wallet
+            to the following wallet address: <b>{{nodeInfo.nodeWalletAddress}}</b>.
+            Your wallet will be verified once the transaction has been added to a block on the <span>{{nodeInfo.cryptocurrency.name}}</span> blockchain.
+            Note that you will need to wait for <b>{{nodeInfo.requiredBlockConfirmations}}</b> confirmations before the funds can be used.</b>
           </p>
         </div>
 

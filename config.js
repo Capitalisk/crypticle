@@ -1,24 +1,62 @@
 module.exports = {
   dev: {
     origin: 'http://localhost:8000',
-    adminEmailAddress: 'Fiat Exchange <grosjona@yahoo.com.au>',
-    mailgun: {
-      apiKey: 'key-11684d92cd1cae9ab957f2674c06887f',
-      domain: 'mg.fiatexchange.io'
+    adminEmailAddress: 'Crypticle <grosjona@yahoo.com.au>',
+    services: {
+      blockchain: {
+        name: 'rise',
+        nodeAddress: 'https://wallet.rise.vision',
+        blockPollInterval: 5000,
+        blockFetchLimit: 100,
+        blockFinality: 102
+      },
+      mail: {
+        name: 'mailgun',
+        apiKey: 'key-11684d92cd1cae9ab957f2674c06887f',
+        domain: 'mg.crypticle.io'
+      },
+      fiat: {
+        name: 'stripe',
+        apiSecretKey: 'sk_test_QlUgKWhOjRrIeTO4YWUaExQH'
+      }
     },
-    stripe: {
-      apiSecretKey: 'sk_test_QlUgKWhOjRrIeTO4YWUaExQH'
+    nodeInfo: {
+      cryptocurrency: {
+        name: 'Rise',
+        symbol: 'RISE'
+      },
+      nodeWalletAddress: '6944317428094516728R',
+      requiredBlockConfirmations: 102
     }
   },
   prod: {
-    origin: 'https://fiatexchange.io',
-    adminEmailAddress: 'Fiat Exchange <grosjona@yahoo.com.au>',
-    mailgun: {
-      apiKey: 'key-11684d92cd1cae9ab957f2674c06887f',
-      domain: 'mg.fiatexchange.io'
+    origin: 'https://crypticle.io',
+    adminEmailAddress: 'Crypticle <grosjona@yahoo.com.au>',
+    services: {
+      blockchain: {
+        name: 'rise',
+        nodeAddress: 'https://wallet.rise.vision',
+        blockPollInterval: 5000,
+        blockFetchLimit: 100,
+        blockFinality: 102
+      },
+      mail: {
+        name: 'mailgun',
+        apiKey: 'key-11684d92cd1cae9ab957f2674c06887f',
+        domain: 'mg.crypticle.io'
+      },
+      fiat: {
+        name: 'stripe',
+        apiSecretKey: 'sk_live_T6aJW8rE0mi0RaZGqNLPxeIa'
+      }
     },
-    stripe: {
-      apiSecretKey: 'sk_live_T6aJW8rE0mi0RaZGqNLPxeIa'
+    nodeInfo: {
+      cryptocurrency: {
+        name: 'Rise',
+        symbol: 'RISE'
+      },
+      nodeWalletAddress: '6944317428094516728R',
+      requiredBlockConfirmations: 102
     }
   }
 };
