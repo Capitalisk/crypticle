@@ -38,11 +38,6 @@ function getPageComponent(pageOptions) {
         this.error = null;
         this.success = 'Account was created successfully.';
         this.showConsoleLink = true;
-      },
-      inputKeyDown: function (event) {
-        if (event.key === 'Enter') {
-          this.signup();
-        }
       }
     },
     template: `
@@ -60,13 +55,13 @@ function getPageComponent(pageOptions) {
             <div class="signup-label">
               Email:
             </div>
-            <input type="text" v-model="email" class="form-control" @keydown="inputKeyDown">
+            <input type="text" v-model="email" class="form-control" @keydown.enter="signup">
           </div>
           <div class="form-area">
             <div class="signup-label">
               Password:
             </div>
-            <input type="password" v-model="password" class="form-control" @keydown="inputKeyDown">
+            <input type="password" v-model="password" class="form-control" @keydown.enter="signup">
           </div>
           <div class="form-area" style="padding-top: 10px;">
             <input type="button" class="form-control" value="Sign up" @click="signup">

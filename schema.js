@@ -12,9 +12,9 @@ module.exports = {
       stripePaymentSetup: type.boolean().default(false),
       nationalCurrency: type.string().default('USD'),
       cryptoWalletAddress: type.string().optional(),
-      cryptoWalletVerified: type.boolean().default(false),
+      cryptoWalletVerified: type.date().optional(),
       cryptoWalletVerificationKey: type.string(),
-      emailVerified: type.boolean().default(false),
+      emailVerified: type.date().optional(),
       emailVerificationKey: type.string().optional(),
       emailVerificationExpiry: type.date().optional(),
       passwordResetKey: type.string().optional(),
@@ -61,4 +61,5 @@ async function accountAccessPrefilter(req) {
   if (!req.authToken || !req.query || !req.authToken.accountId || req.authToken.accountId != req.query.id) {
     throw new Error('A user can only access and modify their own account');
   }
+  // TODO 2: Restrict the fields that a user can modify on his own account.
 }

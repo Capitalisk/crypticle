@@ -24,11 +24,6 @@ function getPageComponent(pageOptions) {
           return;
         }
         this.error = '';
-      },
-      inputKeyDown: function (event) {
-        if (event.key === 'Enter') {
-          this.login();
-        }
       }
     },
     template: `
@@ -42,13 +37,13 @@ function getPageComponent(pageOptions) {
             <div class="login-label">
               Email:
             </div>
-            <input type="text" v-model="email" class="form-control" @keydown="inputKeyDown">
+            <input type="text" v-model="email" class="form-control" @keydown.enter="login">
           </div>
           <div class="form-area">
             <div class="login-label">
               Password:
             </div>
-            <input type="password" v-model="password" class="form-control" @keydown="inputKeyDown">
+            <input type="password" v-model="password" class="form-control" @keydown.enter="login">
           </div>
           <div class="form-area" style="padding-top: 10px;">
             <input type="button" class="form-control" value="Login" @click="login">

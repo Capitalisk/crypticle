@@ -60,9 +60,20 @@ let crudOptions = {
   },
   middleware: {
     invoke: async function (action) {
-      let isAccountSignUp = action.procedure == 'create' && action.data.type == 'Account';
-      if (isAccountSignUp) {
-        action.data.value = await accountService.sanitizeSignupCredentials(action.data.value);
+      if (action.data.type === 'Account') {
+        if (action.procedure === 'create') {
+          action.data.value = await accountService.sanitizeSignupCredentials(action.data.value);
+          return;
+        }
+        if (action.procedure === 'update') {
+          if (action.data.field === 'cryptoWalletAddress') {
+            delete action.data.field;
+            action.data.value = {
+              cryptoWalletAddress: action.data.value,
+              cryptoWalletVerified: null
+            };
+          }
+        }
       }
     }
   }
