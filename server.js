@@ -82,9 +82,14 @@ let crudOptions = {
 };
 
 let crud = agCrudRethink.attach(agServer, crudOptions);
-let accountService = new AccountService({thinky: crud.thinky});
+let accountService = new AccountService({
+  thinky: crud.thinky,
+  crud
+});
+
 let blockchainService = new BlockchainService({
   ...envConfig.services.blockchain,
+  nodeInfo: envConfig.nodeInfo,
   accountService
 });
 

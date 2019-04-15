@@ -7,6 +7,62 @@ const WALLET_VERIFICATION_SECRET_SIZE = 4;
 class AccountService {
   constructor(options) {
     this.thinky = options.thinky;
+    this.crud = options.crud;
+  }
+
+  async getAccountsByWalletAddress(walletAddress, onlyUnverifiedWallets) {
+    let query = this.thinky.r.table('Account').getAll(walletAddress, {index: 'cryptoWalletAddress'});
+    if (onlyUnverifiedWallets) {
+      query = query.filter(
+        this.thinky.r.row.hasFields('cryptoWalletVerified').not()
+      );
+    }
+    return query.run();
+  }
+
+  async verifyWalletAndFetchAccount(blockchainTransaction) {
+    let walletAccounts = await this.getAccountsByWalletAddress(blockchainTransaction.senderId);
+    let matchedWalletAccounts = walletAccounts.filter((account) => {
+      return account.cryptoWalletVerificationKey === String(blockchainTransaction.amount);
+    });
+    let isWalletAlreadyVerified = matchedWalletAccounts.some((account) => {
+      return account.cryptoWalletVerified != null;
+    });
+    if (isWalletAlreadyVerified) {
+      return;
+    }
+    if (matchedWalletAccounts.length > 1) {
+      throw new Error(
+        `Failed to perform wallet verification because multiple accounts were registered to the same wallet address ${
+          blockchainTransaction.senderId
+        }`
+      );
+    }
+    if (matchedWalletAccounts.length < 1) {
+      throw new Error(
+        `Failed to process the blockchain transaction with id ${
+          blockchainTransaction.id
+        } because the wallet address ${
+          blockchainTransaction.senderId
+        } was not associated with any account`
+      );
+    }
+    let walletAccount = matchedWalletAccounts[0];
+    await this.crud.update({
+      type: 'Account',
+      id: walletAccount.id,
+      field: 'cryptoWalletVerified',
+      value: this.thinky.r.now()
+    });
+    return walletAccount;
+  }
+
+  async execTransaction(transaction) {
+    transaction = {...transaction};
+    if (!transaction.created) {
+      transaction.created = this.thinky.r.now();
+    }
+    return this.thinky.r.table('Transaction').insert(transaction).run();
   }
 
   hashPassword(password, salt) {

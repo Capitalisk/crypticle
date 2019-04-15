@@ -13,14 +13,18 @@ class BlockchainService extends AsyncStreamEmitter {
   constructor(options) {
     super();
 
+    this.nodeWalletAddress = options.nodeInfo.nodeWalletAddress;
     this.accountService = options.accountService;
     this.blockPollInterval = options.blockPollInterval;
     this.nodeAddress = options.nodeAddress;
     rise.nodeAddress = options.nodeAddress;
     this.blockFetchLimit = options.blockFetchLimit;
     this.blockFinality = options.blockFinality;
+    this.sync = options.sync;
 
-    this.startSynching();
+    if (this.sync) {
+      this.startSynching();
+    }
   }
 
   async processNextBlocks() {
@@ -75,8 +79,11 @@ class BlockchainService extends AsyncStreamEmitter {
       let block = blocks[i];
       let transactionCount = block.transactions.length;
       for (let j = 0; j < transactionCount; j++) {
-        let transaction = block.transactions[j];
-        await this.processTransaction(transaction);
+        try {
+          await this.processTransaction(block.transactions[j]);
+        } catch (error) {
+          this.emit('error', {error});
+        }
       }
     }
 
@@ -100,11 +107,18 @@ class BlockchainService extends AsyncStreamEmitter {
     return safeHeightDiff > 0;
   }
 
-  async processTransaction(transaction) {
-    if (transaction.recipientId === this.nodeAddress) {
-      // TODO 2: Process credit transaction using account service. If the wallet is not verified, check that the amount matches the key and verify the account on success.
+  async processTransaction(blockchainTransaction) {
+    if (blockchainTransaction.recipientId === this.nodeWalletAddress) {
+      let account = await this.accountService.verifyWalletAndFetchAccount(blockchainTransaction);
+
+      let transaction = {
+        accountId: account.id,
+        type: 'deposit',
+        amount: blockchainTransaction.amount
+      };
+
+      await this.accountService.execTransaction(transaction);
     }
-    console.log('TRANSACTION:', transaction); // TODO 2 delete
   }
 
   async startSynching() {

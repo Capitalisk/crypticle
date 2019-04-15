@@ -21,6 +21,11 @@ function getComponent(options) {
         newCryptoWalletAddress: null
       };
     },
+    computed: {
+      walletVerificationAmount: function () {
+        return Number(this.account.cryptoWalletVerificationKey) / Number(nodeInfo.cryptocurrency.unit);
+      }
+    },
     methods: {
       saveAccount: function () {
         this.account.cryptoWalletAddress = this.newCryptoWalletAddress;
@@ -51,7 +56,7 @@ function getComponent(options) {
           </p>
           <p v-if="!account.cryptoWalletVerified" class="error-container">
             To verify ownership of the wallet address above, you will need to make a transfer of exactly
-            0.{{account.cryptoWalletVerificationKey}} <span>{{nodeInfo.cryptocurrency.symbol}}</span> (not counting the transaction fee) from that wallet
+            <span>{{walletVerificationAmount}}</span> <span>{{nodeInfo.cryptocurrency.symbol}}</span> (not counting the transaction fee) from that wallet
             to the following wallet address: <b>{{nodeInfo.nodeWalletAddress}}</b>.
             Your wallet will be verified once the transaction has been added to a block on the <span>{{nodeInfo.cryptocurrency.name}}</span> blockchain.
             Note that you will need to wait for <b>{{nodeInfo.requiredBlockConfirmations}}</b> confirmations before the funds can be used.</b>

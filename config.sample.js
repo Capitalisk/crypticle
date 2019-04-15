@@ -6,6 +6,7 @@ module.exports = {
       blockchain: {
         name: 'rise',
         nodeAddress: 'https://wallet.rise.vision',
+        sync: true,
         blockPollInterval: 5000,
         blockFetchLimit: 100,
         blockFinality: 102
@@ -23,9 +24,10 @@ module.exports = {
     nodeInfo: {
       cryptocurrency: {
         name: 'Rise',
-        symbol: 'RISE'
+        symbol: 'RISE',
+        unit: '100000000'
       },
-      nodeWalletAddress: '6944317428094516728R',
+      nodeWalletAddress: '5920507067941756798R',
       requiredBlockConfirmations: 102
     }
   },
@@ -36,6 +38,7 @@ module.exports = {
       blockchain: {
         name: 'rise',
         nodeAddress: 'https://wallet.rise.vision',
+        sync: true,
         blockPollInterval: 5000,
         blockFetchLimit: 100,
         blockFinality: 102
@@ -53,9 +56,10 @@ module.exports = {
     nodeInfo: {
       cryptocurrency: {
         name: 'Rise',
-        symbol: 'RISE'
+        symbol: 'RISE',
+        unit: '100000000'
       },
-      nodeWalletAddress: '6944317428094516728R',
+      nodeWalletAddress: '5920507067941756798R',
       requiredBlockConfirmations: 102
     }
   }

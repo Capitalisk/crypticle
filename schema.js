@@ -27,12 +27,12 @@ module.exports = {
       pre: accountAccessPrefilter
     }
   },
-  CryptoTransaction: {
+  Transaction: {
     fields: {
       accountId: type.string(),
       type: type.string(), // Can be 'deposit', 'withdrawal', 'credit', 'debit'
       amount: type.string(),
-      balance: type.string(),
+      balance: type.string().optional(),
       settled: type.date().optional(),
       created: type.date()
     },
