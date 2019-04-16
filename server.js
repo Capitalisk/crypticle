@@ -82,6 +82,7 @@ let crudOptions = {
 };
 
 let crud = agCrudRethink.attach(agServer, crudOptions);
+
 let accountService = new AccountService({
   thinky: crud.thinky,
   crud
