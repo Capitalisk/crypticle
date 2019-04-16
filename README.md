@@ -15,6 +15,4 @@ Some potential use cases:
 - SaaS platforms
 - Games
 
-A Crypticle service/node can be attached to a specific blockchain.
-After a node has been attached and has started accepting deposits from users (and allocated credit which is pegged to the underlying cryptocurrency), it is not feasible to move that node to a different blockchain without violating the implicit agreement that the Crypticle node operator had with their users.
-Attaching services to a specific blockchain using Crypticle should therefore help to create sustainable demand for the underlying blockchain token.
+After a Crypticle node has been attached to a specific Blockchain and has started accepting deposits from users (and has allocated credit which is pegged to the underlying cryptocurrency), it is not feasible for a service provider to move their Crypticle node to a different blockchain without violating the implicit agreement that they have with their users. Attaching services to a specific blockchain using Crypticle should therefore help to create sustainable demand for the underlying blockchain token.
