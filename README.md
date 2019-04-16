@@ -1,7 +1,7 @@
 # Crypticle
 
 A microservice which lets users convert value between blockchain tokens and pegged credit which can be spent on a centralized service/platform.
-The credit is entrusted to the service/platform provider and is pegged to the value of the underlying blockchain tokens - This credit can be used to support high-thoughput off-chain transactions (related to a specific service). Any unused credit can be converted back into trustless blockchain tokens at any time.
+The credit is entrusted with the service provider and is pegged to the value of the underlying blockchain tokens - This credit can be used to support high-thoughput off-chain transactions (related to a specific service). Any unused credit can be converted back into trustless blockchain tokens at any time.
 
 The goal of this project is to automate the payment and accounting layer for SaaS services and platforms using blockchain technology.
 By reducing the friction involved in converting back and forth between decentralized blockchain tokens and centralized credit, users can choose their level of risk exposure when using a centralized service from an unfamiliar third-party.
