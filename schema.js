@@ -31,12 +31,13 @@ module.exports = {
     fields: {
       accountId: type.string(),
       type: type.string(), // Can be 'deposit', 'withdrawal', 'credit', 'debit'
+      referenceId: type.string(),
       amount: type.string(),
       balance: type.string().optional(),
       settled: type.date().optional(),
       created: type.date()
     },
-    indexes: ['accountId']
+    indexes: ['accountId', 'referenceId']
   },
   Activity: {
     fields: {

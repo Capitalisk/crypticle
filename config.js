@@ -27,7 +27,7 @@ module.exports = {
         symbol: 'RISE',
         unit: '100000000'
       },
-      nodeWalletAddress: '5920507067941756798R',
+      nodeWalletAddress: '6255037810762443539R',
       requiredBlockConfirmations: 102
     }
   },
@@ -59,7 +59,7 @@ module.exports = {
         symbol: 'RISE',
         unit: '100000000'
       },
-      nodeWalletAddress: '5920507067941756798R',
+      nodeWalletAddress: '6255037810762443539R',
       requiredBlockConfirmations: 102
     }
   }

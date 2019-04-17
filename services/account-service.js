@@ -21,15 +21,15 @@ class AccountService {
   }
 
   async verifyWalletAndFetchAccount(blockchainTransaction) {
-    let walletAccounts = await this.getAccountsByWalletAddress(blockchainTransaction.senderId);
-    let matchedWalletAccounts = walletAccounts.filter((account) => {
+    let walletAccountList = await this.getAccountsByWalletAddress(blockchainTransaction.senderId);
+    let matchedWalletAccounts = walletAccountList.filter((account) => {
       return account.cryptoWalletVerificationKey === String(blockchainTransaction.amount);
     });
     let isWalletAlreadyVerified = matchedWalletAccounts.some((account) => {
       return account.cryptoWalletVerified != null;
     });
     if (isWalletAlreadyVerified) {
-      return;
+      return matchedWalletAccounts[0];
     }
     if (matchedWalletAccounts.length > 1) {
       throw new Error(
@@ -59,6 +59,19 @@ class AccountService {
 
   async execTransaction(transaction) {
     transaction = {...transaction};
+    if (transaction.type === 'deposit') {
+      let result = await this.thinky.r.table('Transaction').getAll(
+        transaction.referenceId,
+        {index: 'referenceId'}
+      ).run();
+      if (result.length > 0) {
+        throw new Error(
+          `A deposit transaction with referenceId ${
+            transaction.referenceId
+          } has already been processed`
+        );
+      }
+    }
     if (!transaction.created) {
       transaction.created = this.thinky.r.now();
     }

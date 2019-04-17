@@ -114,6 +114,7 @@ class BlockchainService extends AsyncStreamEmitter {
       let transaction = {
         accountId: account.id,
         type: 'deposit',
+        referenceId: blockchainTransaction.id,
         amount: blockchainTransaction.amount
       };
 
