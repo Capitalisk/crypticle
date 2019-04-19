@@ -14,12 +14,12 @@ class BlockchainService extends AsyncStreamEmitter {
     super();
 
     this.nodeWalletAddress = options.nodeInfo.nodeWalletAddress;
+    this.requiredBlockConfirmations = options.nodeInfo.requiredBlockConfirmations;
     this.accountService = options.accountService;
     this.blockPollInterval = options.blockPollInterval;
     this.nodeAddress = options.nodeAddress;
     rise.nodeAddress = options.nodeAddress;
     this.blockFetchLimit = options.blockFetchLimit;
-    this.blockFinality = options.blockFinality;
     this.sync = options.sync;
 
     if (this.sync) {
@@ -44,7 +44,7 @@ class BlockchainService extends AsyncStreamEmitter {
       return false;
     }
     let {height} = heightResult;
-    let maxSafeHeight = height - this.blockFinality;
+    let maxSafeHeight = height - this.requiredBlockConfirmations;
 
     let blocksResult;
     let lastTargetBlockHeight = syncFromBlockHeight + this.blockFetchLimit;
@@ -115,7 +115,7 @@ class BlockchainService extends AsyncStreamEmitter {
         accountId: account.id,
         type: 'deposit',
         referenceId: blockchainTransaction.id,
-        amount: blockchainTransaction.amount
+        amount: String(blockchainTransaction.amount)
       };
 
       await this.accountService.execTransaction(transaction);

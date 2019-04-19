@@ -1,5 +1,5 @@
 module.exports = {
-  origin: 'http://localhost:8000',
+  origin: 'https://crypticle.io',
   adminEmailAddress: 'Crypticle <grosjona@yahoo.com.au>',
   services: {
     blockchain: {
@@ -16,7 +16,7 @@ module.exports = {
     },
     fiat: {
       name: 'stripe',
-      apiSecretKey: 'sk_test_QlUgKWhOjRrIeTO4YWUaExQH'
+      apiSecretKey: 'sk_live_T6aJW8rE0mi0RaZGqNLPxeIa'
     }
   },
   nodeInfo: {
@@ -25,7 +25,7 @@ module.exports = {
       symbol: 'RISE',
       unit: '100000000'
     },
-    nodeWalletAddress: '5920507067941756798R',
+    nodeWalletAddress: '6255037810762443539R',
     requiredBlockConfirmations: 102
   }
 };

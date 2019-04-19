@@ -30,14 +30,91 @@ module.exports = {
   Transaction: {
     fields: {
       accountId: type.string(),
-      type: type.string(), // Can be 'deposit', 'withdrawal', 'credit', 'debit'
+      type: type.string(), // Can be 'deposit', 'withdrawal', 'balance'
       referenceId: type.string(),
       amount: type.string(),
       balance: type.string().optional(),
       settled: type.date().optional(),
       created: type.date()
     },
-    indexes: ['accountId', 'referenceId']
+    indexes: ['accountId', 'referenceId'],
+    views: {
+      accountDepositsPendingView: {
+        paramFields: ['accountId'],
+        transform: function (fullTableQuery, r, productFields) {
+          return fullTableQuery
+          .getAll(productFields.accountId, {index: 'accountId'})
+          .filter(r.row('type').eq('deposit'))
+          .filter(function (account) {
+            return account.hasFields('settled').not();
+          })
+          .orderBy(r.asc('desc'));
+        }
+      },
+      accountDepositsSettledView: {
+        paramFields: ['accountId'],
+        transform: function (fullTableQuery, r, productFields) {
+          return fullTableQuery
+          .getAll(productFields.accountId, {index: 'accountId'})
+          .filter(r.row('type').eq('deposit'))
+          .filter(function (account) {
+            return account.hasFields('settled');
+          })
+          .orderBy(r.asc('desc'));
+        }
+      },
+      accountWithdrawalsPendingView: {
+        paramFields: ['accountId'],
+        transform: function (fullTableQuery, r, productFields) {
+          return fullTableQuery
+          .getAll(productFields.accountId, {index: 'accountId'})
+          .filter(r.row('type').eq('withdrawal'))
+          .filter(function (account) {
+            return account.hasFields('settled').not();
+          })
+          .orderBy(r.asc('desc'));
+        }
+      },
+      accountWithdrawalsSettledView: {
+        paramFields: ['accountId'],
+        transform: function (fullTableQuery, r, productFields) {
+          return fullTableQuery
+          .getAll(productFields.accountId, {index: 'accountId'})
+          .filter(r.row('type').eq('withdrawal'))
+          .filter(function (account) {
+            return account.hasFields('settled');
+          })
+          .orderBy(r.asc('desc'));
+        }
+      },
+      accountBalanceTransactionsPendingView: {
+        paramFields: ['accountId'],
+        transform: function (fullTableQuery, r, productFields) {
+          return fullTableQuery
+          .getAll(productFields.accountId, {index: 'accountId'})
+          .filter(r.row('type').eq('balance'))
+          .filter(function (account) {
+            return account.hasFields('settled').not();
+          })
+          .orderBy(r.asc('desc'));
+        }
+      },
+      accountBalanceTransactionsSettledView: {
+        paramFields: ['accountId'],
+        transform: function (fullTableQuery, r, productFields) {
+          return fullTableQuery
+          .getAll(productFields.accountId, {index: 'accountId'})
+          .filter(r.row('type').eq('balance'))
+          .filter(function (account) {
+            return account.hasFields('settled');
+          })
+          .orderBy(r.asc('desc'));
+        }
+      }
+    },
+    access: {
+      pre: accountTransactionsPrefilter
+    }
   },
   Activity: {
     fields: {
@@ -63,4 +140,9 @@ async function accountAccessPrefilter(req) {
     throw new Error('A user can only access and modify their own account');
   }
   // TODO 2: Restrict the fields that a user can modify on his own account.
+}
+
+async function accountTransactionsPrefilter(req) {
+  return;
+  // TODO 2: Restrict the fields that a user can only see transactions that are associated with their own account.
 }

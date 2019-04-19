@@ -10,7 +10,13 @@ const agcBrokerClient = require('agc-broker-client');
 const agCrudRethink = require('ag-crud-rethink');
 
 const dataSchema = require('./schema');
-const config = require('./config');
+
+const configDev = require('./config.dev');
+const configProd = require('./config.prod');
+const config = {
+  dev: configDev,
+  prod: configProd
+};
 
 const AccountService = require('./services/account-service');
 const BlockchainService = require('./services/blockchain-service');
@@ -82,6 +88,12 @@ let crudOptions = {
 };
 
 let crud = agCrudRethink.attach(agServer, crudOptions);
+
+(async () => {
+  for await (let {error} of crud.listener('error')) {
+    console.error('[CRUD]', error);
+  }
+})();
 
 let accountService = new AccountService({
   thinky: crud.thinky,
