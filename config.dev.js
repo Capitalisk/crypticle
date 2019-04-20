@@ -25,7 +25,8 @@ module.exports = {
       symbol: 'RISE',
       unit: '100000000'
     },
+    walletAddressRegex: '^[0-9]+R$',
     nodeWalletAddress: '16237277499158857342R',
-    requiredBlockConfirmations: 6
+    requiredBlockConfirmations: 2
   }
 };

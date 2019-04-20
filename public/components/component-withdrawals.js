@@ -33,7 +33,7 @@ function getComponent(options) {
     methods: {
       toBlockchainUnits: function (amount) {
         let value = Number(amount) / Number(nodeInfo.cryptocurrency.unit);
-        return Math.round(value * 100) / 100;
+        return Math.round(value * 10000) / 10000;
       },
       toSimpleDate: function (dateString) {
         return (new Date(dateString)).toLocaleString();

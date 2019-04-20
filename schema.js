@@ -5,24 +5,20 @@ const type = thinky.type;
 module.exports = {
   Account: {
     fields: {
-      email: type.string().email(),
+      cryptoWalletAddress: type.string(),
+      cryptoWalletVerified: type.date().optional(),
+      cryptoWalletVerificationKey: type.string(),
       password: type.string(),
       passwordSalt: type.string(),
       stripeCustomerId: type.string().optional(),
       stripePaymentSetup: type.boolean().default(false),
       nationalCurrency: type.string().default('USD'),
-      cryptoWalletAddress: type.string().optional(),
-      cryptoWalletVerified: type.date().optional(),
-      cryptoWalletVerificationKey: type.string(),
-      emailVerified: type.date().optional(),
-      emailVerificationKey: type.string().optional(),
-      emailVerificationExpiry: type.date().optional(),
       passwordResetKey: type.string().optional(),
       passwordResetExpiry: type.date().optional(),
       active: type.boolean().default(true),
       created: type.date()
     },
-    indexes: ['email', 'cryptoWalletAddress'],
+    indexes: ['cryptoWalletAddress'],
     access: {
       pre: accountAccessPrefilter
     }
@@ -30,14 +26,14 @@ module.exports = {
   Transaction: {
     fields: {
       accountId: type.string(),
-      type: type.string(), // Can be 'deposit', 'withdrawal', 'balance'
+      type: type.string(), // Can be 'deposit', 'withdrawal', 'credit' or 'debit'
       referenceId: type.string(),
       amount: type.string(),
       balance: type.string().optional(),
       settled: type.date().optional(),
       created: type.date()
     },
-    indexes: ['accountId', 'referenceId'],
+    indexes: ['accountId', 'referenceId', 'settled', 'created'],
     views: {
       accountDepositsPendingView: {
         paramFields: ['accountId'],
@@ -48,7 +44,7 @@ module.exports = {
           .filter(function (account) {
             return account.hasFields('settled').not();
           })
-          .orderBy(r.asc('desc'));
+          .orderBy(r.desc('created'));
         }
       },
       accountDepositsSettledView: {
@@ -60,7 +56,7 @@ module.exports = {
           .filter(function (account) {
             return account.hasFields('settled');
           })
-          .orderBy(r.asc('desc'));
+          .orderBy(r.desc('settled'));
         }
       },
       accountWithdrawalsPendingView: {
@@ -72,7 +68,7 @@ module.exports = {
           .filter(function (account) {
             return account.hasFields('settled').not();
           })
-          .orderBy(r.asc('desc'));
+          .orderBy(r.desc('created'));
         }
       },
       accountWithdrawalsSettledView: {
@@ -84,31 +80,37 @@ module.exports = {
           .filter(function (account) {
             return account.hasFields('settled');
           })
-          .orderBy(r.asc('desc'));
+          .orderBy(r.desc('settled'));
         }
       },
-      accountBalanceTransactionsPendingView: {
+      accountTransfersPendingView: {
         paramFields: ['accountId'],
         transform: function (fullTableQuery, r, productFields) {
           return fullTableQuery
           .getAll(productFields.accountId, {index: 'accountId'})
-          .filter(r.row('type').eq('balance'))
+          .filter(
+            r.row('type').eq('credit')
+            .or(r.row('type').eq('debit'))
+          )
           .filter(function (account) {
             return account.hasFields('settled').not();
           })
-          .orderBy(r.asc('desc'));
+          .orderBy(r.desc('created'));
         }
       },
-      accountBalanceTransactionsSettledView: {
+      accountTransfersSettledView: {
         paramFields: ['accountId'],
         transform: function (fullTableQuery, r, productFields) {
           return fullTableQuery
           .getAll(productFields.accountId, {index: 'accountId'})
-          .filter(r.row('type').eq('balance'))
+          .filter(
+            r.row('type').eq('credit')
+            .or(r.row('type').eq('debit'))
+          )
           .filter(function (account) {
             return account.hasFields('settled');
           })
-          .orderBy(r.asc('desc'));
+          .orderBy(r.desc('settled'));
         }
       }
     },

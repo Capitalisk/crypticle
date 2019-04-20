@@ -17,8 +17,7 @@ function getComponent(options) {
       });
       return {
         nodeInfo,
-        account: this.accountModel.value,
-        newCryptoWalletAddress: null
+        account: this.accountModel.value
       };
     },
     computed: {
@@ -28,13 +27,7 @@ function getComponent(options) {
     },
     methods: {
       saveAccount: function () {
-        this.account.cryptoWalletAddress = this.newCryptoWalletAddress;
         this.accountModel.save();
-      }
-    },
-    watch: {
-      'account.cryptoWalletAddress': function (newAddress, oldAddress) {
-        this.newCryptoWalletAddress = newAddress;
       }
     },
     template: `
@@ -42,39 +35,26 @@ function getComponent(options) {
         <div class="content-body" v-if="account.cryptoWalletAddress">
           <div class="form-area">
             <label for="input-name">
-              Wallet address
+              Your wallet address: <b>{{account.cryptoWalletAddress}}</b>
               <span v-if="account.cryptoWalletVerified" class="success-container">(verified)</span>
               <span v-if="!account.cryptoWalletVerified" class="error-container">(not verified)</span>
             </label>
-            <div>
-              <input id="input-name" type="text" class="form-control" v-model="newCryptoWalletAddress" @keydown.enter="saveAccount">
-              <input type="button" value="Change wallet address" @click="saveAccount">
-            </div>
           </div>
           <p v-if="account.cryptoWalletVerified">
-            Note that if you change the wallet address above, you will need to go through the wallet verification process again.
+            <span>To deposit funds into your account on this service, send <span>{{nodeInfo.cryptocurrency.symbol}}</span> tokens to the following wallet address: <b>{{nodeInfo.nodeWalletAddress}}</b>.</span>
+            <span class="error-container">Note that the funds must come from your own verified wallet address or else they will be lost!</span>
+            <span>
+              You will need to wait for <b>{{nodeInfo.requiredBlockConfirmations}}</b> confirmations before the funds can be used.
+            </span>
           </p>
           <p v-if="!account.cryptoWalletVerified" class="error-container">
-            To verify ownership of the wallet address above, you will need to make a transfer of exactly
-            <span>{{walletVerificationAmount}}</span> <span>{{nodeInfo.cryptocurrency.symbol}}</span> (not counting the transaction fee) from that wallet
+            You will not be able to use this service until you have proven that you are the owner of the wallet address above.
+            To prove your ownership of the wallet address, you will need to make a transfer of exactly
+            <b>{{walletVerificationAmount}}</b> <span>{{nodeInfo.cryptocurrency.symbol}}</span> (not counting the transaction fee) from that wallet
             to the following wallet address: <b>{{nodeInfo.nodeWalletAddress}}</b>.
             Your wallet will be verified once the transaction has been added to a block on the <span>{{nodeInfo.cryptocurrency.name}}</span> blockchain.
-            Note that you will need to wait for <b>{{nodeInfo.requiredBlockConfirmations}}</b> confirmations before the funds can be used.</b>
+            Note that you will need to wait for <b>{{nodeInfo.requiredBlockConfirmations}}</b> confirmations before the funds can be used.
           </p>
-        </div>
-
-        <div class="content-body" v-if="!account.cryptoWalletAddress">
-          <div class="form-area">
-            <label for="input-name">
-              Wallet address
-            </label>
-            <div>
-              <input id="input-name" type="text" class="form-control" v-model="newCryptoWalletAddress" @keydown.enter="saveAccount">
-              <span class="success-container">
-                <input type="button" value="Set wallet address" @click="saveAccount">
-              </span>
-            </div>
-          </div>
         </div>
       </div>
     `

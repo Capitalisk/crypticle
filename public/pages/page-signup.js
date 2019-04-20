@@ -8,14 +8,14 @@ function getPageComponent(pageOptions) {
       this.accountCollection = new AGCollection({
         socket,
         type: 'Account',
-        fields: ['email', 'password'],
+        fields: ['cryptoWalletAddress', 'password'],
         writeOnly: true
       });
 
       return {
         success: null,
         error: null,
-        email: '',
+        cryptoWalletAddress: '',
         password: '',
         showConsoleLink: false
       };
@@ -23,14 +23,14 @@ function getPageComponent(pageOptions) {
     methods: {
       signup: async function () {
         let details = {
-          email: this.email,
+          cryptoWalletAddress: this.cryptoWalletAddress,
           password: this.password
         };
         try {
           await this.accountCollection.create(details);
         } catch (error) {
           this.error = `Failed to sign up. ${error.message}`;
-          this.showConsoleLink = error.name === 'SignUpEmailTakenError';
+          this.showConsoleLink = error.name === 'SignUpWalletAddressTakenError';
           this.success = null;
           return;
         }
@@ -53,9 +53,9 @@ function getPageComponent(pageOptions) {
           <span v-if="showConsoleLink"><a href="#/console">Click here</a> to go to the console.</span>
           <div class="form-area">
             <div class="signup-label">
-              Email:
+              Blockchain wallet address:
             </div>
-            <input type="text" v-model="email" class="form-control" @keydown.enter="signup">
+            <input type="text" v-model="cryptoWalletAddress" class="form-control" @keydown.enter="signup">
           </div>
           <div class="form-area">
             <div class="signup-label">

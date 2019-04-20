@@ -1,4 +1,3 @@
-const uuid = require('uuid');
 const crypto = require('crypto');
 
 const SALT_SIZE = 32;
@@ -8,6 +7,8 @@ class AccountService {
   constructor(options) {
     this.thinky = options.thinky;
     this.crud = options.crud;
+    this.nodeInfo = options.nodeInfo;
+    this.walletAddressRegExp = new RegExp(this.nodeInfo.walletAddressRegex);
   }
 
   async getAccountsByWalletAddress(walletAddress, onlyUnverifiedWallets) {
@@ -22,15 +23,15 @@ class AccountService {
 
   async verifyWalletAndFetchAccount(blockchainTransaction) {
     let walletAccountList = await this.getAccountsByWalletAddress(blockchainTransaction.senderId);
-    let matchedWalletAccounts = walletAccountList.filter((account) => {
-      return account.cryptoWalletVerificationKey === String(blockchainTransaction.amount);
-    });
-    let isWalletAlreadyVerified = matchedWalletAccounts.some((account) => {
+    let isWalletAlreadyVerified = walletAccountList.some((account) => {
       return account.cryptoWalletVerified != null;
     });
     if (isWalletAlreadyVerified) {
-      return matchedWalletAccounts[0];
+      return walletAccountList[0];
     }
+    let matchedWalletAccounts = walletAccountList.filter((account) => {
+      return account.cryptoWalletVerificationKey === String(blockchainTransaction.amount);
+    });
     if (matchedWalletAccounts.length > 1) {
       throw new Error(
         `Failed to perform wallet verification because multiple accounts were registered to the same wallet address ${
@@ -75,7 +76,10 @@ class AccountService {
     if (!transaction.created) {
       transaction.created = this.thinky.r.now();
     }
-    return this.thinky.r.table('Transaction').insert(transaction).run();
+    return this.crud.create({
+      type: 'Transaction',
+      value: transaction
+    });
   }
 
   hashPassword(password, salt) {
@@ -84,21 +88,22 @@ class AccountService {
     return hash.digest('hex');
   }
 
-  async sanitizeSignupCredentials(accountCredentials) {
-    let credentials = {
-      ...accountCredentials
-    };
-    if (!credentials || credentials.email == null || credentials.password == null) {
+  async sanitizeSignupCredentials(credentials) {
+    credentials = {...credentials};
+    if (!credentials || credentials.cryptoWalletAddress == null || credentials.password == null) {
       let error = new Error('Account credentials were not provided.');
       error.name = 'NoCredentialsProvidedError';
       throw error;
     }
-    if (typeof credentials.email != 'string' || credentials.email.indexOf('@') == -1) {
-      let error = new Error('The provided email address was invalid.');
-      error.name = 'InvalidEmailAddressError';
+    if (
+      typeof credentials.cryptoWalletAddress !== 'string' ||
+      !this.walletAddressRegExp.test(credentials.cryptoWalletAddress)
+    ) {
+      let error = new Error('The provided wallet address was invalid.');
+      error.name = 'InvalidWalletAddressError';
       throw error;
     }
-    if (typeof credentials.password != 'string' || credentials.password.length < 7) {
+    if (typeof credentials.password !== 'string' || credentials.password.length < 7) {
       let error = new Error('Password must be at least 7 characters long.');
       error.name = 'InvalidPasswordError';
       throw error;
@@ -112,10 +117,6 @@ class AccountService {
         resolve(randomBytesBuffer);
       });
     });
-
-    if (credentials.email) {
-      credentials.email = credentials.email.toLowerCase();
-    }
 
     credentials.active = true;
 
@@ -131,9 +132,6 @@ class AccountService {
 
     credentials.cryptoWalletVerificationKey = randomBytes.readUIntBE(0, WALLET_VERIFICATION_SECRET_SIZE).toString();
 
-    credentials.emailVerificationKey = uuid.v4();
-    credentials.emailVerificationExpiry = this.thinky.r.now().add(30 * 24 * 60 * 60);
-
     // Add random password salt.
     credentials.passwordSalt = randomBuffer.toString('hex');
     // Only store the salted hash of the password.
@@ -142,35 +140,34 @@ class AccountService {
 
     let data;
     try {
-      // Verify that email is not already taken.
-      data = await this.thinky.r.table('Account').getAll(credentials.email, {index: 'email'}).run();
+      // Verify that wallet address is not already taken.
+      data = await this.thinky.r.table('Account')
+      .getAll(credentials.cryptoWalletAddress, {index: 'cryptoWalletAddress'})
+      .filter(this.thinky.r.row.hasFields('cryptoWalletVerified'))
+      .run();
     } catch (error) {
       let badLookupError = new Error('Failed to check against existing account data in database.');
       badLookupError.name = 'BadAccountLookupError';
       throw badLookupError;
     }
 
-    if (data[0] == null) {
-      // TODO: Allow email service to be customized.
-      // sendEmailVerificationEmail(req.socket.remoteAddress, credentials.email, credentials.emailVerificationKey);
-      // let emailOptions = {
-      //   email: credentials.email
-      // };
-      // let emailBody = emails.accountCreatedAdmin(emailOptions);
-      // sendEmailToAdmin(req.socket.remoteAddress, 'New Baasil.io signup (' + credentials.plan + '): ' + credentials.email, emailBody);
-    } else {
-      let accountEmailTakenError = new Error(`An account with the email ${credentials.email} already exists.`);
-      accountEmailTakenError.name = 'SignUpEmailTakenError';
-      throw accountEmailTakenError;
+    if (data[0] != null) {
+      let alreadyTakenError = new Error(
+        `An account with the wallet address ${credentials.cryptoWalletAddress} already exists.`
+      );
+      alreadyTakenError.name = 'SignUpWalletAddressTakenError';
+      throw alreadyTakenError;
     }
     return credentials;
   }
 
-  async verifyLoginCredentials(accountCredentials) {
-    let results = await this.thinky.r.table('Account').filter({email: accountCredentials.email}).run();
+  async verifyLoginCredentials(credentials) {
+    let results = await this.thinky.r.table('Account')
+    .getAll(credentials.cryptoWalletAddress, {index: 'cryptoWalletAddress'})
+    .run();
 
     if (!results || !results[0]) {
-      let err = new Error('Invalid email or password.');
+      let err = new Error('Invalid wallet address or password.');
       err.name = 'InvalidCredentialsError';
       throw err;
     }
@@ -184,7 +181,7 @@ class AccountService {
     }
 
     let hash = crypto.createHash('sha256');
-    hash.update(accountCredentials.password + accountData.passwordSalt);
+    hash.update(credentials.password + accountData.passwordSalt);
     let hashedPassword = hash.digest('hex');
 
     if (accountData.password !== hashedPassword) {

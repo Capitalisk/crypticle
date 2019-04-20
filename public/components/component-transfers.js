@@ -5,9 +5,9 @@ function getComponent(options) {
   let view;
 
   if (options.type === 'pending') {
-    view = 'accountBalanceTransactionsPendingView';
+    view = 'accountTransfersPendingView';
   } else if (options.type === 'settled') {
-    view = 'accountBalanceTransactionsSettledView';
+    view = 'accountTransfersSettledView';
   }
 
   return {
@@ -33,7 +33,7 @@ function getComponent(options) {
     methods: {
       toBlockchainUnits: function (amount) {
         let value = Number(amount) / Number(nodeInfo.cryptocurrency.unit);
-        return Math.round(value * 100) / 100;
+        return Math.round(value * 10000) / 10000;
       },
       toSimpleDate: function (dateString) {
         return (new Date(dateString)).toLocaleString();
@@ -46,8 +46,8 @@ function getComponent(options) {
       <div class="component-container">
         <div class="content-body">
           <h4>
-            <span v-if="transactionType">{{capitalize(transactionType)}} balance transactions</span>
-            <span v-if="!transactionType">Balance transactions</span>
+            <span v-if="transactionType">{{capitalize(transactionType)}} transfers</span>
+            <span v-if="!transactionType">Transfers</span>
           </h4>
           <table>
             <tr>

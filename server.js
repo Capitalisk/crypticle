@@ -97,7 +97,8 @@ let crud = agCrudRethink.attach(agServer, crudOptions);
 
 let accountService = new AccountService({
   thinky: crud.thinky,
-  crud
+  crud,
+  nodeInfo: envConfig.nodeInfo,
 });
 
 let blockchainService = new BlockchainService({
@@ -163,7 +164,7 @@ expressApp.get('/health-check', (req, res) => {
           continue;
         }
         let token = {
-          email: accountData.email,
+          cryptoWalletAddress: accountData.cryptoWalletAddress,
           accountId: accountData.id
         };
         socket.setAuthToken(token, {expiresIn: TOKEN_EXPIRY_SECONDS});

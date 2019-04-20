@@ -1,7 +1,7 @@
 import getWalletComponent from '/components/component-wallet.js';
 import getDepositsComponent from '/components/component-deposits.js';
 import getWithdrawalsComponent from '/components/component-withdrawals.js';
-import getBalanceTransactionsComponent from '/components/component-balance-transactions.js';
+import getTransfersComponent from '/components/component-transfers.js';
 
 function getPageComponent(pageOptions) {
   let {socket, nodeInfo} = pageOptions;
@@ -32,12 +32,12 @@ function getPageComponent(pageOptions) {
         nodeInfo,
         type: 'pending'
       }),
-      'component-settled-balance-transactions': getBalanceTransactionsComponent({
+      'component-settled-transfers': getTransfersComponent({
         socket,
         nodeInfo,
         type: 'settled'
       }),
-      'component-pending-balance-transactions': getBalanceTransactionsComponent({
+      'component-pending-transfers': getTransfersComponent({
         socket,
         nodeInfo,
         type: 'pending'
@@ -53,8 +53,8 @@ function getPageComponent(pageOptions) {
         <div class="content-body">
           <component-wallet></component-wallet>
 
-          <component-settled-balance-transactions></component-settled-balance-transactions>
-          <component-pending-balance-transactions></component-pending-balance-transactions>
+          <component-settled-transfers></component-settled-transfers>
+          <component-pending-transfers></component-pending-transfers>
 
           <component-settled-deposits></component-settled-deposits>
           <component-pending-deposits></component-pending-deposits>
