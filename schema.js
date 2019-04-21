@@ -27,13 +27,14 @@ module.exports = {
     fields: {
       accountId: type.string(),
       type: type.string(), // Can be 'deposit', 'withdrawal', 'credit' or 'debit'
-      referenceId: type.string(),
       amount: type.string(),
+      counterpartyId: type.string().optional(),
       balance: type.string().optional(),
       settled: type.date().optional(),
+      canceled: type.date().optional(),
       created: type.date()
     },
-    indexes: ['accountId', 'referenceId', 'settled', 'created'],
+    indexes: ['accountId', 'settled', 'created'],
     views: {
       accountDepositsPendingView: {
         paramFields: ['accountId'],
@@ -117,6 +118,22 @@ module.exports = {
     access: {
       pre: accountTransactionsPrefilter
     }
+  },
+  Deposit: {
+    fields: {
+      internalTransactionId: type.string(),
+      height: type.number()
+    },
+    indexes: ['internalTransactionId', 'processed']
+  },
+  Withdrawal: {
+    fields: {
+      internalTransactionId: type.string(),
+      signedTransaction: type.string(),
+      lastAttempt: type.date(),
+      settled: type.date().optional()
+    },
+    indexes: ['internalTransactionId', 'processed']
   },
   Activity: {
     fields: {

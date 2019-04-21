@@ -68,7 +68,10 @@ let crudOptions = {
   },
   middleware: {
     invoke: async function (action) {
-      if (action.data && action.data.type === 'Account') {
+      if (!action.data) {
+        return;
+      }
+      if (action.data.type === 'Account') {
         if (action.procedure === 'create') {
           action.data.value = await accountService.sanitizeSignupCredentials(action.data.value);
           return;
@@ -82,6 +85,7 @@ let crudOptions = {
             };
           }
         }
+        return;
       }
     }
   }
@@ -91,7 +95,7 @@ let crud = agCrudRethink.attach(agServer, crudOptions);
 
 (async () => {
   for await (let {error} of crud.listener('error')) {
-    console.error('[CRUD]', error);
+    console.warn('[CRUD]', error);
   }
 })();
 
@@ -100,6 +104,12 @@ let accountService = new AccountService({
   crud,
   nodeInfo: envConfig.nodeInfo,
 });
+
+(async () => {
+  for await (let {error} of accountService.listener('error')) {
+    console.error('[AccountService]', error);
+  }
+})();
 
 let blockchainService = new BlockchainService({
   ...envConfig.services.blockchain,

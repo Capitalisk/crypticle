@@ -12,7 +12,7 @@ function getComponent(options) {
 
   return {
     data: function () {
-      this.withdrawalsCollection = new AGCollection({
+      this.transactionsCollection = new AGCollection({
         socket,
         type: 'Transaction',
         view,
@@ -26,7 +26,7 @@ function getComponent(options) {
       });
       return {
         nodeInfo,
-        withdrawals: this.withdrawalsCollection.value,
+        transactions: this.transactionsCollection.value,
         withdrawalType: options.type
       };
     },
@@ -51,18 +51,14 @@ function getComponent(options) {
           </h4>
           <table>
             <tr>
-              <th>
-                <span v-if="nodeInfo.cryptocurrency">{{nodeInfo.cryptocurrency.name}}</span>
-                <span v-if="!nodeInfo.cryptocurrency">Blockchain</span>
-                <span>transaction ID</span>
-              </th>
+              <th>Transaction ID</th>
               <th>Amount</th>
               <th>Date</th>
             </tr>
-            <tr v-for="withdrawal of withdrawals">
-              <td>{{withdrawal.referenceId}}</td>
-              <td>{{toBlockchainUnits(withdrawal.amount)}}<span v-if="nodeInfo.cryptocurrency"> {{nodeInfo.cryptocurrency.symbol}}</span></td>
-              <td>{{toSimpleDate(withdrawal.created)}}</td>
+            <tr v-for="txn of transactions">
+              <td>{{txn.id}}</td>
+              <td>{{toBlockchainUnits(txn.amount)}}<span v-if="nodeInfo.cryptocurrency"> {{nodeInfo.cryptocurrency.symbol}}</span></td>
+              <td>{{toSimpleDate(txn.created)}}</td>
             </tr>
           </table>
         </div>

@@ -12,21 +12,21 @@ function getComponent(options) {
 
   return {
     data: function () {
-      this.depositCollection = new AGCollection({
+      this.transactionsCollection = new AGCollection({
         socket,
         type: 'Transaction',
         view,
         viewParams: {
           accountId: socket.authToken && socket.authToken.accountId
         },
-        fields: ['referenceId', 'amount', 'created'],
+        fields: ['amount', 'created'],
         pageOffset: 0,
         pageSize: 10,
         getCount: true
       });
       return {
         nodeInfo,
-        deposits: this.depositCollection.value,
+        transactions: this.transactionsCollection.value,
         depositType: options.type
       };
     },
@@ -51,18 +51,14 @@ function getComponent(options) {
           </h4>
           <table>
             <tr>
-              <th>
-                <span v-if="nodeInfo.cryptocurrency">{{nodeInfo.cryptocurrency.name}}</span>
-                <span v-if="!nodeInfo.cryptocurrency">Blockchain</span>
-                <span>transaction ID</span>
-              </th>
+              <th>Transaction ID</th>
               <th>Amount</th>
               <th>Date</th>
             </tr>
-            <tr v-for="deposit of deposits">
-              <td>{{deposit.referenceId}}</td>
-              <td>{{toBlockchainUnits(deposit.amount)}}<span v-if="nodeInfo.cryptocurrency"> {{nodeInfo.cryptocurrency.symbol}}</span></td>
-              <td>{{toSimpleDate(deposit.created)}}</td>
+            <tr v-for="txn of transactions">
+              <td>{{txn.id}}</td>
+              <td>{{toBlockchainUnits(txn.amount)}}<span v-if="nodeInfo.cryptocurrency"> {{nodeInfo.cryptocurrency.symbol}}</span></td>
+              <td>{{toSimpleDate(txn.created)}}</td>
             </tr>
           </table>
         </div>

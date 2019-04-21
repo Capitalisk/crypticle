@@ -14,7 +14,7 @@ class BlockchainService extends AsyncStreamEmitter {
     super();
 
     this.nodeWalletAddress = options.nodeInfo.nodeWalletAddress;
-    this.requiredBlockConfirmations = options.nodeInfo.requiredBlockConfirmations;
+    this.requiredBlockConfirmations = options.nodeInfo.requiredBlockConfirmations; // TODO 2: Use this for settlement.
     this.accountService = options.accountService;
     this.blockPollInterval = options.blockPollInterval;
     this.nodeAddress = options.nodeAddress;
@@ -44,16 +44,15 @@ class BlockchainService extends AsyncStreamEmitter {
       return false;
     }
     let {height} = heightResult;
-    let maxSafeHeight = height - this.requiredBlockConfirmations;
 
     let blocksResult;
     let lastTargetBlockHeight = syncFromBlockHeight + this.blockFetchLimit;
-    let safeHeightDiff = lastTargetBlockHeight - maxSafeHeight;
+    let safeHeightDiff = lastTargetBlockHeight - height;
     if (safeHeightDiff < 0) {
       safeHeightDiff = 0;
     }
 
-    if (syncFromBlockHeight >= maxSafeHeight) {
+    if (syncFromBlockHeight >= height) {
       return true;
     }
 
@@ -79,11 +78,7 @@ class BlockchainService extends AsyncStreamEmitter {
       let block = blocks[i];
       let transactionCount = block.transactions.length;
       for (let j = 0; j < transactionCount; j++) {
-        try {
-          await this.processTransaction(block.transactions[j]);
-        } catch (error) {
-          this.emit('error', {error});
-        }
+        await this.processDepositTransaction(block.transactions[j]);
       }
     }
 
@@ -107,22 +102,14 @@ class BlockchainService extends AsyncStreamEmitter {
     return safeHeightDiff > 0;
   }
 
-  async processTransaction(blockchainTransaction) {
+  async processDepositTransaction(blockchainTransaction) {
     if (blockchainTransaction.recipientId === this.nodeWalletAddress) {
-      let account = await this.accountService.verifyWalletAndFetchAccount(blockchainTransaction);
-
-      let transaction = {
-        accountId: account.id,
-        type: 'deposit',
-        referenceId: blockchainTransaction.id,
-        amount: String(blockchainTransaction.amount)
-      };
-
-      await this.accountService.execTransaction(transaction);
+      await this.accountService.execDepositTransaction(blockchainTransaction);
     }
   }
 
   async startSynching() {
+    // Catch up to the latest height.
     while (true) {
       let done;
       try {
@@ -136,6 +123,7 @@ class BlockchainService extends AsyncStreamEmitter {
     if (this._intervalRef != null) {
       clearInterval(this._intervalRef);
     }
+    // Sync block by block.
     this._intervalRef = setInterval(async () => {
       try {
         await this.processNextBlocks();

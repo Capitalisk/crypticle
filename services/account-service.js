@@ -1,24 +1,22 @@
 const crypto = require('crypto');
+const uuid = require('uuid');
+const AsyncStreamEmitter = require('async-stream-emitter');
 
 const SALT_SIZE = 32;
 const WALLET_VERIFICATION_SECRET_SIZE = 4;
 
-class AccountService {
+class AccountService extends AsyncStreamEmitter {
   constructor(options) {
+    super();
+
     this.thinky = options.thinky;
     this.crud = options.crud;
     this.nodeInfo = options.nodeInfo;
     this.walletAddressRegExp = new RegExp(this.nodeInfo.walletAddressRegex);
   }
 
-  async getAccountsByWalletAddress(walletAddress, onlyUnverifiedWallets) {
-    let query = this.thinky.r.table('Account').getAll(walletAddress, {index: 'cryptoWalletAddress'});
-    if (onlyUnverifiedWallets) {
-      query = query.filter(
-        this.thinky.r.row.hasFields('cryptoWalletVerified').not()
-      );
-    }
-    return query.run();
+  async getAccountsByWalletAddress(walletAddress) {
+    return this.thinky.r.table('Account').getAll(walletAddress, {index: 'cryptoWalletAddress'}).run();
   }
 
   async verifyWalletAndFetchAccount(blockchainTransaction) {
@@ -33,20 +31,28 @@ class AccountService {
       return account.cryptoWalletVerificationKey === String(blockchainTransaction.amount);
     });
     if (matchedWalletAccounts.length > 1) {
-      throw new Error(
-        `Failed to perform wallet verification because multiple accounts were registered to the same wallet address ${
-          blockchainTransaction.senderId
-        }`
-      );
+      // Do not throw here because this issue cannot be resolved by retrying.
+      this.emit('error', {
+        error: new Error(
+          `Failed to perform wallet verification because multiple accounts were registered to the same wallet address ${
+            blockchainTransaction.senderId
+          }`
+        )
+      });
+      return null;
     }
     if (matchedWalletAccounts.length < 1) {
-      throw new Error(
-        `Failed to process the blockchain transaction with id ${
-          blockchainTransaction.id
-        } because the wallet address ${
-          blockchainTransaction.senderId
-        } was not associated with any account`
-      );
+      // Do not throw here because this issue cannot be resolved by retrying.
+      this.emit('error', {
+        error: new Error(
+          `Failed to process the blockchain transaction with id ${
+            blockchainTransaction.id
+          } because the wallet address ${
+            blockchainTransaction.senderId
+          } was not associated with any account`
+        )
+      });
+      return null;
     }
     let walletAccount = matchedWalletAccounts[0];
     await this.crud.update({
@@ -59,27 +65,90 @@ class AccountService {
   }
 
   async execTransaction(transaction) {
-    transaction = {...transaction};
-    if (transaction.type === 'deposit') {
-      let result = await this.thinky.r.table('Transaction').getAll(
-        transaction.referenceId,
-        {index: 'referenceId'}
-      ).run();
-      if (result.length > 0) {
-        throw new Error(
-          `A deposit transaction with referenceId ${
-            transaction.referenceId
-          } has already been processed`
-        );
-      }
-    }
-    if (!transaction.created) {
-      transaction.created = this.thinky.r.now();
-    }
     return this.crud.create({
       type: 'Transaction',
-      value: transaction
+      value: {
+        created: this.thinky.r.now(),
+        ...transaction
+      }
     });
+  }
+
+  async execDepositTransaction(blockchainTransaction) {
+    let account = await this.verifyWalletAndFetchAccount(blockchainTransaction);
+    if (!account) {
+      return {
+        deposit: null,
+        transaction: null
+      };
+    }
+
+    let internalTransactionId = uuid.v4();
+    let deposit = {
+      id: blockchainTransaction.id,
+      internalTransactionId,
+      height: blockchainTransaction.height
+    };
+    let insertedDeposit;
+    try {
+      insertedDeposit = await this.crud.create({
+        type: 'Deposit',
+        value: deposit
+      });
+    } catch (error) {
+      // Check if the deposit and transaction have already been created.
+      // If a deposit exists without a matching transaction (e.g. because of a
+      // past insertion failure), create the matching transaction.
+      let deposit;
+      try {
+        deposit = await this.crud.read({
+          type: 'Deposit',
+          id: blockchainTransaction.id
+        });
+      } catch (err) {
+        throw new Error(
+          `Failed to create deposit with external ID ${
+            blockchainTransaction.id
+          } and no existing one could be found - ${error}`
+        );
+      }
+      try {
+        let txn = await this.crud.read({
+          type: 'Transaction',
+          id: deposit.internalTransactionId
+        });
+        return {
+          deposit,
+          transaction: txn
+        };
+      } catch (err) {
+        internalTransactionId = deposit.internalTransactionId;
+      }
+    }
+    let transaction = {
+      id: internalTransactionId,
+      accountId: account.id,
+      type: 'deposit',
+      amount: String(blockchainTransaction.amount)
+    };
+    let insertedTransaction = await this.execTransaction(transaction);
+    return {
+      deposit,
+      transaction: insertedTransaction
+    };
+  }
+
+  async settleTransaction(transactionId) {
+    let result = await this.thinky.r.table('Transaction')
+    .get(transactionId)
+    .update({settled: this.thinky.r.now()})
+    .run();
+
+    if (!result.replaced) {
+      throw new Error(
+        `Failed to settle transaction ${transactionId}`
+      );
+    }
   }
 
   hashPassword(password, salt) {
