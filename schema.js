@@ -124,7 +124,7 @@ module.exports = {
       internalTransactionId: type.string(),
       height: type.number()
     },
-    indexes: ['internalTransactionId', 'processed']
+    indexes: ['internalTransactionId']
   },
   Withdrawal: {
     fields: {
@@ -133,7 +133,7 @@ module.exports = {
       lastAttempt: type.date(),
       settled: type.date().optional()
     },
-    indexes: ['internalTransactionId', 'processed']
+    indexes: ['internalTransactionId', 'lastAttempt', 'settled']
   },
   Activity: {
     fields: {
