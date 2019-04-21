@@ -12,7 +12,18 @@ function getComponent(options) {
 
   return {
     data: function () {
-      this.transactionsCollection = new AGCollection({
+      this.depositCollection = new AGCollection({
+        socket,
+        type: 'Deposit',
+        view,
+        viewParams: {
+          accountId: socket.authToken && socket.authToken.accountId
+        },
+        fields: ['internalTransactionId', 'height'],
+        pageOffset: 0,
+        pageSize: 10
+      });
+      this.transactionCollection = new AGCollection({
         socket,
         type: 'Transaction',
         view,
@@ -26,11 +37,18 @@ function getComponent(options) {
       });
       return {
         nodeInfo,
-        transactions: this.transactionsCollection.value,
+        deposits: this.depositCollection.value,
+        transactions: this.transactionCollection.value,
         depositType: options.type
       };
     },
     methods: {
+      getHeight: function (transaction) {
+        let matchingDeposit = this.deposits.find((deposit) => {
+          return deposit.internalTransactionId === transaction.id;
+        });
+        return matchingDeposit ? matchingDeposit.height : '';
+      },
       toBlockchainUnits: function (amount) {
         let value = Number(amount) / Number(nodeInfo.cryptocurrency.unit);
         return Math.round(value * 10000) / 10000;
@@ -53,11 +71,13 @@ function getComponent(options) {
             <tr>
               <th>Transaction ID</th>
               <th>Amount</th>
+              <th>Height</th>
               <th>Date</th>
             </tr>
             <tr v-for="txn of transactions">
               <td>{{txn.id}}</td>
               <td>{{toBlockchainUnits(txn.amount)}}<span v-if="nodeInfo.cryptocurrency"> {{nodeInfo.cryptocurrency.symbol}}</span></td>
+              <td>{{getHeight(txn)}}</td>
               <td>{{toSimpleDate(txn.created)}}</td>
             </tr>
           </table>

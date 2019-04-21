@@ -12,7 +12,7 @@ function getComponent(options) {
 
   return {
     data: function () {
-      this.transactionsCollection = new AGCollection({
+      this.transactionCollection = new AGCollection({
         socket,
         type: 'Transaction',
         view,
@@ -26,7 +26,7 @@ function getComponent(options) {
       });
       return {
         nodeInfo,
-        transactions: this.transactionsCollection.value,
+        transactions: this.transactionCollection.value,
         withdrawalType: options.type
       };
     },

@@ -9,7 +9,7 @@ const uuid = require('uuid');
 const agcBrokerClient = require('agc-broker-client');
 const agCrudRethink = require('ag-crud-rethink');
 
-const dataSchema = require('./schema');
+const getSchema = require('./schema');
 
 const configDev = require('./config.dev');
 const configProd = require('./config.prod');
@@ -43,6 +43,10 @@ const AGC_BROKER_RETRY_DELAY = Number(process.env.AGC_BROKER_RETRY_DELAY) || nul
 
 const DB_NAME = process.env.DB_NAME || 'crypticle';
 const TOKEN_EXPIRY_SECONDS = 60 * 60;
+
+const dataSchema = getSchema({
+  dbName: DB_NAME
+});
 
 const envConfig = config[ENVIRONMENT];
 

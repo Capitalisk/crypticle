@@ -86,8 +86,10 @@ class AccountService extends AsyncStreamEmitter {
     let internalTransactionId = uuid.v4();
     let deposit = {
       id: blockchainTransaction.id,
+      accountId: account.id,
       internalTransactionId,
-      height: blockchainTransaction.height
+      height: blockchainTransaction.height,
+      created: this.thinky.r.now()
     };
     let insertedDeposit;
     try {
