@@ -40,54 +40,6 @@ function getSchema(options) {
         pre: accountTransactionsPrefilter
       },
       views: {
-        accountDepositsPendingView: {
-          paramFields: ['accountId'],
-          transform: function (fullTableQuery, r, params) {
-            return fullTableQuery
-            .getAll(params.accountId, {index: 'accountId'})
-            .filter(r.row('type').eq('deposit'))
-            .filter(function (account) {
-              return account.hasFields('settled').not();
-            })
-            .orderBy(r.desc('created'));
-          }
-        },
-        accountDepositsSettledView: {
-          paramFields: ['accountId'],
-          transform: function (fullTableQuery, r, params) {
-            return fullTableQuery
-            .getAll(params.accountId, {index: 'accountId'})
-            .filter(r.row('type').eq('deposit'))
-            .filter(function (account) {
-              return account.hasFields('settled');
-            })
-            .orderBy(r.desc('settled'));
-          }
-        },
-        accountWithdrawalsPendingView: {
-          paramFields: ['accountId'],
-          transform: function (fullTableQuery, r, params) {
-            return fullTableQuery
-            .getAll(params.accountId, {index: 'accountId'})
-            .filter(r.row('type').eq('withdrawal'))
-            .filter(function (account) {
-              return account.hasFields('settled').not();
-            })
-            .orderBy(r.desc('created'));
-          }
-        },
-        accountWithdrawalsSettledView: {
-          paramFields: ['accountId'],
-          transform: function (fullTableQuery, r, params) {
-            return fullTableQuery
-            .getAll(params.accountId, {index: 'accountId'})
-            .filter(r.row('type').eq('withdrawal'))
-            .filter(function (account) {
-              return account.hasFields('settled');
-            })
-            .orderBy(r.desc('settled'));
-          }
-        },
         accountTransfersPendingView: {
           paramFields: ['accountId'],
           transform: function (fullTableQuery, r, params) {
@@ -131,9 +83,22 @@ function getSchema(options) {
       access: {
         pre: accountTransactionsPrefilter // TODO 2: Check that filters are correct.
       },
+      relations: {
+        Transaction: {
+          accountId: function (transaction) {
+            return transaction.accountId;
+          },
+          internalTransactionId: function (transaction) {
+            return transaction.id;
+          }
+        }
+      },
       views: {
         accountDepositsPendingView: {
           paramFields: ['accountId'],
+          foreignAffectingFields: {
+            Transaction: ['settled']
+          },
           transform: function (fullTableQuery, r, params) {
             return fullTableQuery
             .getAll(params.accountId, {index: 'accountId'})
@@ -143,6 +108,9 @@ function getSchema(options) {
         },
         accountDepositsSettledView: {
           paramFields: ['accountId'],
+          foreignAffectingFields: {
+            Transaction: ['settled']
+          },
           transform: function (fullTableQuery, r, params) {
             return fullTableQuery
             .getAll(params.accountId, {index: 'accountId'})
@@ -164,6 +132,29 @@ function getSchema(options) {
       indexes: ['accountId', 'internalTransactionId', 'lastAttempt', 'settled'],
       access: {
         pre: accountTransactionsPrefilter // TODO 2: Check that filters are correct.
+      },
+      views: {
+        accountWithdrawalsPendingView: {
+          paramFields: ['accountId'],
+          // foreignAffectingFields: {
+          //   Transaction: ['settled']
+          // }, // TODO 2 TODO 3
+          transform: function (fullTableQuery, r, params) {
+            return fullTableQuery
+            .getAll(params.accountId, {index: 'accountId'})
+            .filter(r.db(options.dbName).table('Transaction').get(r.row('internalTransactionId')).hasFields('settled').not())
+            .orderBy(r.desc('created'));
+          }
+        },
+        accountWithdrawalsSettledView: {
+          paramFields: ['accountId'],
+          transform: function (fullTableQuery, r, params) {
+            return fullTableQuery
+            .getAll(params.accountId, {index: 'accountId'})
+            .filter(r.db(options.dbName).table('Transaction').get(r.row('internalTransactionId')).hasFields('settled'))
+            .orderBy(r.desc('created'));
+          }
+        }
       }
     },
     Activity: {

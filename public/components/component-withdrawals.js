@@ -1,4 +1,5 @@
 import AGCollection from '/node_modules/ag-collection/ag-collection.js';
+import AGModel from '/node_modules/ag-model/ag-model.js';
 
 function getComponent(options) {
   let {socket, nodeInfo} = options;
@@ -12,21 +13,57 @@ function getComponent(options) {
 
   return {
     data: function () {
-      this.transactionCollection = new AGCollection({
+      this.withdrawalCollection = new AGCollection({
         socket,
-        type: 'Transaction',
+        type: 'Withdrawal',
         view,
         viewParams: {
           accountId: socket.authToken && socket.authToken.accountId
         },
-        fields: ['referenceId', 'amount', 'created'],
+        fields: ['internalTransactionId', 'height'],
+        defaultFieldValues: {
+          transaction: {}
+        },
         pageOffset: 0,
-        pageSize: 10,
-        getCount: true
+        pageSize: 10
       });
+
+      (async () => {
+        for await (let withdrawalModel of this.withdrawalCollection.listener('modelDestroy')) {
+          withdrawalModel.transactionModel.destroy();
+          delete withdrawalModel.transactionModel;
+        }
+      })();
+
+      (async () => {
+        for await (let event of this.withdrawalCollection.listener('modelChange')) {
+          if (event.resourceField !== 'internalTransactionId') {
+            continue;
+          }
+          let withdrawalModel = this.withdrawalCollection.agModels[event.resourceId];
+          let originalTransactionModel = withdrawalModel.transactionModel;
+          let transactionId = event.newValue;
+          if (
+            transactionId &&
+            (!originalTransactionModel || withdrawalModel.transactionModel.id !== transactionId)
+          ) {
+            withdrawalModel.transactionModel = new AGModel({
+              socket,
+              type: 'Transaction',
+              id: transactionId,
+              fields: ['amount', 'settled']
+            });
+            withdrawalModel.value.transaction = withdrawalModel.transactionModel.value;
+            if (originalTransactionModel) {
+              originalTransactionModel.destroy();
+            }
+          }
+        }
+      })();
+
       return {
         nodeInfo,
-        transactions: this.transactionCollection.value,
+        withdrawals: this.withdrawalCollection.value,
         withdrawalType: options.type
       };
     },
@@ -51,14 +88,14 @@ function getComponent(options) {
           </h4>
           <table>
             <tr>
-              <th>Transaction ID</th>
+              <th>Withdrawal ID</th>
               <th>Amount</th>
               <th>Date</th>
             </tr>
-            <tr v-for="txn of transactions">
-              <td>{{txn.id}}</td>
-              <td>{{toBlockchainUnits(txn.amount)}}<span v-if="nodeInfo.cryptocurrency"> {{nodeInfo.cryptocurrency.symbol}}</span></td>
-              <td>{{toSimpleDate(txn.created)}}</td>
+            <tr v-for="wit of withdrawals">
+              <td>{{wit.id}}</td>
+              <td>{{toBlockchainUnits(wit.transaction.amount)}}<span v-if="nodeInfo.cryptocurrency"> {{nodeInfo.cryptocurrency.symbol}}</span></td>
+              <td>{{wit.created}}</td>
             </tr>
           </table>
         </div>
