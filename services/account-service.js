@@ -1,9 +1,16 @@
 const crypto = require('crypto');
 const uuid = require('uuid');
 const AsyncStreamEmitter = require('async-stream-emitter');
+const {generateWallet} = require('../utils/crypto');
 
 const SALT_SIZE = 32;
-const WALLET_VERIFICATION_SECRET_SIZE = 4;
+const MAX_WALLET_CREATE_ATTEMPTS = 10;
+
+const MIN_USERNAME_LENGTH = 3;
+const MAX_USERNAME_LENGTH = 30;
+
+const MIN_PASSWORD_LENGTH = 7;
+const MAX_PASSWORD_LENGTH = 50;
 
 class AccountService extends AsyncStreamEmitter {
   constructor(options) {
@@ -12,15 +19,14 @@ class AccountService extends AsyncStreamEmitter {
     this.thinky = options.thinky;
     this.crud = options.crud;
     this.nodeInfo = options.nodeInfo;
-    this.walletAddressRegExp = new RegExp(this.nodeInfo.walletAddressRegex);
   }
 
-  async getAccountsByWalletAddress(walletAddress) {
-    return this.thinky.r.table('Account').getAll(walletAddress, {index: 'cryptoWalletAddress'}).run();
+  async getAccountsByDepositWalletAddress(walletAddress) {
+    return this.thinky.r.table('Account').getAll(walletAddress, {index: 'depositWalletAddress'}).run();
   }
 
   async verifyWalletAndFetchAccount(blockchainTransaction) {
-    let walletAccountList = await this.getAccountsByWalletAddress(blockchainTransaction.senderId);
+    let walletAccountList = await this.getAccountsByDepositWalletAddress(blockchainTransaction.senderId);
     let isWalletAlreadyVerified = walletAccountList.some((account) => {
       return account.cryptoWalletVerified != null;
     });
@@ -83,11 +89,11 @@ class AccountService extends AsyncStreamEmitter {
       };
     }
 
-    let internalTransactionId = uuid.v4();
+    let transactionId = uuid.v4();
     let deposit = {
       id: blockchainTransaction.id,
       accountId: account.id,
-      internalTransactionId,
+      transactionId,
       height: blockchainTransaction.height,
       created: this.thinky.r.now()
     };
@@ -117,18 +123,18 @@ class AccountService extends AsyncStreamEmitter {
       try {
         let txn = await this.crud.read({
           type: 'Transaction',
-          id: deposit.internalTransactionId
+          id: deposit.transactionId
         });
         return {
           deposit,
           transaction: txn
         };
       } catch (err) {
-        internalTransactionId = deposit.internalTransactionId;
+        transactionId = deposit.transactionId;
       }
     }
     let transaction = {
-      id: internalTransactionId,
+      id: transactionId,
       accountId: account.id,
       type: 'deposit',
       amount: String(blockchainTransaction.amount)
@@ -161,24 +167,42 @@ class AccountService extends AsyncStreamEmitter {
 
   async sanitizeSignupCredentials(credentials) {
     credentials = {...credentials};
-    if (!credentials || credentials.cryptoWalletAddress == null || credentials.password == null) {
+    if (!credentials || credentials.username == null || credentials.password == null) {
       let error = new Error('Account credentials were not provided.');
       error.name = 'NoCredentialsProvidedError';
       throw error;
     }
     if (
-      typeof credentials.cryptoWalletAddress !== 'string' ||
-      !this.walletAddressRegExp.test(credentials.cryptoWalletAddress)
+      typeof credentials.username !== 'string' ||
+      credentials.username.length < MIN_USERNAME_LENGTH ||
+      credentials.username.length > MAX_USERNAME_LENGTH
     ) {
-      let error = new Error('The provided wallet address was invalid.');
-      error.name = 'InvalidWalletAddressError';
+      let error = new Error(
+        `The provided username was invalid. It must be between ${
+          MIN_USERNAME_LENGTH
+        } and ${
+          MAX_USERNAME_LENGTH
+        } characters in length.`
+      );
+      error.name = 'InvalidUsernameError';
       throw error;
     }
-    if (typeof credentials.password !== 'string' || credentials.password.length < 7) {
-      let error = new Error('Password must be at least 7 characters long.');
+    if (
+      typeof credentials.password !== 'string' ||
+      credentials.password.length < MIN_PASSWORD_LENGTH ||
+      credentials.password.length > MAX_PASSWORD_LENGTH
+    ) {
+      let error = new Error(
+        `Password must be between ${
+          MIN_PASSWORD_LENGTH
+        } and ${
+          MAX_PASSWORD_LENGTH
+        } characters in length.`
+      );
       error.name = 'InvalidPasswordError';
       throw error;
     }
+
     let randomBuffer = await new Promise((resolve, reject) => {
       crypto.randomBytes(SALT_SIZE, (err, randomBytesBuffer) => {
         if (err) {
@@ -191,44 +215,64 @@ class AccountService extends AsyncStreamEmitter {
 
     credentials.active = true;
 
-    let randomBytes = await new Promise((resolve, reject) => {
-      crypto.randomBytes(WALLET_VERIFICATION_SECRET_SIZE, (err, result) => {
-        if (err) {
-          reject(err);
-          return;
-        }
-        resolve(result);
-      });
-    });
-
-    credentials.cryptoWalletVerificationKey = randomBytes.readUIntBE(0, WALLET_VERIFICATION_SECRET_SIZE).toString();
-
     // Add random password salt.
     credentials.passwordSalt = randomBuffer.toString('hex');
     // Only store the salted hash of the password.
     credentials.password = this.hashPassword(credentials.password, credentials.passwordSalt);
     credentials.created = this.thinky.r.now();
 
-    let data;
+    let isUsernameAvailable = false;
     try {
       // Verify that wallet address is not already taken.
-      data = await this.thinky.r.table('Account')
-      .getAll(credentials.cryptoWalletAddress, {index: 'cryptoWalletAddress'})
-      .filter(this.thinky.r.row.hasFields('cryptoWalletVerified'))
+      isUsernameAvailable = await this.thinky.r.table('Account')
+      .getAll(credentials.username, {index: 'username'})
+      .isEmpty()
       .run();
     } catch (error) {
-      let badLookupError = new Error('Failed to check against existing account data in database.');
+      let badLookupError = new Error('Failed to check against existing account data in the database.');
       badLookupError.name = 'BadAccountLookupError';
       throw badLookupError;
     }
 
-    if (data[0] != null) {
+    if (!isUsernameAvailable) {
       let alreadyTakenError = new Error(
-        `An account with the wallet address ${credentials.cryptoWalletAddress} already exists.`
+        `An account with the username ${credentials.username} already exists.`
       );
-      alreadyTakenError.name = 'SignUpWalletAddressTakenError';
+      alreadyTakenError.name = 'SignUpUsernameTakenError';
       throw alreadyTakenError;
     }
+
+    let walletCreateAttempts = 0;
+    while (true) {
+      let wallet = generateWallet();
+
+      credentials.depositWalletAddress = wallet.address;
+
+      let isWalletAddressAvailable = false;
+
+      try {
+        isWalletAddressAvailable = await this.thinky.r.table('Account')
+        .getAll(credentials.depositWalletAddress, {index: 'depositWalletAddress'})
+        .isEmpty()
+        .run();
+      } catch (error) {
+        let badLookupError = new Error('Failed to check against existing account data in the database.');
+        badLookupError.name = 'BadAccountLookupError';
+        throw badLookupError;
+      }
+
+      if (isWalletAddressAvailable) {
+        credentials.depositWalletPrivateKey = wallet.privateKey;
+        credentials.depositWalletPublicKey = wallet.publicKey;
+        break;
+      }
+      if (++walletCreateAttempts >= MAX_WALLET_CREATE_ATTEMPTS) {
+        let accountCreateError = new Error('Failed to generate an account wallet');
+        accountCreateError.name = 'AccountCreateError';
+        throw accountCreateError;
+      }
+    }
+
     return credentials;
   }
 

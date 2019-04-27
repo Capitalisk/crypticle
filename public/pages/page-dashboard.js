@@ -1,4 +1,3 @@
-import getWalletComponent from '/components/component-wallet.js';
 import getDepositsComponent from '/components/component-deposits.js';
 import getWithdrawalsComponent from '/components/component-withdrawals.js';
 import getTransfersComponent from '/components/component-transfers.js';
@@ -8,10 +7,6 @@ function getPageComponent(pageOptions) {
 
   return {
     components: {
-      'component-wallet': getWalletComponent({
-        socket,
-        nodeInfo
-      }),
       'component-settled-deposits': getDepositsComponent({
         socket,
         nodeInfo,
@@ -51,8 +46,6 @@ function getPageComponent(pageOptions) {
       <div class="page-container">
         <h2 class="content-row heading">Dashboard</h2>
         <div class="content-body">
-          <component-wallet></component-wallet>
-
           <component-settled-transfers></component-settled-transfers>
           <component-pending-transfers></component-pending-transfers>
 

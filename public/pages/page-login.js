@@ -6,14 +6,14 @@ function getPageComponent(pageOptions) {
     data: function () {
       return {
         error: null,
-        cryptoWalletAddress: '',
+        username: '',
         password: ''
       };
     },
     methods: {
       login: async function () {
         var details = {
-          cryptoWalletAddress: this.cryptoWalletAddress,
+          username: this.username,
           password: this.password
         };
         try {
@@ -35,9 +35,9 @@ function getPageComponent(pageOptions) {
           </div>
           <div class="form-area">
             <div class="login-label">
-              Blockchain wallet address:
+              Username:
             </div>
-            <input type="text" v-model="cryptoWalletAddress" class="form-control" @keydown.enter="login">
+            <input type="text" v-model="username" class="form-control" @keydown.enter="login">
           </div>
           <div class="form-area">
             <div class="login-label">

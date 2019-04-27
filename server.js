@@ -80,15 +80,6 @@ let crudOptions = {
           action.data.value = await accountService.sanitizeSignupCredentials(action.data.value);
           return;
         }
-        if (action.procedure === 'update') {
-          if (action.data.field === 'cryptoWalletAddress') {
-            delete action.data.field;
-            action.data.value = {
-              cryptoWalletAddress: action.data.value,
-              cryptoWalletVerified: null
-            };
-          }
-        }
         return;
       }
     }

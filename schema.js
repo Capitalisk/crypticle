@@ -6,9 +6,10 @@ function getSchema(options) {
   return {
     Account: {
       fields: {
-        cryptoWalletAddress: type.string(),
-        cryptoWalletVerified: type.date().optional(),
-        cryptoWalletVerificationKey: type.string(),
+        username: type.string(),
+        depositWalletAddress: type.string(),
+        depositWalletPrivateKey: type.string(),
+        depositWalletPublicKey: type.string(),
         password: type.string(),
         passwordSalt: type.string(),
         stripeCustomerId: type.string().optional(),
@@ -19,7 +20,7 @@ function getSchema(options) {
         active: type.boolean().default(true),
         created: type.date()
       },
-      indexes: ['cryptoWalletAddress'],
+      indexes: ['username', 'depositWalletAddress'],
       access: {
         pre: accountAccessPrefilter
       }
@@ -75,11 +76,11 @@ function getSchema(options) {
     Deposit: {
       fields: {
         accountId: type.string(),
-        internalTransactionId: type.string(),
+        transactionId: type.string(),
         height: type.number(),
         created: type.date()
       },
-      indexes: ['accountId', 'internalTransactionId'],
+      indexes: ['accountId', 'transactionId'],
       access: {
         pre: accountTransactionsPrefilter // TODO 2: Check that filters are correct.
       },
@@ -88,7 +89,7 @@ function getSchema(options) {
           accountId: function (transaction) {
             return transaction.accountId;
           },
-          internalTransactionId: function (transaction) {
+          transactionId: function (transaction) {
             return transaction.id;
           }
         }
@@ -102,7 +103,7 @@ function getSchema(options) {
           transform: function (fullTableQuery, r, params) {
             return fullTableQuery
             .getAll(params.accountId, {index: 'accountId'})
-            .filter(r.db(options.dbName).table('Transaction').get(r.row('internalTransactionId')).hasFields('settled').not())
+            .filter(r.db(options.dbName).table('Transaction').get(r.row('transactionId')).hasFields('settled').not())
             .orderBy(r.desc('created'));
           }
         },
@@ -114,7 +115,7 @@ function getSchema(options) {
           transform: function (fullTableQuery, r, params) {
             return fullTableQuery
             .getAll(params.accountId, {index: 'accountId'})
-            .filter(r.db(options.dbName).table('Transaction').get(r.row('internalTransactionId')).hasFields('settled'))
+            .filter(r.db(options.dbName).table('Transaction').get(r.row('transactionId')).hasFields('settled'))
             .orderBy(r.desc('created'));
           }
         }
@@ -123,13 +124,13 @@ function getSchema(options) {
     Withdrawal: {
       fields: {
         accountId: type.string(),
-        internalTransactionId: type.string(),
+        transactionId: type.string(),
         signedTransaction: type.string(),
         lastAttempt: type.date(),
         settled: type.date().optional(),
         created: type.date()
       },
-      indexes: ['accountId', 'internalTransactionId', 'lastAttempt', 'settled'],
+      indexes: ['accountId', 'transactionId', 'lastAttempt', 'settled'],
       access: {
         pre: accountTransactionsPrefilter // TODO 2: Check that filters are correct.
       },
@@ -142,7 +143,7 @@ function getSchema(options) {
           transform: function (fullTableQuery, r, params) {
             return fullTableQuery
             .getAll(params.accountId, {index: 'accountId'})
-            .filter(r.db(options.dbName).table('Transaction').get(r.row('internalTransactionId')).hasFields('settled').not())
+            .filter(r.db(options.dbName).table('Transaction').get(r.row('transactionId')).hasFields('settled').not())
             .orderBy(r.desc('created'));
           }
         },
@@ -151,7 +152,7 @@ function getSchema(options) {
           transform: function (fullTableQuery, r, params) {
             return fullTableQuery
             .getAll(params.accountId, {index: 'accountId'})
-            .filter(r.db(options.dbName).table('Transaction').get(r.row('internalTransactionId')).hasFields('settled'))
+            .filter(r.db(options.dbName).table('Transaction').get(r.row('transactionId')).hasFields('settled'))
             .orderBy(r.desc('created'));
           }
         }

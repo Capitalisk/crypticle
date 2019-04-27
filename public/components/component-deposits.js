@@ -20,7 +20,7 @@ function getComponent(options) {
         viewParams: {
           accountId: socket.authToken && socket.authToken.accountId
         },
-        fields: ['internalTransactionId', 'height'],
+        fields: ['transactionId', 'height'],
         defaultFieldValues: {
           transaction: {}
         },
@@ -37,7 +37,7 @@ function getComponent(options) {
 
       (async () => {
         for await (let event of this.depositCollection.listener('modelChange')) {
-          if (event.resourceField !== 'internalTransactionId') {
+          if (event.resourceField !== 'transactionId') {
             continue;
           }
           let depositModel = this.depositCollection.agModels[event.resourceId];
