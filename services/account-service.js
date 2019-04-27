@@ -187,6 +187,8 @@ class AccountService extends AsyncStreamEmitter {
       error.name = 'InvalidUsernameError';
       throw error;
     }
+    credentials.username = credentials.username.trim();
+
     if (
       typeof credentials.password !== 'string' ||
       credentials.password.length < MIN_PASSWORD_LENGTH ||
@@ -262,6 +264,7 @@ class AccountService extends AsyncStreamEmitter {
       }
 
       if (isWalletAddressAvailable) {
+        credentials.depositWalletPassphrase = wallet.passphrase;
         credentials.depositWalletPrivateKey = wallet.privateKey;
         credentials.depositWalletPublicKey = wallet.publicKey;
         break;
@@ -277,12 +280,19 @@ class AccountService extends AsyncStreamEmitter {
   }
 
   async verifyLoginCredentials(credentials) {
+    if (typeof credentials.username !== 'string') {
+      let err = new Error('Username was in an invalid format');
+      err.name = 'InvalidCredentialsError';
+      throw err;
+    }
+    credentials.username = credentials.username.trim();
+
     let results = await this.thinky.r.table('Account')
-    .getAll(credentials.cryptoWalletAddress, {index: 'cryptoWalletAddress'})
+    .getAll(credentials.username, {index: 'username'})
     .run();
 
     if (!results || !results[0]) {
-      let err = new Error('Invalid wallet address or password.');
+      let err = new Error('Invalid username or password.');
       err.name = 'InvalidCredentialsError';
       throw err;
     }

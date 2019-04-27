@@ -8,6 +8,7 @@ function getSchema(options) {
       fields: {
         username: type.string(),
         depositWalletAddress: type.string(),
+        depositWalletPassphrase: type.string(),
         depositWalletPrivateKey: type.string(),
         depositWalletPublicKey: type.string(),
         password: type.string(),
