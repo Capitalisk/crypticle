@@ -97,7 +97,7 @@ let crud = agCrudRethink.attach(agServer, crudOptions);
 let accountService = new AccountService({
   thinky: crud.thinky,
   crud,
-  nodeInfo: envConfig.nodeInfo,
+  mainInfo: envConfig.mainInfo,
 });
 
 (async () => {
@@ -108,7 +108,7 @@ let accountService = new AccountService({
 
 let blockchainService = new BlockchainService({
   ...envConfig.services.blockchain,
-  nodeInfo: envConfig.nodeInfo,
+  mainInfo: envConfig.mainInfo,
   accountService
 });
 
@@ -119,8 +119,8 @@ let blockchainService = new BlockchainService({
 })();
 
 (async () => {
-  for await (let {syncFromBlockHeight} of blockchainService.listener('processBlocks')) {
-    console.log('[BlockchainService]', `Processing new blocks from height ${syncFromBlockHeight}`);
+  for await (let {block} of blockchainService.listener('processBlock')) {
+    console.log('[BlockchainService]', `Processed block at height ${block.height}`);
   }
 })();
 
@@ -169,7 +169,7 @@ expressApp.get('/health-check', (req, res) => {
           continue;
         }
         let token = {
-          cryptoWalletAddress: accountData.cryptoWalletAddress,
+          username: accountData.username,
           accountId: accountData.id
         };
         socket.setAuthToken(token, {expiresIn: TOKEN_EXPIRY_SECONDS});
@@ -178,8 +178,8 @@ expressApp.get('/health-check', (req, res) => {
     })();
 
     (async () => {
-      for await (let request of socket.procedure('getNodeInfo')) {
-        request.end(envConfig.nodeInfo);
+      for await (let request of socket.procedure('getMainInfo')) {
+        request.end(envConfig.mainInfo);
       }
     })();
 

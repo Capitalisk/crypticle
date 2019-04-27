@@ -1,40 +1,45 @@
 import getDepositsComponent from '/components/component-deposits.js';
 import getWithdrawalsComponent from '/components/component-withdrawals.js';
 import getTransfersComponent from '/components/component-transfers.js';
+import getWalletComponent from '/components/component-wallet.js';
 
 function getPageComponent(pageOptions) {
-  let {socket, nodeInfo} = pageOptions;
+  let {socket, mainInfo} = pageOptions;
 
   return {
     components: {
+      'component-wallet': getWalletComponent({
+        socket,
+        mainInfo
+      }),
       'component-settled-deposits': getDepositsComponent({
         socket,
-        nodeInfo,
+        mainInfo,
         type: 'settled'
       }),
       'component-pending-deposits': getDepositsComponent({
         socket,
-        nodeInfo,
+        mainInfo,
         type: 'pending'
       }),
       'component-settled-withdrawals': getWithdrawalsComponent({
         socket,
-        nodeInfo,
+        mainInfo,
         type: 'settled'
       }),
       'component-pending-withdrawals': getWithdrawalsComponent({
         socket,
-        nodeInfo,
+        mainInfo,
         type: 'pending'
       }),
       'component-settled-transfers': getTransfersComponent({
         socket,
-        nodeInfo,
+        mainInfo,
         type: 'settled'
       }),
       'component-pending-transfers': getTransfersComponent({
         socket,
-        nodeInfo,
+        mainInfo,
         type: 'pending'
       })
     },
@@ -46,6 +51,8 @@ function getPageComponent(pageOptions) {
       <div class="page-container">
         <h2 class="content-row heading">Dashboard</h2>
         <div class="content-body">
+          <component-wallet></component-wallet>
+
           <component-settled-transfers></component-settled-transfers>
           <component-pending-transfers></component-pending-transfers>
 

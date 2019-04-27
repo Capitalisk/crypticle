@@ -2,7 +2,7 @@ import AGCollection from '/node_modules/ag-collection/ag-collection.js';
 import AGModel from '/node_modules/ag-model/ag-model.js';
 
 function getComponent(options) {
-  let {socket, nodeInfo} = options;
+  let {socket, mainInfo} = options;
   let view;
 
   if (options.type === 'pending') {
@@ -62,14 +62,14 @@ function getComponent(options) {
       })();
 
       return {
-        nodeInfo,
+        mainInfo,
         withdrawals: this.withdrawalCollection.value,
         withdrawalType: options.type
       };
     },
     methods: {
       toBlockchainUnits: function (amount) {
-        let value = Number(amount) / Number(nodeInfo.cryptocurrency.unit);
+        let value = Number(amount) / Number(mainInfo.cryptocurrency.unit);
         return Math.round(value * 10000) / 10000;
       },
       toSimpleDate: function (dateString) {
@@ -94,7 +94,7 @@ function getComponent(options) {
             </tr>
             <tr v-for="wit of withdrawals">
               <td>{{wit.id}}</td>
-              <td>{{toBlockchainUnits(wit.transaction.amount)}}<span v-if="nodeInfo.cryptocurrency"> {{nodeInfo.cryptocurrency.symbol}}</span></td>
+              <td>{{toBlockchainUnits(wit.transaction.amount)}}<span v-if="mainInfo.cryptocurrency"> {{mainInfo.cryptocurrency.symbol}}</span></td>
               <td>{{wit.created}}</td>
             </tr>
           </table>

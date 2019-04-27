@@ -3,24 +3,38 @@ const path = require('path');
 const util = require('util');
 const rise = require('risejs').rise;
 const AsyncStreamEmitter = require('async-stream-emitter');
+const WritableConsumableStream = require('writable-consumable-stream');
+const {createSignedTransaction, fees} = require('../utils/blockchain');
 
 const readFile = util.promisify(fs.readFile);
 const writeFile = util.promisify(fs.writeFile);
 
 const STATE_FILE_PATH = path.resolve(__dirname, '..', 'state.json');
+const HIGH_BACKPRESSURE_THRESHOLD = 10;
 
 class BlockchainService extends AsyncStreamEmitter {
   constructor(options) {
     super();
 
-    this.nodeWalletAddress = options.nodeInfo.nodeWalletAddress;
-    this.requiredBlockConfirmations = options.nodeInfo.requiredBlockConfirmations; // TODO 2: Use this for settlement.
+    this.mainWalletAddress = options.mainInfo.mainWalletAddress;
+    this.requiredBlockConfirmations = options.mainInfo.requiredBlockConfirmations; // TODO 2: Use this for settlement.
     this.accountService = options.accountService;
     this.blockPollInterval = options.blockPollInterval;
-    this.nodeAddress = options.nodeAddress;
     rise.nodeAddress = options.nodeAddress;
     this.blockFetchLimit = options.blockFetchLimit;
     this.sync = options.sync;
+
+    this.blockProcessingStream = new WritableConsumableStream();
+
+    (async () => {
+      for await (let packet of this.blockProcessingStream) {
+        try {
+          await this.processNextBlocks();
+        } catch (error) {
+          this.emit('error', {error});
+        }
+      }
+    })();
 
     if (this.sync) {
       this.startSynching();
@@ -36,7 +50,6 @@ class BlockchainService extends AsyncStreamEmitter {
     let {syncFromBlockHeight} = state;
 
     let heightResult;
-
     try {
       heightResult = await rise.blocks.getHeight();
     } catch (error) {
@@ -52,13 +65,9 @@ class BlockchainService extends AsyncStreamEmitter {
       safeHeightDiff = 0;
     }
 
-    if (syncFromBlockHeight >= height) {
+    if (height <= syncFromBlockHeight) {
       return true;
     }
-
-    this.emit('processBlocks', {
-      syncFromBlockHeight
-    });
 
     try {
       blocksResult = await rise.blocks.getBlocks({
@@ -80,6 +89,7 @@ class BlockchainService extends AsyncStreamEmitter {
       for (let j = 0; j < transactionCount; j++) {
         await this.processDepositTransaction(block.transactions[j]);
       }
+      this.emit('processBlock', {block});
     }
 
     let lastBlock = blocks[blocks.length - 1];
@@ -98,14 +108,54 @@ class BlockchainService extends AsyncStreamEmitter {
         2
       )
     );
-
     return safeHeightDiff > 0;
   }
 
+  async finalizeDepositTransaction(blockchainTransaction) {
+    await this.accountService.execDepositTransaction(blockchainTransaction);
+  }
+
   async processDepositTransaction(blockchainTransaction) {
-    if (blockchainTransaction.recipientId === this.nodeWalletAddress) {
-      await this.accountService.execDepositTransaction(blockchainTransaction);
+    if (blockchainTransaction.recipientId === this.mainWalletAddress) {
+      await this.finalizeDepositTransaction(blockchainTransaction);
+      return;
     }
+    let targetAccountList = await this.accountService.getAccountsByDepositWalletAddress(blockchainTransaction.recipientId);
+    if (targetAccountList.length > 1) {
+      throw new Error(
+        `Multiple accounts were associated with the deposit address ${blockchainTransaction.recipientId}`
+      );
+    }
+    if (targetAccountList.length < 1) {
+      return;
+    }
+
+    let targetAccount = targetAccountList[0];
+
+    let balanceResult = await rise.accounts.getBalance(targetAccount.depositWalletAddress);
+    let amount = Number(balanceResult.balance) - fees.send;
+
+    if (amount < 0) {
+      this.emit('error', {
+        error: new Error(
+          `Funds from the deposit wallet address ${
+            targetAccount.depositWalletAddress
+          } could not be moved to the main wallet because the deposit wallet balance was too low.`
+        )
+      });
+      return;
+    }
+
+    let forwardToNodeWalletTransaction = createSignedTransaction(
+      {
+        kind: 'send',
+        amount,
+        recipient: this.mainWalletAddress
+      },
+      targetAccount.depositWalletPassphrase
+    );
+
+    await rise.transactions.put(forwardToNodeWalletTransaction);
   }
 
   async startSynching() {
@@ -125,9 +175,11 @@ class BlockchainService extends AsyncStreamEmitter {
     }
     // Sync block by block.
     this._intervalRef = setInterval(async () => {
-      try {
-        await this.processNextBlocks();
-      } catch (error) {
+      this.blockProcessingStream.write({time: Date.now()});
+      if (this.blockProcessingStream.getBackpressure() > HIGH_BACKPRESSURE_THRESHOLD) {
+        let error = new Error(
+          'The block processing getBackpressure is too high. This may cause delays in processing deposits. Consider increasing the blockPollInterval config option.'
+        );
         this.emit('error', {error});
       }
     }, this.blockPollInterval);

@@ -1,7 +1,7 @@
 const crypto = require('crypto');
 const uuid = require('uuid');
 const AsyncStreamEmitter = require('async-stream-emitter');
-const {generateWallet} = require('../utils/crypto');
+const {generateWallet} = require('../utils/blockchain');
 
 const SALT_SIZE = 32;
 const MAX_WALLET_CREATE_ATTEMPTS = 10;
@@ -18,56 +18,16 @@ class AccountService extends AsyncStreamEmitter {
 
     this.thinky = options.thinky;
     this.crud = options.crud;
-    this.nodeInfo = options.nodeInfo;
+    this.mainInfo = options.mainInfo;
   }
 
   async getAccountsByDepositWalletAddress(walletAddress) {
     return this.thinky.r.table('Account').getAll(walletAddress, {index: 'depositWalletAddress'}).run();
   }
 
-  async verifyWalletAndFetchAccount(blockchainTransaction) {
+  async fetchTransactionTargetAccount(blockchainTransaction) {
     let walletAccountList = await this.getAccountsByDepositWalletAddress(blockchainTransaction.senderId);
-    let isWalletAlreadyVerified = walletAccountList.some((account) => {
-      return account.cryptoWalletVerified != null;
-    });
-    if (isWalletAlreadyVerified) {
-      return walletAccountList[0];
-    }
-    let matchedWalletAccounts = walletAccountList.filter((account) => {
-      return account.cryptoWalletVerificationKey === String(blockchainTransaction.amount);
-    });
-    if (matchedWalletAccounts.length > 1) {
-      // Do not throw here because this issue cannot be resolved by retrying.
-      this.emit('error', {
-        error: new Error(
-          `Failed to perform wallet verification because multiple accounts were registered to the same wallet address ${
-            blockchainTransaction.senderId
-          }`
-        )
-      });
-      return null;
-    }
-    if (matchedWalletAccounts.length < 1) {
-      // Do not throw here because this issue cannot be resolved by retrying.
-      this.emit('error', {
-        error: new Error(
-          `Failed to process the blockchain transaction with id ${
-            blockchainTransaction.id
-          } because the wallet address ${
-            blockchainTransaction.senderId
-          } was not associated with any account`
-        )
-      });
-      return null;
-    }
-    let walletAccount = matchedWalletAccounts[0];
-    await this.crud.update({
-      type: 'Account',
-      id: walletAccount.id,
-      field: 'cryptoWalletVerified',
-      value: this.thinky.r.now()
-    });
-    return walletAccount;
+    return walletAccountList[0];
   }
 
   async execTransaction(transaction) {
@@ -81,7 +41,7 @@ class AccountService extends AsyncStreamEmitter {
   }
 
   async execDepositTransaction(blockchainTransaction) {
-    let account = await this.verifyWalletAndFetchAccount(blockchainTransaction);
+    let account = await this.fetchTransactionTargetAccount(blockchainTransaction);
     if (!account) {
       return {
         deposit: null,
@@ -195,7 +155,7 @@ class AccountService extends AsyncStreamEmitter {
       credentials.password.length > MAX_PASSWORD_LENGTH
     ) {
       let error = new Error(
-        `Password must be between ${
+        `A password must be between ${
           MIN_PASSWORD_LENGTH
         } and ${
           MAX_PASSWORD_LENGTH

@@ -19,13 +19,13 @@ module.exports = {
       apiSecretKey: 'sk_test_QlUgKWhOjRrIeTO4YWUaExQH'
     }
   },
-  nodeInfo: {
+  mainInfo: {
     cryptocurrency: {
       name: 'Rise',
       symbol: 'RISE',
       unit: '100000000'
     },
-    nodeWalletAddress: '16237277499158857342R',
+    mainWalletAddress: '16237277499158857342R',
     requiredBlockConfirmations: 2
   }
 };

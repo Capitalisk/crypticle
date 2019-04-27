@@ -10,7 +10,7 @@ function hashSha256(data) {
 	return dataHash.digest();
 }
 
-module.exports.generateWallet = function () {
+function generateWallet() {
   const passphrase = bip39.generateMnemonic();
   // const hexSeed = bip39.mnemonicToSeedHex(passphrase);
   const hashedSeed = hashSha256(passphrase);
@@ -22,4 +22,14 @@ module.exports.generateWallet = function () {
     publicKey: Buffer.from(publicKey).toString('hex'),
     address: Rise.calcAddress(publicKey)
   };
+}
+
+function createSignedTransaction(transaction, passphrase) {
+	return Rise.txs.createAndSign(transaction, passphrase);
+}
+
+module.exports = {
+	createSignedTransaction,
+	generateWallet,
+	fees: Rise.txs.baseFees
 };

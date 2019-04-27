@@ -7,17 +7,19 @@ let socket = window.socket = asyngularClient.create();
 
 let pageOptions = {
   socket,
-  nodeInfo: {}
+  mainInfo: {
+    cryptocurrency: {}
+  }
 };
 
 (async () => {
-  let nodeInfo;
+  let mainInfo;
   try {
-    nodeInfo = await socket.invoke('getNodeInfo');
+    mainInfo = await socket.invoke('getMainInfo');
   } catch (error) {
     console.error(error);
   }
-  Object.assign(pageOptions.nodeInfo, nodeInfo);
+  Object.assign(pageOptions.mainInfo, mainInfo);
 })();
 
 let PageHome = getHomePageComponent(pageOptions);
