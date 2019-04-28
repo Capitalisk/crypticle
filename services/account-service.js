@@ -22,6 +22,9 @@ class AccountService extends AsyncStreamEmitter {
   }
 
   async getAccountsByDepositWalletAddress(walletAddress) {
+    if (walletAddress == null) {
+      return [];
+    }
     return this.thinky.r.table('Account').getAll(walletAddress, {index: 'depositWalletAddress'}).run();
   }
 
@@ -104,6 +107,13 @@ class AccountService extends AsyncStreamEmitter {
       deposit,
       transaction: insertedTransaction
     };
+  }
+
+  async fetchUnsettledDeposits() { // TODO 2
+    let transactions = await this.thinky.r.table('Transaction')
+    .getAll(false, {index: 'settled'})
+    .filter(r.row('type').eq('deposit'))
+    .run();
   }
 
   async settleTransaction(transactionId) {

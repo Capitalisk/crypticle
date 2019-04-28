@@ -111,6 +111,10 @@ class BlockchainService extends AsyncStreamEmitter {
     return safeHeightDiff > 0;
   }
 
+  async settlePendingDeposits(currentBlockHeight) { // TODO 2
+
+  }
+
   async finalizeDepositTransaction(blockchainTransaction) {
     await this.accountService.execDepositTransaction(blockchainTransaction);
   }

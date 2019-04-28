@@ -19,7 +19,7 @@ function getSchema(options) {
         passwordResetKey: type.string().optional(),
         passwordResetExpiry: type.date().optional(),
         active: type.boolean().default(true),
-        created: type.date()
+        createdDate: type.date()
       },
       indexes: ['username', 'depositWalletAddress'],
       access: {
@@ -33,9 +33,11 @@ function getSchema(options) {
         amount: type.string(),
         counterpartyId: type.string().optional(),
         balance: type.string().optional(),
-        settled: type.date().optional(),
-        canceled: type.date().optional(),
-        created: type.date()
+        settled: type.boolean().default(false),
+        settledDate: type.date().optional(),
+        canceled: type.boolean().default(false),
+        canceledDate: type.date().optional(),
+        createdDate: type.date()
       },
       indexes: ['accountId', 'settled', 'created'],
       access: {
@@ -79,7 +81,7 @@ function getSchema(options) {
         accountId: type.string(),
         transactionId: type.string(),
         height: type.number(),
-        created: type.date()
+        createdDate: type.date()
       },
       indexes: ['accountId', 'transactionId'],
       access: {
@@ -128,8 +130,9 @@ function getSchema(options) {
         transactionId: type.string(),
         signedTransaction: type.string(),
         lastAttempt: type.date(),
-        settled: type.date().optional(),
-        created: type.date()
+        settled: type.boolean().default(false),
+        settledDate: type.date().optional(),
+        createdDate: type.date()
       },
       indexes: ['accountId', 'transactionId', 'lastAttempt', 'settled'],
       access: {
@@ -165,13 +168,13 @@ function getSchema(options) {
         accountId: type.string().optional(),
         action: type.string().optional(),
         data: type.object().optional(),
-        created: type.date()
+        createdDate: type.date()
       }
     },
     Mail: {
       fields: {
         data: type.object(),
-        created: type.date()
+        createdDate: type.date()
       }
     }
   };

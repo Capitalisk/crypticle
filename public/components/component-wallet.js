@@ -2,7 +2,6 @@ import AGModel from '/node_modules/ag-model/ag-model.js';
 
 function getComponent(options) {
   let {socket, mainInfo} = options;
-  let view;
 
   return {
     data: function () {
