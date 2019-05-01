@@ -19,7 +19,7 @@ function getComponent(options) {
         viewParams: {
           accountId: socket.authToken && socket.authToken.accountId
         },
-        fields: ['amount', 'created'],
+        fields: ['amount', 'createdDate'],
         pageOffset: 0,
         pageSize: 50,
         getCount: true
@@ -60,7 +60,7 @@ function getComponent(options) {
             <tr v-for="transaction of transactions">
               <td>{{transaction.id}}</td>
               <td>{{toBlockchainUnits(transaction.amount)}}<span v-if="mainInfo.cryptocurrency"> {{mainInfo.cryptocurrency.symbol}}</span></td>
-              <td>{{toSimpleDate(transaction.created)}}</td>
+              <td>{{toSimpleDate(transaction.createdDate)}}</td>
             </tr>
           </table>
         </div>

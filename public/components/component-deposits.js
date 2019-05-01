@@ -20,7 +20,7 @@ function getComponent(options) {
         viewParams: {
           accountId: socket.authToken && socket.authToken.accountId
         },
-        fields: ['transactionId', 'height'],
+        fields: ['transactionId', 'height', 'createdDate'],
         defaultFieldValues: {
           transaction: {}
         },
@@ -51,7 +51,7 @@ function getComponent(options) {
               socket,
               type: 'Transaction',
               id: transactionId,
-              fields: ['amount', 'settled']
+              fields: ['amount', 'settledDate']
             });
             depositModel.value.transaction = depositModel.transactionModel.value;
             if (originalTransactionModel) {
@@ -97,7 +97,7 @@ function getComponent(options) {
               <td>{{dep.id}}</td>
               <td>{{toBlockchainUnits(dep.transaction.amount)}}<span v-if="mainInfo.cryptocurrency"> {{mainInfo.cryptocurrency.symbol}}</span></td>
               <td>{{dep.height}}</td>
-              <td>{{dep.created}}</td>
+              <td>{{toSimpleDate(dep.createdDate)}}</td>
             </tr>
           </table>
         </div>

@@ -20,7 +20,7 @@ function getComponent(options) {
         viewParams: {
           accountId: socket.authToken && socket.authToken.accountId
         },
-        fields: ['transactionId', 'height'],
+        fields: ['transactionId', 'height', 'createdDate'],
         defaultFieldValues: {
           transaction: {}
         },
@@ -51,7 +51,7 @@ function getComponent(options) {
               socket,
               type: 'Transaction',
               id: transactionId,
-              fields: ['amount', 'settled']
+              fields: ['amount', 'settledDate']
             });
             withdrawalModel.value.transaction = withdrawalModel.transactionModel.value;
             if (originalTransactionModel) {
@@ -95,7 +95,7 @@ function getComponent(options) {
             <tr v-for="wit of withdrawals">
               <td>{{wit.id}}</td>
               <td>{{toBlockchainUnits(wit.transaction.amount)}}<span v-if="mainInfo.cryptocurrency"> {{mainInfo.cryptocurrency.symbol}}</span></td>
-              <td>{{wit.created}}</td>
+              <td>{{toSimpleDate(wit.createdDate)}}</td>
             </tr>
           </table>
         </div>

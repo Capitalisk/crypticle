@@ -1,5 +1,6 @@
 const crypto = require('crypto');
 const uuid = require('uuid');
+const {hash} = require('sc-hasher');
 const AsyncStreamEmitter = require('async-stream-emitter');
 const {generateWallet} = require('../utils/blockchain');
 
@@ -19,6 +20,13 @@ class AccountService extends AsyncStreamEmitter {
     this.thinky = options.thinky;
     this.crud = options.crud;
     this.mainInfo = options.mainInfo;
+    this.shardIndex = null;
+    this.shardCount = null;
+  }
+
+  setShardInfo(shardIndex, shardCount) {
+    this.shardIndex = shardIndex;
+    this.shardCount = shardCount;
   }
 
   async getAccountsByDepositWalletAddress(walletAddress) {
@@ -34,10 +42,13 @@ class AccountService extends AsyncStreamEmitter {
   }
 
   async execTransaction(transaction) {
+    let settlementShardKey = hash(transaction.accountId, Number.MAX_SAFE_INTEGER);
     return this.crud.create({
       type: 'Transaction',
       value: {
-        created: this.thinky.r.now(),
+        createdDate: this.thinky.r.now(),
+        settled: false,
+        settlementShardKey,
         ...transaction
       }
     });
@@ -58,7 +69,7 @@ class AccountService extends AsyncStreamEmitter {
       accountId: account.id,
       transactionId,
       height: blockchainTransaction.height,
-      created: this.thinky.r.now()
+      createdDate: this.thinky.r.now()
     };
     let insertedDeposit;
     try {
@@ -109,17 +120,39 @@ class AccountService extends AsyncStreamEmitter {
     };
   }
 
-  async fetchUnsettledDeposits() { // TODO 2
-    let transactions = await this.thinky.r.table('Transaction')
+  async fetchAccountBalance(accountId) {
+    return this.thinky.r.table('Transaction')
+    .getAll(accountId, {index: 'accountId'})
+    .orderBy(this.thinky.r.desc('createdDate'))
+    .nth(0)
+    .getField('amount');
+  }
+
+  async fetchUnsettledTransactions() {
+    if (this.shardIndex == null) {
+      return [];
+    }
+    return this.thinky.r.table('Transaction')
     .getAll(false, {index: 'settled'})
-    .filter(r.row('type').eq('deposit'))
+    .filter(this.thinky.r.row('settlementShardKey').mod(this.shardCount).eq(this.shardIndex))
+    .orderBy(this.thinky.r.asc('createdDate'))
     .run();
+  }
+
+  async settlePendingTransactions() { // TODO 222222
+    // let unsettledTransactions = await this.fetchUnsettledTransactions();
+    // let accountBalances = {};
+    // unsettledTransactions.map(async (txn) => {
+    //   if (!accountBalances[txn.accountId]) {
+    //     accountBalances[txn.accountId] = ;
+    //   }
+    // });
   }
 
   async settleTransaction(transactionId) {
     let result = await this.thinky.r.table('Transaction')
     .get(transactionId)
-    .update({settled: this.thinky.r.now()})
+    .update({settled: true, settledDate: this.thinky.r.now()})
     .run();
 
     if (!result.replaced) {
@@ -191,7 +224,7 @@ class AccountService extends AsyncStreamEmitter {
     credentials.passwordSalt = randomBuffer.toString('hex');
     // Only store the salted hash of the password.
     credentials.password = this.hashPassword(credentials.password, credentials.passwordSalt);
-    credentials.created = this.thinky.r.now();
+    credentials.createdDate = this.thinky.r.now();
 
     let isUsernameAvailable = false;
     try {

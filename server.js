@@ -43,9 +43,11 @@ const AGC_BROKER_RETRY_DELAY = Number(process.env.AGC_BROKER_RETRY_DELAY) || nul
 
 const DB_NAME = process.env.DB_NAME || 'crypticle';
 const TOKEN_EXPIRY_SECONDS = 60 * 60;
+const MAX_RECORD_DISPLAY_AGE = 30 * 24 * 60 * 60 * 1000; // One month.
 
 const dataSchema = getSchema({
-  dbName: DB_NAME
+  dbName: DB_NAME,
+  maxRecordDisplayAge: MAX_RECORD_DISPLAY_AGE
 });
 
 const envConfig = config[ENVIRONMENT];
@@ -233,6 +235,15 @@ if (AGC_STATE_SERVER_HOST) {
     stateServerReconnectRandomness: AGC_STATE_SERVER_RECONNECT_RANDOMNESS,
     brokerRetryDelay: AGC_BROKER_RETRY_DELAY
   });
+
+  (async () => {
+    for await (let event of agcClient.listener('updateWorkers')) {
+      let sortedWorkerURIs = event.workerURIs.sort();
+      let workerCount = sortedWorkerURIs.length;
+      let currentWorkerIndex = event.workerURIs.indexOf(event.sourceWorkerURI);
+      accountService.setShardInfo(currentWorkerIndex, workerCount);
+    }
+  })();
 
   if (ASYNGULAR_LOG_LEVEL >= 1) {
     (async () => {

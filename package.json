@@ -10,7 +10,7 @@
   ],
   "dependencies": {
     "ag-crud-rethink": "^2.4.1",
-    "agc-broker-client": "^5.4.0",
+    "agc-broker-client": "^5.4.1",
     "async-stream-emitter": "^3.0.3",
     "asyngular-client": "^5.4.1",
     "asyngular-server": "^5.4.0",
@@ -23,6 +23,7 @@
     "nodemon": "^1.18.9",
     "risejs": "^1.4.1",
     "sc-errors": "^2.0.0",
+    "sc-hasher": "^1.0.1",
     "serve-static": "^1.13.2",
     "tweetnacl": "^1.0.1",
     "uuid": "^3.3.2",
