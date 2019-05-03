@@ -1,6 +1,6 @@
 const crypto = require('crypto');
 const uuid = require('uuid');
-const {hash} = require('sc-hasher');
+const {getShardKey, getShardRange} = require('../utils/sharding');
 const AsyncStreamEmitter = require('async-stream-emitter');
 const {generateWallet} = require('../utils/blockchain');
 
@@ -42,13 +42,13 @@ class AccountService extends AsyncStreamEmitter {
   }
 
   async execTransaction(transaction) {
-    let settlementShardKey = hash(transaction.accountId, Number.MAX_SAFE_INTEGER);
+    let shk = getShardKey(transaction.accountId);
     return this.crud.create({
       type: 'Transaction',
       value: {
         createdDate: this.thinky.r.now(),
         settled: false,
-        settlementShardKey,
+        shk,
         ...transaction
       }
     });
@@ -129,24 +129,91 @@ class AccountService extends AsyncStreamEmitter {
   }
 
   async fetchUnsettledTransactions() {
-    if (this.shardIndex == null) {
+    if (this.shardIndex == null || this.shardCount == null) {
       return [];
     }
+    // Only fetch transactions from accounts which are winthin the
+    // shard range as the current worker.
+    let shardRange = getShardRange(this.shardIndex, this.shardCount);
     return this.thinky.r.table('Transaction')
-    .getAll(false, {index: 'settled'})
-    .filter(this.thinky.r.row('settlementShardKey').mod(this.shardCount).eq(this.shardIndex))
+    .between(shardRange.start, shardRange.end, {index: 'shk'})
     .orderBy(this.thinky.r.asc('createdDate'))
     .run();
   }
 
-  async settlePendingTransactions() { // TODO 222222
-    // let unsettledTransactions = await this.fetchUnsettledTransactions();
-    // let accountBalances = {};
-    // unsettledTransactions.map(async (txn) => {
-    //   if (!accountBalances[txn.accountId]) {
-    //     accountBalances[txn.accountId] = ;
-    //   }
-    // });
+  async settlePendingTransactions() {
+    let unsettledTransactions = await this.fetchUnsettledTransactions();
+    let accountDetails = {};
+    unsettledTransactions.forEach((txn) => {
+      if (!accountDetails[txn.accountId]) {
+        accountDetails[txn.accountId] = {};
+      }
+    });
+    let affectedAccountIds = Object.keys(accountDetails);
+    await Promise.all(
+      affectedAccountIds.map(async (accountId) => {
+        let mostRecentTransactions = await this.thinky.r.table('Transaction')
+        .getAll([accountId, true], {index: 'accountIdIsMostRecent'})
+        .orderBy(this.thinky.r.desc('createdDate'))
+        .run();
+        accountDetails[accountId].balance = mostRecentTransactions[0] ? BigInt(mostRecentTransactions[0].balance) : 0n;
+        accountDetails[accountId].mostRecentTransactionIds = mostRecentTransactions.map(txn => txn.id);
+      })
+    );
+    unsettledTransactions.forEach((txn) => {
+      let account = accountDetails[txn.accountId];
+      if (txn.type === 'withdrawal') {
+        account.balance -= BigInt(txn.amount);
+      } else if (txn.type === 'debit') {
+        account.balance -= BigInt(txn.amount);
+      } else if (txn.type === 'credit') {
+        account.balance += BigInt(txn.amount);
+      } else if (txn.type === 'deposit') {
+        account.balance += BigInt(txn.amount);
+      }
+      txn.balance = account.balance.toString();
+      txn.settled = true;
+      txn.settledDate = this.thinky.r.now();
+      txn.shk = null;
+      account.lastTransaction = txn;
+    });
+
+    // Mark the last settled transaction for each account as the most recent transaction.
+    await Promise.all(
+      affectedAccountIds.map(async (accountId) => {
+        let account = accountDetails[accountId];
+        account.lastTransaction.isMostRecent = true;
+      })
+    );
+
+    await Promise.all(
+      unsettledTransactions.map(async (txn) => {
+        let {id, txnData} = txn;
+        await this.crud.update({
+          type: 'Transaction',
+          id,
+          value: txnData
+        });
+      })
+    );
+
+    // For all transactions which were the most recent, set the
+    // isMostRecent property to false since this is no longer true.
+    await Promise.all(
+      affectedAccountIds.map(async (accountId) => {
+        let account = accountDetails[accountId];
+        await Promise.all(
+          account.mostRecentTransactionIds.map(async (txnId) => {
+            await this.crud.update({
+              type: 'Transaction',
+              id: txnId,
+              field: 'isMostRecent',
+              value: false
+            });
+          })
+        );
+      })
+    );
   }
 
   async settleTransaction(transactionId) {
@@ -163,9 +230,9 @@ class AccountService extends AsyncStreamEmitter {
   }
 
   hashPassword(password, salt) {
-    let hash = crypto.createHash('sha256');
-    hash.update(password + salt);
-    return hash.digest('hex');
+    let hasher = crypto.createHash('sha256');
+    hasher.update(password + salt);
+    return hasher.digest('hex');
   }
 
   async sanitizeSignupCredentials(credentials) {
@@ -308,9 +375,9 @@ class AccountService extends AsyncStreamEmitter {
       throw accountInactiveError;
     }
 
-    let hash = crypto.createHash('sha256');
-    hash.update(credentials.password + accountData.passwordSalt);
-    let hashedPassword = hash.digest('hex');
+    let hasher = crypto.createHash('sha256');
+    hasher.update(credentials.password + accountData.passwordSalt);
+    let hashedPassword = hasher.digest('hex');
 
     if (accountData.password !== hashedPassword) {
       let err = new Error('Wrong password.');
