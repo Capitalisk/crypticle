@@ -232,21 +232,6 @@ function getSchema(options) {
           }
         }
       }
-    },
-    Activity: {
-      fields: {
-        type: type.string(),
-        accountId: type.string().optional(),
-        action: type.string().optional(),
-        data: type.object().optional(),
-        createdDate: type.date()
-      }
-    },
-    Mail: {
-      fields: {
-        data: type.object(),
-        createdDate: type.date()
-      }
     }
   };
 }
