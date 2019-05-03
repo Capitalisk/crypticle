@@ -35,29 +35,20 @@ function getSchema(options) {
         balance: type.string().optional(),
         settled: type.boolean().default(false),
         settledDate: type.date().optional(),
-        shk: type.number().optional(), // Settlement shard key.
-        isMostRecent: type.boolean().default(false),
+        settlementShardKey: type.number().optional(),
         canceled: type.boolean().default(false),
-        canceledDate: type.date().optional(),
         createdDate: type.date()
       },
       indexes: [
         'accountId',
         'settled',
-        'shk',
+        'settlementShardKey',
         'createdDate',
         {
           name: 'accountIdCreatedDate',
           type: 'compound',
           fn: function (r) {
             return [r.row('accountId'), r.row('createdDate')];
-          }
-        },
-        {
-          name: 'accountIdIsMostRecent',
-          type: 'compound',
-          fn: function (r) {
-            return [r.row('accountId'), r.row('isMostRecent')];
           }
         }
       ],

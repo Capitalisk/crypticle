@@ -42,13 +42,13 @@ class AccountService extends AsyncStreamEmitter {
   }
 
   async execTransaction(transaction) {
-    let shk = getShardKey(transaction.accountId);
+    let settlementShardKey = getShardKey(transaction.accountId);
     return this.crud.create({
       type: 'Transaction',
       value: {
         createdDate: this.thinky.r.now(),
         settled: false,
-        shk,
+        settlementShardKey,
         ...transaction
       }
     });
@@ -128,87 +128,104 @@ class AccountService extends AsyncStreamEmitter {
     .getField('amount');
   }
 
-  async fetchUnsettledTransactions() {
+  async fetchAccountSettlementLedger() {
     if (this.shardIndex == null || this.shardCount == null) {
-      return [];
+      return {};
     }
-    // Only fetch transactions from accounts which are winthin the
+    // Only fetch transactions from accounts which are within the
     // shard range as the current worker.
     let shardRange = getShardRange(this.shardIndex, this.shardCount);
-    return this.thinky.r.table('Transaction')
-    .between(shardRange.start, shardRange.end, {index: 'shk'})
+    let txns = await this.thinky.r.table('Transaction')
+    .between(shardRange.start, shardRange.end, {index: 'settlementShardKey'})
     .orderBy(this.thinky.r.asc('createdDate'))
     .run();
+
+    if (!txns.length) {
+      return {};
+    }
+
+    let accountLedger = {};
+    txns.forEach((txn) => {
+      if (!accountLedger[txn.accountId]) {
+        accountLedger[txn.accountId] = {
+          balance: 0n,
+          lastSettledTransaction: null,
+          unsettledTransactions: [],
+        };
+      }
+      let account = accountLedger[txn.accountId];
+      if (txn.settled) {
+        account.lastSettledTransaction = txn;
+        account.balance = BigInt(txn.balance);
+      } else {
+        account.unsettledTransactions.push(txn);
+      }
+    });
+
+    return accountLedger;
   }
 
   async settlePendingTransactions() {
-    let unsettledTransactions = await this.fetchUnsettledTransactions();
-    let accountDetails = {};
-    unsettledTransactions.forEach((txn) => {
-      if (!accountDetails[txn.accountId]) {
-        accountDetails[txn.accountId] = {};
-      }
-    });
-    let affectedAccountIds = Object.keys(accountDetails);
-    await Promise.all(
-      affectedAccountIds.map(async (accountId) => {
-        let mostRecentTransactions = await this.thinky.r.table('Transaction')
-        .getAll([accountId, true], {index: 'accountIdIsMostRecent'})
-        .orderBy(this.thinky.r.desc('createdDate'))
-        .run();
-        accountDetails[accountId].balance = mostRecentTransactions[0] ? BigInt(mostRecentTransactions[0].balance) : 0n;
-        accountDetails[accountId].mostRecentTransactionIds = mostRecentTransactions.map(txn => txn.id);
-      })
-    );
-    unsettledTransactions.forEach((txn) => {
-      let account = accountDetails[txn.accountId];
-      if (txn.type === 'withdrawal') {
-        account.balance -= BigInt(txn.amount);
-      } else if (txn.type === 'debit') {
-        account.balance -= BigInt(txn.amount);
-      } else if (txn.type === 'credit') {
-        account.balance += BigInt(txn.amount);
-      } else if (txn.type === 'deposit') {
-        account.balance += BigInt(txn.amount);
-      }
-      txn.balance = account.balance.toString();
-      txn.settled = true;
-      txn.settledDate = this.thinky.r.now();
-      txn.shk = null;
-      account.lastTransaction = txn;
-    });
-
-    // Mark the last settled transaction for each account as the most recent transaction.
-    await Promise.all(
-      affectedAccountIds.map(async (accountId) => {
-        let account = accountDetails[accountId];
-        account.lastTransaction.isMostRecent = true;
-      })
-    );
+    let accountLedger = await this.fetchAccountSettlementLedger();
+    let unsettledAccoundIds = Object.keys(accountLedger);
 
     await Promise.all(
-      unsettledTransactions.map(async (txn) => {
-        let {id, txnData} = txn;
-        await this.crud.update({
-          type: 'Transaction',
-          id,
-          value: txnData
-        });
-      })
-    );
-
-    // For all transactions which were the most recent, set the
-    // isMostRecent property to false since this is no longer true.
-    await Promise.all(
-      affectedAccountIds.map(async (accountId) => {
-        let account = accountDetails[accountId];
+      unsettledAccoundIds.map(async (accountId) => {
+        let account = accountLedger[accountId];
         await Promise.all(
-          account.mostRecentTransactionIds.map(async (txnId) => {
+          account.unsettledTransactions.map(async (txn) => {
+            if (txn.type === 'withdrawal') {
+              let newBalance = account.balance - BigInt(txn.amount);
+              if (newBalance >= 0n) {
+                account.balance = newBalance;
+              } else {
+                txn.canceled = true;
+              }
+            } else if (txn.type === 'debit') {
+              let newBalance = account.balance - BigInt(txn.amount);
+              if (newBalance >= 0n) {
+                account.balance = newBalance;
+              } else {
+                txn.canceled = true;
+              }
+            } else if (txn.type === 'credit') {
+              account.balance += BigInt(txn.amount);
+            } else if (txn.type === 'deposit') {
+              account.balance += BigInt(txn.amount);
+            }
+
+            txn.balance = account.balance.toString();
+            txn.settled = true;
+            txn.settledDate = this.thinky.r.now();
+
+            let {id, txnData} = txn;
             await this.crud.update({
               type: 'Transaction',
-              id: txnId,
-              field: 'isMostRecent',
-              value: false
+              id,
+              value: txnData
+            });
+          })
+        );
+      })
+    );
+
+    await Promise.all(
+      unsettledAccoundIds.map(async (accountId) => {
+        let account = accountLedger[accountId];
+        let txnsToRemoveShardKey = [];
+        if (account.lastSettledTransaction) {
+          txnsToRemoveShardKey.push(account.lastSettledTransaction);
+        }
+        // Remove the settlement shard key from all settled transactions except for the last one.
+        txnsToRemoveShardKey = txnsToRemoveShardKey.concat(
+          account.unsettledTransactions.slice(0, account.unsettledTransactions.length - 1)
+        );
+        await Promise.all(
+          txnsToRemoveShardKey.map(async (txn) => {
+            await this.crud.delete({
+              type: 'Transaction',
+              id: txn.id,
+              field: 'settlementShardKey'
             });
           })
         );
