@@ -96,10 +96,16 @@ let crud = agCrudRethink.attach(agServer, crudOptions);
   }
 })();
 
+let shardInfo = {
+  shardIndex: null,
+  shardCount: null
+};
+
 let accountService = new AccountService({
   thinky: crud.thinky,
   crud,
   mainInfo: envConfig.mainInfo,
+  shardInfo
 });
 
 (async () => {
@@ -111,7 +117,8 @@ let accountService = new AccountService({
 let blockchainService = new BlockchainService({
   ...envConfig.services.blockchain,
   mainInfo: envConfig.mainInfo,
-  accountService
+  accountService,
+  shardInfo
 });
 
 (async () => {
@@ -241,7 +248,8 @@ if (AGC_STATE_SERVER_HOST) {
       let sortedWorkerURIs = event.workerURIs.sort();
       let workerCount = sortedWorkerURIs.length;
       let currentWorkerIndex = event.workerURIs.indexOf(event.sourceWorkerURI);
-      accountService.setShardInfo(currentWorkerIndex, workerCount);
+      shardInfo.shardIndex = currentWorkerIndex;
+      shardInfo.shardCount = workerCount;
     }
   })();
 

@@ -5,12 +5,15 @@ const rise = require('risejs').rise;
 const AsyncStreamEmitter = require('async-stream-emitter');
 const WritableConsumableStream = require('writable-consumable-stream');
 const {createSignedTransaction, fees} = require('../utils/blockchain');
+const {getShardKey, getShardRange} = require('../utils/sharding');
 
 const readFile = util.promisify(fs.readFile);
 const writeFile = util.promisify(fs.writeFile);
 
 const STATE_FILE_PATH = path.resolve(__dirname, '..', 'state.json');
 const HIGH_BACKPRESSURE_THRESHOLD = 10;
+
+// TODO 2: Always use BigInt instead of number when handling transaction amounts.
 
 class BlockchainService extends AsyncStreamEmitter {
   constructor(options) {
@@ -23,6 +26,7 @@ class BlockchainService extends AsyncStreamEmitter {
     rise.nodeAddress = options.nodeAddress;
     this.blockFetchLimit = options.blockFetchLimit;
     this.sync = options.sync;
+    this.shardInfo = options.shardInfo;
 
     this.blockProcessingStream = new WritableConsumableStream();
 
@@ -97,6 +101,12 @@ class BlockchainService extends AsyncStreamEmitter {
       syncFromBlockHeight = lastBlock.height;
     }
 
+    try {
+      await this.settlePendingDeposits(syncFromBlockHeight);
+    } catch (error) {
+      this.emit('error', {error});
+    }
+
     await writeFile(
       STATE_FILE_PATH,
       JSON.stringify(
@@ -108,15 +118,102 @@ class BlockchainService extends AsyncStreamEmitter {
         2
       )
     );
+
     return safeHeightDiff > 0;
   }
 
-  async settlePendingDeposits(currentBlockHeight) { // TODO 2
+  async settlePendingDeposits(currentBlockHeight) {
+    let targetHeight = currentBlockHeight - this.requiredBlockConfirmations;
+    let shardRange = getShardRange(this.shardInfo.shardIndex, this.shardInfo.shardCount);
+    let unsettledDeposits = await this.thinky.r.table('Deposit')
+    .between([shardRange.start, this.thinky.r.minval], [shardRange.end, targetHeight], {index: 'settlementShardKeyHeight'})
+    .orderBy(this.thinky.r.asc('createdDate'))
+    .run();
 
+    await Promise.all(
+      unsettledDeposits.map(async (deposit) => {
+        let transaction = {
+          id: deposit.transactionId,
+          accountId: account.id,
+          type: 'deposit',
+          amount: deposit.amount
+        };
+        try {
+          await this.accountService.execTransaction(transaction);
+        } catch (error) {
+          let existingTransaction = await this.thinky.r.table('Transaction').get(deposit.transactionId).run();
+          if (existingTransaction == null) {
+            // This means that the transaction could not be created because of an exception because it does not
+            // yet exist.
+            this.emit('error', {error});
+            return;
+          }
+          // If existingTransaction is not null, it means that the transaction already exists (and this caused the error).
+          // This could mean that this function failed to update/cleanup the underlying deposit on the last round.
+          // In this case, it should proceed with the cleanup (try again).
+        }
+        await this.crud.update({
+          type: 'Deposit',
+          id: deposit.id,
+          value: {
+            settled: true,
+            settledDate: this.thinky.r.now();
+          }
+        });
+        await this.crud.delete({
+          type: 'Deposit',
+          id: deposit.id,
+          field: 'settlementShardKey'
+        });
+      })
+    );
+  }
+
+  async execDeposit(blockchainTransaction) {
+    let account = await this.accountService.fetchAccountByWalletAddress(blockchainTransaction.senderId);
+    if (!account) {
+      return;
+    }
+
+    let settlementShardKey = getShardKey(account.id);
+    let transactionId = uuid.v4();
+    let deposit = {
+      id: blockchainTransaction.id,
+      accountId: account.id,
+      transactionId,
+      height: blockchainTransaction.height,
+      amount: String(blockchainTransaction.amount),
+      settlementShardKey,
+      createdDate: this.thinky.r.now()
+    };
+    let insertedDeposit;
+    try {
+      insertedDeposit = await this.crud.create({
+        type: 'Deposit',
+        value: deposit
+      });
+    } catch (error) {
+      // Check if the deposit and transaction have already been created.
+      // If a deposit exists without a matching transaction (e.g. because of a
+      // past insertion failure), create the matching transaction.
+      let deposit;
+      try {
+        deposit = await this.crud.read({
+          type: 'Deposit',
+          id: blockchainTransaction.id
+        });
+      } catch (err) {
+        throw new Error(
+          `Failed to create deposit with external ID ${
+            blockchainTransaction.id
+          } and no existing one could be found - ${error}`
+        );
+      }
+    }
   }
 
   async finalizeDepositTransaction(blockchainTransaction) {
-    await this.accountService.execDepositTransaction(blockchainTransaction);
+    await this.accountService.execDeposit(blockchainTransaction);
   }
 
   async processDepositTransaction(blockchainTransaction) {

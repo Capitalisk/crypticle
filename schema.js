@@ -99,17 +99,29 @@ function getSchema(options) {
         accountId: type.string(),
         transactionId: type.string(),
         height: type.number(),
+        amount: type.string(),
+        settled: type.boolean().default(false),
+        settledDate: type.date().optional(),
+        settlementShardKey: type.number().optional(),
         createdDate: type.date()
       },
       indexes: [
         'accountId',
         'transactionId',
         'createdDate',
+        'settlementShardKey',
         {
           name: 'accountIdCreatedDate',
           type: 'compound',
           fn: function (r) {
             return [r.row('accountId'), r.row('createdDate')];
+          }
+        },
+        {
+          name: 'settlementShardKeyHeight',
+          type: 'compound',
+          fn: function (r) {
+            return [r.row('settlementShardKey'), r.row('height')];
           }
         }
       ],

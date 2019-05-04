@@ -20,13 +20,7 @@ class AccountService extends AsyncStreamEmitter {
     this.thinky = options.thinky;
     this.crud = options.crud;
     this.mainInfo = options.mainInfo;
-    this.shardIndex = null;
-    this.shardCount = null;
-  }
-
-  setShardInfo(shardIndex, shardCount) {
-    this.shardIndex = shardIndex;
-    this.shardCount = shardCount;
+    this.shardInfo = options.shardInfo;
   }
 
   async getAccountsByDepositWalletAddress(walletAddress) {
@@ -36,8 +30,8 @@ class AccountService extends AsyncStreamEmitter {
     return this.thinky.r.table('Account').getAll(walletAddress, {index: 'depositWalletAddress'}).run();
   }
 
-  async fetchTransactionTargetAccount(blockchainTransaction) {
-    let walletAccountList = await this.getAccountsByDepositWalletAddress(blockchainTransaction.senderId);
+  async fetchAccountByWalletAddress(walletAddress) {
+    let walletAccountList = await this.getAccountsByDepositWalletAddress(walletAddress);
     return walletAccountList[0];
   }
 
@@ -54,72 +48,6 @@ class AccountService extends AsyncStreamEmitter {
     });
   }
 
-  async execDepositTransaction(blockchainTransaction) {
-    let account = await this.fetchTransactionTargetAccount(blockchainTransaction);
-    if (!account) {
-      return {
-        deposit: null,
-        transaction: null
-      };
-    }
-
-    let transactionId = uuid.v4();
-    let deposit = {
-      id: blockchainTransaction.id,
-      accountId: account.id,
-      transactionId,
-      height: blockchainTransaction.height,
-      createdDate: this.thinky.r.now()
-    };
-    let insertedDeposit;
-    try {
-      insertedDeposit = await this.crud.create({
-        type: 'Deposit',
-        value: deposit
-      });
-    } catch (error) {
-      // Check if the deposit and transaction have already been created.
-      // If a deposit exists without a matching transaction (e.g. because of a
-      // past insertion failure), create the matching transaction.
-      let deposit;
-      try {
-        deposit = await this.crud.read({
-          type: 'Deposit',
-          id: blockchainTransaction.id
-        });
-      } catch (err) {
-        throw new Error(
-          `Failed to create deposit with external ID ${
-            blockchainTransaction.id
-          } and no existing one could be found - ${error}`
-        );
-      }
-      try {
-        let txn = await this.crud.read({
-          type: 'Transaction',
-          id: deposit.transactionId
-        });
-        return {
-          deposit,
-          transaction: txn
-        };
-      } catch (err) {
-        transactionId = deposit.transactionId;
-      }
-    }
-    let transaction = {
-      id: transactionId,
-      accountId: account.id,
-      type: 'deposit',
-      amount: String(blockchainTransaction.amount)
-    };
-    let insertedTransaction = await this.execTransaction(transaction);
-    return {
-      deposit,
-      transaction: insertedTransaction
-    };
-  }
-
   async fetchAccountBalance(accountId) {
     return this.thinky.r.table('Transaction')
     .getAll(accountId, {index: 'accountId'})
@@ -129,12 +57,12 @@ class AccountService extends AsyncStreamEmitter {
   }
 
   async fetchAccountSettlementLedger() {
-    if (this.shardIndex == null || this.shardCount == null) {
+    if (this.shardInfo.shardIndex == null || this.shardInfo.shardCount == null) {
       return {};
     }
     // Only fetch transactions from accounts which are within the
     // shard range as the current worker.
-    let shardRange = getShardRange(this.shardIndex, this.shardCount);
+    let shardRange = getShardRange(this.shardInfo.shardIndex, this.shardInfo.shardCount);
     let txns = await this.thinky.r.table('Transaction')
     .between(shardRange.start, shardRange.end, {index: 'settlementShardKey'})
     .orderBy(this.thinky.r.asc('createdDate'))
