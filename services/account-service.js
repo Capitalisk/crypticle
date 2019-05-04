@@ -217,9 +217,11 @@ class AccountService extends AsyncStreamEmitter {
           txnsToRemoveShardKey.push(account.lastSettledTransaction);
         }
         // Remove the settlement shard key from all settled transactions except for the last one.
-        txnsToRemoveShardKey = txnsToRemoveShardKey.concat(
-          account.unsettledTransactions.slice(0, account.unsettledTransactions.length - 1)
-        );
+        txnsToRemoveShardKey = txnsToRemoveShardKey
+        .concat(account.unsettledTransactions)
+        .filter(txn => txn.settled);
+        txnsToRemoveShardKey = txnsToRemoveShardKey.slice(0, txnsToRemoveShardKey.length - 1);
+
         await Promise.all(
           txnsToRemoveShardKey.map(async (txn) => {
             await this.crud.delete({
