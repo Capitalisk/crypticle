@@ -129,7 +129,8 @@ class BlockchainService extends AsyncStreamEmitter {
     let targetHeight = currentBlockHeight - this.requiredBlockConfirmations;
     let shardRange = getShardRange(this.shardInfo.shardIndex, this.shardInfo.shardCount);
     let unsettledDeposits = await this.thinky.r.table('Deposit')
-    .between([shardRange.start, this.thinky.r.minval], [shardRange.end, targetHeight], {index: 'settlementShardKeyHeight'})
+    .between(shardRange.start, shardRange.end, {index: 'settlementShardKey'})
+    .filter(this.thinky.r.row('height').le(targetHeight))
     .orderBy(this.thinky.r.asc('createdDate'))
     .run();
 

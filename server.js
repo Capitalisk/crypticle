@@ -43,14 +43,13 @@ const AGC_BROKER_RETRY_DELAY = Number(process.env.AGC_BROKER_RETRY_DELAY) || nul
 
 const DB_NAME = process.env.DB_NAME || 'crypticle';
 const TOKEN_EXPIRY_SECONDS = 60 * 60;
-const MAX_RECORD_DISPLAY_AGE = 30 * 24 * 60 * 60 * 1000; // One month.
+
+const envConfig = config[ENVIRONMENT];
 
 const dataSchema = getSchema({
   dbName: DB_NAME,
-  maxRecordDisplayAge: MAX_RECORD_DISPLAY_AGE
+  maxRecordDisplayAge: envConfig.mainInfo.maxRecordDisplayAge
 });
-
-const envConfig = config[ENVIRONMENT];
 
 let agOptions = {};
 

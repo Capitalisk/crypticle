@@ -138,13 +138,6 @@ function getSchema(options) {
           fn: function (r) {
             return [r.row('accountId'), r.row('createdDate')];
           }
-        },
-        {
-          name: 'settlementShardKeyHeight',
-          type: 'compound',
-          fn: function (r) {
-            return [r.row('settlementShardKey'), r.row('height')];
-          }
         }
       ],
       access: {
@@ -174,7 +167,12 @@ function getSchema(options) {
               [params.accountId, r.maxval],
               {index: 'accountIdCreatedDate', rightBound: 'closed'}
             )
-            .filter(r.db(options.dbName).table('Transaction').get(r.row('transactionId')).getField('settled').eq(false))
+            .filter(
+              r.db(options.dbName).table('Transaction')
+              .getAll(r.row('transactionId'), {index: 'id'})
+              .filter(txn => txn('settled').eq(true))
+              .count().eq(0)
+            )
             .orderBy(r.desc('createdDate'));
           }
         },
@@ -191,7 +189,12 @@ function getSchema(options) {
               [params.accountId, r.maxval],
               {index: 'accountIdCreatedDate', rightBound: 'closed'}
             )
-            .filter(r.db(options.dbName).table('Transaction').get(r.row('transactionId')).getField('settled').eq(true))
+            .filter(
+              r.db(options.dbName).table('Transaction')
+              .getAll(r.row('transactionId'), {index: 'id'})
+              .filter(txn => txn('settled').eq(true))
+              .count().gt(0)
+            )
             .orderBy(r.desc('createdDate'));
           }
         }
@@ -235,7 +238,12 @@ function getSchema(options) {
               [params.accountId, r.maxval],
               {index: 'accountIdCreatedDate', rightBound: 'closed'}
             )
-            .filter(r.db(options.dbName).table('Transaction').get(r.row('transactionId')).getField('settled').eq(false))
+            .filter(
+              r.db(options.dbName).table('Transaction')
+              .getAll(r.row('transactionId'), {index: 'id'})
+              .filter(txn => txn('settled').eq(true))
+              .count().eq(0)
+            )
             .orderBy(r.desc('createdDate'));
           }
         },
@@ -252,7 +260,12 @@ function getSchema(options) {
               [params.accountId, r.maxval],
               {index: 'accountIdCreatedDate', rightBound: 'closed'}
             )
-            .filter(r.db(options.dbName).table('Transaction').get(r.row('transactionId')).getField('settled').eq(true))
+            .filter(
+              r.db(options.dbName).table('Transaction')
+              .getAll(r.row('transactionId'), {index: 'id'})
+              .filter(txn => txn('settled').eq(true))
+              .count().gt(0)
+            )
             .orderBy(r.desc('createdDate'));
           }
         }

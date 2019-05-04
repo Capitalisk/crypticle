@@ -27,6 +27,7 @@ module.exports = {
     },
     mainWalletAddress: '6255037810762443539R',
     requiredBlockConfirmations: 102,
-    transactionSettlementInterval: 5000
+    transactionSettlementInterval: 5000,
+    maxRecordDisplayAge: 2592000000
   }
 };
