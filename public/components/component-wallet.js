@@ -12,10 +12,10 @@ function getComponent(options) {
         id: socket.authToken && socket.authToken.accountId,
         fields: ['depositWalletAddress']
       });
-      this.latestSettledTransactionsCollection = new AGCollection({
+      this.lastSettledTransactionsCollection = new AGCollection({
         socket,
         type: 'Transaction',
-        view: 'latestSettledTransactions',
+        view: 'lastSettledTransactions',
         viewParams: {
           accountId: socket.authToken && socket.authToken.accountId
         },
@@ -26,7 +26,7 @@ function getComponent(options) {
       return {
         mainInfo,
         account: this.accountModel.value,
-        latestSettledTransactions: this.latestSettledTransactionsCollection.value
+        lastSettledTransactions: this.lastSettledTransactionsCollection.value
       };
     },
     methods: {
@@ -45,10 +45,10 @@ function getComponent(options) {
             Wallet address
           </h4>
           <div>
-            <span>Balance:</span> <span v-for="txn of latestSettledTransactions">{{toBlockchainUnits(txn.balance)}}</span><span v-if="mainInfo.cryptocurrency"> {{mainInfo.cryptocurrency.symbol}}</span>
+            <span>Balance:</span> <span v-if="!lastSettledTransactions.length">0</span><span v-for="txn of lastSettledTransactions">{{toBlockchainUnits(txn.balance)}}</span><span v-if="mainInfo.cryptocurrency"> {{mainInfo.cryptocurrency.symbol}}</span>
           </div>
           <div>
-            To top up your account, you should deposit {{mainInfo.cryptocurrency.symbol}} tokens to the following wallet address: <b>{{account.depositWalletAddress}}</b>
+            To top up your account, you should send {{mainInfo.cryptocurrency.symbol}} tokens to the following wallet address: <b>{{account.depositWalletAddress}}</b>
           </div>
         </div>
       </div>

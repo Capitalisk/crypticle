@@ -215,13 +215,9 @@ class BlockchainService extends AsyncStreamEmitter {
     }
   }
 
-  async finalizeDepositTransaction(blockchainTransaction) {
-    await this.execDeposit(blockchainTransaction);
-  }
-
   async processDepositTransaction(blockchainTransaction) {
     if (blockchainTransaction.recipientId === this.mainWalletAddress) {
-      await this.finalizeDepositTransaction(blockchainTransaction);
+      await this.execDeposit(blockchainTransaction);
       return;
     }
     let targetAccountList = await this.accountService.getAccountsByDepositWalletAddress(blockchainTransaction.recipientId);

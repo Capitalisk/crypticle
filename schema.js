@@ -65,8 +65,9 @@ function getSchema(options) {
         pre: accountTransactionsPrefilter
       },
       views: {
-        latestSettledTransactions: {
+        lastSettledTransactions: {
           paramFields: ['accountId'],
+          affectingFields: ['settledDate'],
           transform: function (fullTableQuery, r, params) {
             return fullTableQuery
             .between(

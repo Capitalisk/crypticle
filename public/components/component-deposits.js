@@ -1,4 +1,3 @@
-import AGModel from '/node_modules/ag-model/ag-model.js';
 import AGCollection from '/node_modules/ag-collection/ag-collection.js';
 
 function getComponent(options) {
