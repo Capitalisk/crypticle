@@ -19,6 +19,7 @@ function getSchema(options) {
         passwordResetKey: type.string().optional(),
         passwordResetExpiry: type.date().optional(),
         active: type.boolean().default(true),
+        // balance: type.string().default('0'), // TODO 2222
         createdDate: type.date()
       },
       indexes: ['username', 'depositWalletAddress'],
@@ -42,6 +43,7 @@ function getSchema(options) {
       indexes: [
         'accountId',
         'settled',
+        'settledDate',
         'settlementShardKey',
         'createdDate',
         {
@@ -50,12 +52,31 @@ function getSchema(options) {
           fn: function (r) {
             return [r.row('accountId'), r.row('createdDate')];
           }
+        },
+        {
+          name: 'accountIdSettledDate',
+          type: 'compound',
+          fn: function (r) {
+            return [r.row('accountId'), r.row('settledDate')];
+          }
         }
       ],
       access: {
         pre: accountTransactionsPrefilter
       },
       views: {
+        latestSettledTransactions: {
+          paramFields: ['accountId'],
+          transform: function (fullTableQuery, r, params) {
+            return fullTableQuery
+            .between(
+              [params.accountId, r.minval],
+              [params.accountId, r.maxval],
+              {index: 'accountIdSettledDate', rightBound: 'closed'}
+            )
+            .orderBy({index: r.desc('accountIdSettledDate')});
+          }
+        },
         accountTransfersPendingView: {
           paramFields: ['accountId'],
           transform: function (fullTableQuery, r, params) {

@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const util = require('util');
+const uuid = require('uuid');
 const rise = require('risejs').rise;
 const AsyncStreamEmitter = require('async-stream-emitter');
 const WritableConsumableStream = require('writable-consumable-stream');
@@ -20,13 +21,16 @@ class BlockchainService extends AsyncStreamEmitter {
     super();
 
     this.mainWalletAddress = options.mainInfo.mainWalletAddress;
-    this.requiredBlockConfirmations = options.mainInfo.requiredBlockConfirmations; // TODO 2: Use this for settlement.
+    this.requiredBlockConfirmations = options.mainInfo.requiredBlockConfirmations;
     this.accountService = options.accountService;
     this.blockPollInterval = options.blockPollInterval;
     rise.nodeAddress = options.nodeAddress;
     this.blockFetchLimit = options.blockFetchLimit;
     this.sync = options.sync;
     this.shardInfo = options.shardInfo;
+    this.thinky = options.thinky;
+    this.crud = options.crud;
+    this.lastBlockHeight = 0;
 
     this.blockProcessingStream = new WritableConsumableStream();
 
@@ -34,6 +38,7 @@ class BlockchainService extends AsyncStreamEmitter {
       for await (let packet of this.blockProcessingStream) {
         try {
           await this.processNextBlocks();
+          await this.settlePendingDeposits(this.lastBlockHeight);
         } catch (error) {
           this.emit('error', {error});
         }
@@ -52,6 +57,7 @@ class BlockchainService extends AsyncStreamEmitter {
       })
     );
     let {syncFromBlockHeight} = state;
+    this.lastBlockHeight = syncFromBlockHeight;
 
     let heightResult;
     try {
@@ -101,12 +107,6 @@ class BlockchainService extends AsyncStreamEmitter {
       syncFromBlockHeight = lastBlock.height;
     }
 
-    try {
-      await this.settlePendingDeposits(syncFromBlockHeight);
-    } catch (error) {
-      this.emit('error', {error});
-    }
-
     await writeFile(
       STATE_FILE_PATH,
       JSON.stringify(
@@ -123,6 +123,9 @@ class BlockchainService extends AsyncStreamEmitter {
   }
 
   async settlePendingDeposits(currentBlockHeight) {
+    if (this.shardInfo.shardIndex == null || this.shardInfo.shardCount == null) {
+      return;
+    }
     let targetHeight = currentBlockHeight - this.requiredBlockConfirmations;
     let shardRange = getShardRange(this.shardInfo.shardIndex, this.shardInfo.shardCount);
     let unsettledDeposits = await this.thinky.r.table('Deposit')
@@ -134,7 +137,7 @@ class BlockchainService extends AsyncStreamEmitter {
       unsettledDeposits.map(async (deposit) => {
         let transaction = {
           id: deposit.transactionId,
-          accountId: account.id,
+          accountId: deposit.accountId,
           type: 'deposit',
           amount: deposit.amount
         };
@@ -157,7 +160,7 @@ class BlockchainService extends AsyncStreamEmitter {
           id: deposit.id,
           value: {
             settled: true,
-            settledDate: this.thinky.r.now();
+            settledDate: this.thinky.r.now()
           }
         });
         await this.crud.delete({
@@ -213,7 +216,7 @@ class BlockchainService extends AsyncStreamEmitter {
   }
 
   async finalizeDepositTransaction(blockchainTransaction) {
-    await this.accountService.execDeposit(blockchainTransaction);
+    await this.execDeposit(blockchainTransaction);
   }
 
   async processDepositTransaction(blockchainTransaction) {

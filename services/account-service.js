@@ -1,8 +1,8 @@
 const crypto = require('crypto');
-const uuid = require('uuid');
 const {getShardKey, getShardRange} = require('../utils/sharding');
 const AsyncStreamEmitter = require('async-stream-emitter');
 const {generateWallet} = require('../utils/blockchain');
+const WritableConsumableStream = require('writable-consumable-stream');
 
 const SALT_SIZE = 32;
 const MAX_WALLET_CREATE_ATTEMPTS = 10;
@@ -13,6 +13,8 @@ const MAX_USERNAME_LENGTH = 30;
 const MIN_PASSWORD_LENGTH = 7;
 const MAX_PASSWORD_LENGTH = 50;
 
+const HIGH_BACKPRESSURE_THRESHOLD = 10;
+
 class AccountService extends AsyncStreamEmitter {
   constructor(options) {
     super();
@@ -21,6 +23,21 @@ class AccountService extends AsyncStreamEmitter {
     this.crud = options.crud;
     this.mainInfo = options.mainInfo;
     this.shardInfo = options.shardInfo;
+    this.settlementInterval = this.mainInfo.transactionSettlementInterval;
+
+    this.settlementProcessingStream = new WritableConsumableStream();
+
+    (async () => {
+      for await (let packet of this.settlementProcessingStream) {
+        try {
+          await this.settlePendingTransactions();
+        } catch (error) {
+          this.emit('error', {error});
+        }
+      }
+    })();
+
+    this.startSettlementLoop();
   }
 
   async getAccountsByDepositWalletAddress(walletAddress) {
@@ -126,7 +143,7 @@ class AccountService extends AsyncStreamEmitter {
             txn.settled = true;
             txn.settledDate = this.thinky.r.now();
 
-            let {id, txnData} = txn;
+            let {id, ...txnData} = txn;
             await this.crud.update({
               type: 'Transaction',
               id,
@@ -332,6 +349,21 @@ class AccountService extends AsyncStreamEmitter {
       throw err;
     }
     return accountData;
+  }
+
+  async startSettlementLoop() {
+    if (this._intervalRef != null) {
+      clearInterval(this._intervalRef);
+    }
+    this._intervalRef = setInterval(async () => {
+      this.settlementProcessingStream.write({time: Date.now()});
+      if (this.settlementProcessingStream.getBackpressure() > HIGH_BACKPRESSURE_THRESHOLD) {
+        let error = new Error(
+          'The settlement processing getBackpressure is too high. This may cause delays in performing transaction settlements.'
+        );
+        this.emit('error', {error});
+      }
+    }, this.settlementInterval);
   }
 }
 

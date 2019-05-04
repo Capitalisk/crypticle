@@ -1,5 +1,5 @@
-import AGCollection from '/node_modules/ag-collection/ag-collection.js';
 import AGModel from '/node_modules/ag-model/ag-model.js';
+import AGCollection from '/node_modules/ag-collection/ag-collection.js';
 
 function getComponent(options) {
   let {socket, mainInfo} = options;
@@ -20,46 +20,13 @@ function getComponent(options) {
         viewParams: {
           accountId: socket.authToken && socket.authToken.accountId
         },
-        fields: ['transactionId', 'height', 'createdDate'],
+        fields: ['transactionId', 'amount', 'height', 'createdDate'],
         defaultFieldValues: {
           transaction: {}
         },
         pageOffset: 0,
         pageSize: 10
       });
-
-      (async () => {
-        for await (let depositModel of this.depositCollection.listener('modelDestroy')) {
-          depositModel.transactionModel.destroy();
-          delete depositModel.transactionModel;
-        }
-      })();
-
-      (async () => {
-        for await (let event of this.depositCollection.listener('modelChange')) {
-          if (event.resourceField !== 'transactionId') {
-            continue;
-          }
-          let depositModel = this.depositCollection.agModels[event.resourceId];
-          let originalTransactionModel = depositModel.transactionModel;
-          let transactionId = event.newValue;
-          if (
-            transactionId &&
-            (!originalTransactionModel || depositModel.transactionModel.id !== transactionId)
-          ) {
-            depositModel.transactionModel = new AGModel({
-              socket,
-              type: 'Transaction',
-              id: transactionId,
-              fields: ['amount', 'settledDate']
-            });
-            depositModel.value.transaction = depositModel.transactionModel.value;
-            if (originalTransactionModel) {
-              originalTransactionModel.destroy();
-            }
-          }
-        }
-      })();
 
       return {
         mainInfo,
@@ -95,7 +62,7 @@ function getComponent(options) {
             </tr>
             <tr v-for="dep of deposits">
               <td>{{dep.id}}</td>
-              <td>{{toBlockchainUnits(dep.transaction.amount)}}<span v-if="mainInfo.cryptocurrency"> {{mainInfo.cryptocurrency.symbol}}</span></td>
+              <td>{{toBlockchainUnits(dep.amount)}}<span v-if="mainInfo.cryptocurrency"> {{mainInfo.cryptocurrency.symbol}}</span></td>
               <td>{{dep.height}}</td>
               <td>{{toSimpleDate(dep.createdDate)}}</td>
             </tr>

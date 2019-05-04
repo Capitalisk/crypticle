@@ -26,6 +26,7 @@ module.exports = {
       unit: '100000000'
     },
     mainWalletAddress: '6255037810762443539R',
-    requiredBlockConfirmations: 102
+    requiredBlockConfirmations: 102,
+    transactionSettlementInterval: 5000
   }
 };

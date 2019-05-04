@@ -116,6 +116,8 @@ let accountService = new AccountService({
 
 let blockchainService = new BlockchainService({
   ...envConfig.services.blockchain,
+  thinky: crud.thinky,
+  crud,
   mainInfo: envConfig.mainInfo,
   accountService,
   shardInfo
@@ -261,4 +263,7 @@ if (AGC_STATE_SERVER_HOST) {
       }
     })();
   }
+} else {
+  shardInfo.shardIndex = 0;
+  shardInfo.shardCount = 1;
 }
