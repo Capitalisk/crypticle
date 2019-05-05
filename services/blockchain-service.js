@@ -136,6 +136,24 @@ class BlockchainService extends AsyncStreamEmitter {
 
     await Promise.all(
       unsettledDeposits.map(async (deposit) => {
+        let blockchainTxnResult;
+        try {
+          blockchainTxnResult = await rise.transactions.get(deposit.id);
+        } catch (error) {
+          this.emit('error', {error});
+          return;
+        }
+        if (!blockchainTxnResult || !blockchainTxnResult.success) {
+          this.emit('error', {
+            error: new Error(
+              `The blockchain transaction ${
+                deposit.id
+              } could not be found on the blockchain after the required block confirmations`
+            )
+          });
+          return;
+        }
+
         let transaction = {
           id: deposit.transactionId,
           accountId: deposit.accountId,
