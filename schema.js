@@ -125,6 +125,7 @@ function getSchema(options) {
         settled: type.boolean().default(false),
         settledDate: type.date().optional(),
         settlementShardKey: type.number().optional(),
+        canceled: type.boolean().default(false),
         createdDate: type.date()
       },
       indexes: [
@@ -205,7 +206,11 @@ function getSchema(options) {
         accountId: type.string(),
         transactionId: type.string(),
         signedTransaction: type.string(),
+        amount: type.string(),
         lastAttempt: type.date(),
+        canceled: type.boolean().default(false),
+        settled: type.boolean().default(false),
+        settledDate: type.date().optional(),
         createdDate: type.date()
       },
       indexes: [

@@ -151,6 +151,39 @@ class BlockchainService extends AsyncStreamEmitter {
               } could not be found on the blockchain after the required block confirmations`
             )
           });
+          await this.crud.update({
+            type: 'Deposit',
+            id: deposit.id,
+            value: {
+              canceled: true,
+              settled: true,
+              settledDate: this.thinky.r.now()
+            }
+          });
+          await this.crud.delete({
+            type: 'Deposit',
+            id: deposit.id,
+            field: 'settlementShardKey'
+          });
+          return;
+        }
+
+        if (
+          blockchainTxnResult.transaction &&
+          typeof blockchainTxnResult.transaction.confirmations === 'number' &&
+          blockchainTxnResult.transaction.confirmations < this.requiredBlockConfirmations
+        ) {
+          this.emit('error', {
+            error: new Error(
+              `The blockchain transaction ${
+                deposit.id
+              } had ${
+                blockchainTxnResult.transaction.confirmations
+              } confirmations. ${
+                this.requiredBlockConfirmations
+              } confirmations are required for settlement.`
+            )
+          });
           return;
         }
 
