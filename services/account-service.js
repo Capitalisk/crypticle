@@ -117,40 +117,42 @@ class AccountService extends AsyncStreamEmitter {
     await Promise.all(
       unsettledAccoundIds.map(async (accountId) => {
         let account = accountLedger[accountId];
-        await Promise.all(
-          account.unsettledTransactions.map(async (txn) => {
-            if (txn.type === 'withdrawal') {
-              let newBalance = account.balance - BigInt(txn.amount);
-              if (newBalance >= 0n) {
-                account.balance = newBalance;
-              } else {
-                txn.canceled = true;
-              }
-            } else if (txn.type === 'debit') {
-              let newBalance = account.balance - BigInt(txn.amount);
-              if (newBalance >= 0n) {
-                account.balance = newBalance;
-              } else {
-                txn.canceled = true;
-              }
-            } else if (txn.type === 'credit') {
-              account.balance += BigInt(txn.amount);
-            } else if (txn.type === 'deposit') {
-              account.balance += BigInt(txn.amount);
+        let len = account.unsettledTransactions.length;
+
+        for (let i = 0; i < len; i++) {
+          let txn = account.unsettledTransactions[i];
+
+          if (txn.type === 'withdrawal') {
+            let newBalance = account.balance - BigInt(txn.amount);
+            if (newBalance >= 0n) {
+              account.balance = newBalance;
+            } else {
+              txn.canceled = true;
             }
+          } else if (txn.type === 'debit') {
+            let newBalance = account.balance - BigInt(txn.amount);
+            if (newBalance >= 0n) {
+              account.balance = newBalance;
+            } else {
+              txn.canceled = true;
+            }
+          } else if (txn.type === 'credit') {
+            account.balance += BigInt(txn.amount);
+          } else if (txn.type === 'deposit') {
+            account.balance += BigInt(txn.amount);
+          }
 
-            txn.balance = account.balance.toString();
-            txn.settled = true;
-            txn.settledDate = this.thinky.r.now();
+          txn.balance = account.balance.toString();
+          txn.settled = true;
+          txn.settledDate = this.thinky.r.now();
 
-            let {id, ...txnData} = txn;
-            await this.crud.update({
-              type: 'Transaction',
-              id,
-              value: txnData
-            });
-          })
-        );
+          let {id, ...txnData} = txn;
+          await this.crud.update({
+            type: 'Transaction',
+            id,
+            value: txnData
+          });
+        }
       })
     );
 
