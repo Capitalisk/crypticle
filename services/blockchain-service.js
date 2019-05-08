@@ -51,6 +51,8 @@ class BlockchainService extends AsyncStreamEmitter {
   }
 
   async processNextBlocks() {
+    // TODO 2: If the state file does not exist, create it with the latest block height.
+    // By default, the file should not exist.
     let state = JSON.parse(
       await readFile(STATE_FILE_PATH, {
         encoding: 'utf8'
