@@ -101,6 +101,7 @@ let shardInfo = {
 };
 
 let accountService = new AccountService({
+  ...envConfig.services.account,
   thinky: crud.thinky,
   crud,
   mainInfo: envConfig.mainInfo,

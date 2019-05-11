@@ -9,10 +9,9 @@ module.exports = {
       blockPollInterval: 5000,
       blockFetchLimit: 100
     },
-    mail: {
-      name: 'mailgun',
-      apiKey: 'key-11684d92cd1cae9ab957f2674c06887f',
-      domain: 'mg.crypticle.io'
+    account: {
+      transactionSettlementInterval: 5000,
+      maxTransactionSettlementsPerAccount: 100
     },
     fiat: {
       name: 'stripe',
@@ -27,7 +26,6 @@ module.exports = {
     },
     mainWalletAddress: '6255037810762443539R',
     requiredBlockConfirmations: 102,
-    transactionSettlementInterval: 5000,
     maxRecordDisplayAge: 2592000000
   }
 };

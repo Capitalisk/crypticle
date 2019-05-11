@@ -23,7 +23,8 @@ class AccountService extends AsyncStreamEmitter {
     this.crud = options.crud;
     this.mainInfo = options.mainInfo;
     this.shardInfo = options.shardInfo;
-    this.settlementInterval = this.mainInfo.transactionSettlementInterval;
+    this.settlementInterval = options.transactionSettlementInterval;
+    this.maxSettlementsPerAccount = options.maxTransactionSettlementsPerAccount;
 
     this.settlementProcessingStream = new WritableConsumableStream();
 
@@ -73,7 +74,7 @@ class AccountService extends AsyncStreamEmitter {
     .getField('amount');
   }
 
-  async fetchAccountSettlementLedger() {
+  async fetchAccountSettlementLedger(maxSettlementsPerAccount) {
     if (this.shardInfo.shardIndex == null || this.shardInfo.shardCount == null) {
       return {};
     }
@@ -102,7 +103,10 @@ class AccountService extends AsyncStreamEmitter {
       if (txn.settled) {
         account.lastSettledTransaction = txn;
         account.balance = BigInt(txn.balance);
-      } else {
+      } else if (
+        maxSettlementsPerAccount == null ||
+        account.unsettledTransactions.length < maxSettlementsPerAccount
+      ) {
         account.unsettledTransactions.push(txn);
       }
     });
@@ -111,7 +115,7 @@ class AccountService extends AsyncStreamEmitter {
   }
 
   async settlePendingTransactions() {
-    let accountLedger = await this.fetchAccountSettlementLedger();
+    let accountLedger = await this.fetchAccountSettlementLedger(this.maxSettlementsPerAccount);
     let unsettledAccoundIds = Object.keys(accountLedger);
 
     await Promise.all(
