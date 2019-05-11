@@ -51,15 +51,16 @@ class BlockchainService extends AsyncStreamEmitter {
   }
 
   async processNextBlocks() {
-    // TODO 2: If the state file does not exist, create it with the latest block height.
-    // By default, the file should not exist.
-    let state = JSON.parse(
-      await readFile(STATE_FILE_PATH, {
-        encoding: 'utf8'
-      })
-    );
-    let {syncFromBlockHeight} = state;
-    this.lastBlockHeight = syncFromBlockHeight;
+    let state;
+    try {
+      state = JSON.parse(
+        await readFile(STATE_FILE_PATH, {
+          encoding: 'utf8'
+        })
+      );
+    } catch (error) {
+      this.emit('error', {error});
+    }
 
     let heightResult;
     try {
@@ -69,6 +70,15 @@ class BlockchainService extends AsyncStreamEmitter {
       return false;
     }
     let {height} = heightResult;
+
+    if (!state) {
+      state = {
+        syncFromBlockHeight: height - 1
+      };
+    }
+
+    let {syncFromBlockHeight} = state;
+    this.lastBlockHeight = syncFromBlockHeight;
 
     let blocksResult;
     let lastTargetBlockHeight = syncFromBlockHeight + this.blockFetchLimit;
