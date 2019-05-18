@@ -45,12 +45,11 @@ class RiseAdapter {
     return rise.accounts.getBalance(walletAddress);
   }
 
-  async sendTransaction(transaction, passphrase) {
-    transaction = {
-      ...transaction,
-      kind: 'send'
-    };
-    let signedTransaction = Rise.txs.createAndSign(transaction, passphrase);
+	signTransaction(transaction, passphrase) {
+		return Rise.txs.createAndSign(transaction, passphrase);
+	}
+
+  async sendTransaction(signedTransaction) {
     return rise.transactions.put(signedTransaction);
   }
 

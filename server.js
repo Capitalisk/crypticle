@@ -8,6 +8,8 @@ const morgan = require('morgan');
 const uuid = require('uuid');
 const agcBrokerClient = require('agc-broker-client');
 const agCrudRethink = require('ag-crud-rethink');
+const inquirer = require('inquirer');
+const prompt = inquirer.createPromptModule();
 
 const getSchema = require('./schema');
 
@@ -45,209 +47,221 @@ const TOKEN_EXPIRY_SECONDS = 60 * 60;
 
 const envConfig = config[ENVIRONMENT];
 
-const dataSchema = getSchema({
-  dbName: DB_NAME,
-  maxRecordDisplayAge: envConfig.mainInfo.maxRecordDisplayAge
-});
+(async () => {
+  let {blockchainNodeWalletPassphrase} = await prompt([
+    {
+      type: 'password',
+      message: 'Please insert your hot wallet passphrase (to process blockchain withdrawals)',
+      name: 'blockchainNodeWalletPassphrase',
+      default: null
+    }
+  ]);
 
-let agOptions = {};
+  const dataSchema = getSchema({
+    dbName: DB_NAME,
+    maxRecordDisplayAge: envConfig.mainInfo.maxRecordDisplayAge
+  });
 
-if (process.env.ASYNGULAR_OPTIONS) {
-  let envOptions = JSON.parse(process.env.ASYNGULAR_OPTIONS);
-  Object.assign(agOptions, envOptions);
-}
+  let agOptions = {};
 
-let httpServer = eetase(http.createServer());
-let agServer = asyngularServer.attach(httpServer, agOptions);
+  if (process.env.ASYNGULAR_OPTIONS) {
+    let envOptions = JSON.parse(process.env.ASYNGULAR_OPTIONS);
+    Object.assign(agOptions, envOptions);
+  }
 
-let crudOptions = {
-  blockPreByDefault: true,
-  blockPostByDefault: false,
-  defaultPageSize: 10,
-  schema: dataSchema,
-  thinkyOptions: {
-    host: '127.0.0.1',
-    db: DB_NAME,
-    port: 28015
-  },
-  middleware: {
-    invoke: async function (action) {
-      if (!action.data) {
-        return;
-      }
-      if (action.data.type === 'Account') {
-        if (action.procedure === 'create') {
-          action.data.value = await accountService.sanitizeSignupCredentials(action.data.value);
+  let httpServer = eetase(http.createServer());
+  let agServer = asyngularServer.attach(httpServer, agOptions);
+
+  let crudOptions = {
+    blockPreByDefault: true,
+    blockPostByDefault: false,
+    defaultPageSize: 10,
+    schema: dataSchema,
+    thinkyOptions: {
+      host: '127.0.0.1',
+      db: DB_NAME,
+      port: 28015
+    },
+    middleware: {
+      invoke: async function (action) {
+        if (!action.data) {
           return;
         }
-        return;
-      }
-    }
-  }
-};
-
-let crud = agCrudRethink.attach(agServer, crudOptions);
-
-(async () => {
-  for await (let {error} of crud.listener('error')) {
-    console.warn('[CRUD]', error);
-  }
-})();
-
-let shardInfo = {
-  shardIndex: null,
-  shardCount: null
-};
-
-let accountService = new AccountService({
-  ...envConfig.services.account,
-  thinky: crud.thinky,
-  crud,
-  mainInfo: envConfig.mainInfo,
-  shardInfo
-});
-
-(async () => {
-  for await (let {error} of accountService.listener('error')) {
-    console.error('[AccountService]', error);
-  }
-})();
-
-(async () => {
-  for await (let {block} of accountService.listener('processBlock')) {
-    console.log('[AccountService]', `Processed block at height ${block.height}`);
-  }
-})();
-
-let expressApp = express();
-if (ENVIRONMENT === 'dev') {
-  // Log every HTTP request. See https://github.com/expressjs/morgan for other
-  // available formats.
-  expressApp.use(morgan('dev'));
-}
-expressApp.use(serveStatic(path.resolve(__dirname, 'public')));
-
-// Add GET /health-check express route
-expressApp.get('/health-check', (req, res) => {
-  res.status(200).send('OK');
-});
-
-// HTTP request handling loop.
-(async () => {
-  for await (let requestData of httpServer.listener('request')) {
-    expressApp.apply(null, requestData);
-  }
-})();
-
-// Asyngular/WebSocket connection handling loop.
-(async () => {
-  for await (let {socket} of agServer.listener('connection')) {
-    // Handle socket connection.
-
-    (async () => {
-      for await (let request of socket.procedure('login')) {
-        let accountData;
-        try {
-          accountData = await accountService.verifyLoginCredentials(request.data);
-        } catch (error) {
-          if (
-            error.name === 'InvalidCredentialsError' ||
-            error.name === 'AccountInactiveError'
-          ) {
-            request.error(error);
-          } else {
-            let clientError = new Error('Failed to login.');
-            clientError.name = 'FailedToLoginError';
-            request.error(clientError);
+        if (action.data.type === 'Account') {
+          if (action.procedure === 'create') {
+            action.data.value = await accountService.sanitizeSignupCredentials(action.data.value);
+            return;
           }
-          console.error(error);
-          continue;
+          return;
         }
-        let token = {
-          username: accountData.username,
-          accountId: accountData.id
-        };
-        socket.setAuthToken(token, {expiresIn: TOKEN_EXPIRY_SECONDS});
-        request.end();
       }
-    })();
-
-    (async () => {
-      for await (let request of socket.procedure('getMainInfo')) {
-        request.end(envConfig.mainInfo);
-      }
-    })();
-
-  }
-})();
-
-httpServer.listen(ASYNGULAR_PORT);
-
-if (ASYNGULAR_LOG_LEVEL >= 1) {
-  (async () => {
-    for await (let {error} of agServer.listener('error')) {
-      console.error(error);
     }
-  })();
-}
+  };
 
-if (ASYNGULAR_LOG_LEVEL >= 2) {
-  console.log(
-    `   ${colorText('[Active]', 32)} Asyngular worker with PID ${process.pid} is listening on port ${ASYNGULAR_PORT}`
-  );
+  let crud = agCrudRethink.attach(agServer, crudOptions);
 
   (async () => {
-    for await (let {warning} of agServer.listener('warning')) {
-      console.warn(warning);
+    for await (let {error} of crud.listener('error')) {
+      console.warn('[CRUD]', error);
     }
   })();
-}
 
-function colorText(message, color) {
-  if (color) {
-    return `\x1b[${color}m${message}\x1b[0m`;
-  }
-  return message;
-}
+  let shardInfo = {
+    shardIndex: null,
+    shardCount: null
+  };
 
-if (AGC_STATE_SERVER_HOST) {
-  // Setup broker client to connect to the Asyngular cluster (AGC).
-  let agcClient = agcBrokerClient.attach(agServer.brokerEngine, {
-    instanceId: AGC_INSTANCE_ID,
-    instancePort: ASYNGULAR_PORT,
-    instanceIp: AGC_INSTANCE_IP,
-    instanceIpFamily: AGC_INSTANCE_IP_FAMILY,
-    pubSubBatchDuration: AGC_PUB_SUB_BATCH_DURATION,
-    stateServerHost: AGC_STATE_SERVER_HOST,
-    stateServerPort: AGC_STATE_SERVER_PORT,
-    mappingEngine: AGC_MAPPING_ENGINE,
-    clientPoolSize: AGC_CLIENT_POOL_SIZE,
-    authKey: AGC_AUTH_KEY,
-    stateServerConnectTimeout: AGC_STATE_SERVER_CONNECT_TIMEOUT,
-    stateServerAckTimeout: AGC_STATE_SERVER_ACK_TIMEOUT,
-    stateServerReconnectRandomness: AGC_STATE_SERVER_RECONNECT_RANDOMNESS,
-    brokerRetryDelay: AGC_BROKER_RETRY_DELAY
+  let accountService = new AccountService({
+    ...envConfig.services.account,
+    thinky: crud.thinky,
+    crud,
+    mainInfo: envConfig.mainInfo,
+    shardInfo,
+    blockchainNodeWalletPassphrase
   });
 
   (async () => {
-    for await (let event of agcClient.listener('updateWorkers')) {
-      let sortedWorkerURIs = event.workerURIs.sort();
-      let workerCount = sortedWorkerURIs.length;
-      let currentWorkerIndex = event.workerURIs.indexOf(event.sourceWorkerURI);
-      shardInfo.shardIndex = currentWorkerIndex;
-      shardInfo.shardCount = workerCount;
+    for await (let {error} of accountService.listener('error')) {
+      console.error('[AccountService]', error);
     }
   })();
 
+  (async () => {
+    for await (let {block} of accountService.listener('processBlock')) {
+      console.log('[AccountService]', `Processed block at height ${block.height}`);
+    }
+  })();
+
+  let expressApp = express();
+  if (ENVIRONMENT === 'dev') {
+    // Log every HTTP request. See https://github.com/expressjs/morgan for other
+    // available formats.
+    expressApp.use(morgan('dev'));
+  }
+  expressApp.use(serveStatic(path.resolve(__dirname, 'public')));
+
+  // Add GET /health-check express route
+  expressApp.get('/health-check', (req, res) => {
+    res.status(200).send('OK');
+  });
+
+  // HTTP request handling loop.
+  (async () => {
+    for await (let requestData of httpServer.listener('request')) {
+      expressApp.apply(null, requestData);
+    }
+  })();
+
+  // Asyngular/WebSocket connection handling loop.
+  (async () => {
+    for await (let {socket} of agServer.listener('connection')) {
+      // Handle socket connection.
+
+      (async () => {
+        for await (let request of socket.procedure('login')) {
+          let accountData;
+          try {
+            accountData = await accountService.verifyLoginCredentials(request.data);
+          } catch (error) {
+            if (
+              error.name === 'InvalidCredentialsError' ||
+              error.name === 'AccountInactiveError'
+            ) {
+              request.error(error);
+            } else {
+              let clientError = new Error('Failed to login.');
+              clientError.name = 'FailedToLoginError';
+              request.error(clientError);
+            }
+            console.error(error);
+            continue;
+          }
+          let token = {
+            username: accountData.username,
+            accountId: accountData.id
+          };
+          socket.setAuthToken(token, {expiresIn: TOKEN_EXPIRY_SECONDS});
+          request.end();
+        }
+      })();
+
+      (async () => {
+        for await (let request of socket.procedure('getMainInfo')) {
+          request.end(envConfig.mainInfo);
+        }
+      })();
+
+    }
+  })();
+
+  httpServer.listen(ASYNGULAR_PORT);
+
   if (ASYNGULAR_LOG_LEVEL >= 1) {
     (async () => {
-      for await (let {error} of agcClient.listener('error')) {
-        error.name = 'AGCError';
+      for await (let {error} of agServer.listener('error')) {
         console.error(error);
       }
     })();
   }
-} else {
-  shardInfo.shardIndex = 0;
-  shardInfo.shardCount = 1;
-}
+
+  if (ASYNGULAR_LOG_LEVEL >= 2) {
+    console.log(
+      `   ${colorText('[Active]', 32)} Asyngular worker with PID ${process.pid} is listening on port ${ASYNGULAR_PORT}`
+    );
+
+    (async () => {
+      for await (let {warning} of agServer.listener('warning')) {
+        console.warn(warning);
+      }
+    })();
+  }
+
+  function colorText(message, color) {
+    if (color) {
+      return `\x1b[${color}m${message}\x1b[0m`;
+      }
+      return message;
+    }
+
+    if (AGC_STATE_SERVER_HOST) {
+      // Setup broker client to connect to the Asyngular cluster (AGC).
+      let agcClient = agcBrokerClient.attach(agServer.brokerEngine, {
+        instanceId: AGC_INSTANCE_ID,
+        instancePort: ASYNGULAR_PORT,
+        instanceIp: AGC_INSTANCE_IP,
+        instanceIpFamily: AGC_INSTANCE_IP_FAMILY,
+        pubSubBatchDuration: AGC_PUB_SUB_BATCH_DURATION,
+        stateServerHost: AGC_STATE_SERVER_HOST,
+        stateServerPort: AGC_STATE_SERVER_PORT,
+        mappingEngine: AGC_MAPPING_ENGINE,
+        clientPoolSize: AGC_CLIENT_POOL_SIZE,
+        authKey: AGC_AUTH_KEY,
+        stateServerConnectTimeout: AGC_STATE_SERVER_CONNECT_TIMEOUT,
+        stateServerAckTimeout: AGC_STATE_SERVER_ACK_TIMEOUT,
+        stateServerReconnectRandomness: AGC_STATE_SERVER_RECONNECT_RANDOMNESS,
+        brokerRetryDelay: AGC_BROKER_RETRY_DELAY
+      });
+
+      (async () => {
+        for await (let event of agcClient.listener('updateWorkers')) {
+          let sortedWorkerURIs = event.workerURIs.sort();
+          let workerCount = sortedWorkerURIs.length;
+          let currentWorkerIndex = event.workerURIs.indexOf(event.sourceWorkerURI);
+          shardInfo.shardIndex = currentWorkerIndex;
+          shardInfo.shardCount = workerCount;
+        }
+      })();
+
+      if (ASYNGULAR_LOG_LEVEL >= 1) {
+        (async () => {
+          for await (let {error} of agcClient.listener('error')) {
+            error.name = 'AGCError';
+            console.error(error);
+          }
+        })();
+      }
+    } else {
+      shardInfo.shardIndex = 0;
+      shardInfo.shardCount = 1;
+    }
+})();

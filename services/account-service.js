@@ -41,6 +41,7 @@ class AccountService extends AsyncStreamEmitter {
     this.blockPollInterval = options.blockPollInterval;
     this.blockFetchLimit = options.blockFetchLimit;
     this.blockchainSync = options.blockchainSync;
+    this.blockchainNodeWalletPassphrase = options.blockchainNodeWalletPassphrase;
     this.shardInfo = options.shardInfo;
     this.thinky = options.thinky;
     this.crud = options.crud;
@@ -251,7 +252,14 @@ class AccountService extends AsyncStreamEmitter {
     let settlementShardKey = getShardKey(withdrawal.accountId);
     let transactionId = uuid.v4();
 
-    // TODO 2: Create signedTransaction here.
+    let signedTransaction = await this.blockchainAdapter.signTransaction(
+      {
+        kind: 'send',
+        amount,
+        recipient: withdrawal.walletAddress
+      },
+      this.blockchainNodeWalletPassphrase
+    );
 
     await this.crud.create({
       type: 'Withdrawal',
@@ -260,18 +268,10 @@ class AccountService extends AsyncStreamEmitter {
         settled: false,
         settlementShardKey,
         transactionId,
+        signedTransaction,
         ...withdrawal
       }
     });
-    // await this.crud.create({ // TODO 2
-    //   type: 'Transaction',
-    //   value: {
-    //     createdDate: this.thinky.r.now(),
-    //     settled: false,
-    //     settlementShardKey,
-    //     ...transaction
-    //   }
-    // });
   }
 
   hashPassword(password, salt) {
@@ -693,13 +693,15 @@ class AccountService extends AsyncStreamEmitter {
       return;
     }
 
-    await this.blockchainAdapter.sendTransaction(
+    let signedTransaction = await this.blockchainAdapter.signTransaction(
       {
+        kind: 'send',
         amount,
         recipient: this.mainWalletAddress
       },
       targetAccount.depositWalletPassphrase
     );
+    await this.blockchainAdapter.sendTransaction(signedTransaction);
   }
 
   async startBlockchainSyncInterval() {

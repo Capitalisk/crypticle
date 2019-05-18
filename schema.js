@@ -19,7 +19,6 @@ function getSchema(options) {
         passwordResetKey: type.string().optional(),
         passwordResetExpiry: type.date().optional(),
         active: type.boolean().default(true),
-        // balance: type.string().default('0'), // TODO 2222
         createdDate: type.date()
       },
       indexes: ['username', 'depositWalletAddress'],
@@ -49,14 +48,14 @@ function getSchema(options) {
         'createdDate',
         {
           name: 'accountIdCreatedDate',
-          type: 'compound',
+          type: 'compound', // Compound indexes are ordered lexicographically
           fn: function (r) {
             return [r.row('accountId'), r.row('createdDate')];
           }
         },
         {
           name: 'accountIdSettledDate',
-          type: 'compound',
+          type: 'compound', // Compound indexes are ordered lexicographically
           fn: function (r) {
             return [r.row('accountId'), r.row('settledDate')];
           }
@@ -136,7 +135,7 @@ function getSchema(options) {
         'settlementShardKey',
         {
           name: 'accountIdCreatedDate',
-          type: 'compound',
+          type: 'compound', // Compound indexes are ordered lexicographically
           fn: function (r) {
             return [r.row('accountId'), r.row('createdDate')];
           }
@@ -224,7 +223,7 @@ function getSchema(options) {
         'settlementShardKey',
         {
           name: 'accountIdCreatedDate',
-          type: 'compound',
+          type: 'compound', // Compound indexes are ordered lexicographically
           fn: function (r) {
             return [r.row('accountId'), r.row('createdDate')];
           }
