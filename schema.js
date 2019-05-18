@@ -33,6 +33,7 @@ function getSchema(options) {
         type: type.string(), // Can be 'deposit', 'withdrawal', 'credit' or 'debit'
         amount: type.string(),
         counterpartyId: type.string().optional(),
+        data: type.string().optional(),
         balance: type.string().optional(),
         settled: type.boolean().default(false),
         settledDate: type.date().optional(),
