@@ -1,8 +1,16 @@
+const fs = require('fs');
+const path = require('path');
+const util = require('util');
+const uuid = require('uuid');
 const crypto = require('crypto');
 const {getShardKey, getShardRange} = require('../utils/sharding');
 const AsyncStreamEmitter = require('async-stream-emitter');
-const {generateWallet} = require('../utils/blockchain');
 const WritableConsumableStream = require('writable-consumable-stream');
+
+const readFile = util.promisify(fs.readFile);
+const writeFile = util.promisify(fs.writeFile);
+
+const STATE_FILE_PATH = path.resolve(__dirname, '..', 'state.json');
 
 const SALT_SIZE = 32;
 const MAX_WALLET_CREATE_ATTEMPTS = 10;
@@ -15,6 +23,8 @@ const MAX_PASSWORD_LENGTH = 50;
 
 const HIGH_BACKPRESSURE_THRESHOLD = 10;
 
+// TODO 2: Always use BigInt instead of number when handling transaction amounts.
+
 class AccountService extends AsyncStreamEmitter {
   constructor(options) {
     super();
@@ -25,6 +35,23 @@ class AccountService extends AsyncStreamEmitter {
     this.shardInfo = options.shardInfo;
     this.settlementInterval = options.transactionSettlementInterval;
     this.maxSettlementsPerAccount = options.maxTransactionSettlementsPerAccount;
+
+    this.mainWalletAddress = options.mainInfo.mainWalletAddress;
+    this.requiredBlockConfirmations = options.mainInfo.requiredBlockConfirmations;
+    this.blockPollInterval = options.blockPollInterval;
+    this.blockFetchLimit = options.blockFetchLimit;
+    this.blockchainSync = options.blockchainSync;
+    this.shardInfo = options.shardInfo;
+    this.thinky = options.thinky;
+    this.crud = options.crud;
+    this.lastBlockHeight = 0;
+
+    this.blockchainAdapterPath = options.blockchainAdapterPath || '../adapters/rise-adapter.js';
+    const BlockchainAdapter = require(this.blockchainAdapterPath);
+
+    this.blockchainAdapter = new BlockchainAdapter({
+      nodeAddress: options.blockchainNodeAddress
+    });
 
     this.settlementProcessingStream = new WritableConsumableStream();
 
@@ -38,7 +65,23 @@ class AccountService extends AsyncStreamEmitter {
       }
     })();
 
-    this.startSettlementLoop();
+    this.blockProcessingStream = new WritableConsumableStream();
+
+    (async () => {
+      for await (let packet of this.blockProcessingStream) {
+        try {
+          await this.processNextBlocks();
+          await this.settlePendingDeposits(this.lastBlockHeight);
+        } catch (error) {
+          this.emit('error', {error});
+        }
+      }
+    })();
+
+    if (this.blockchainSync) {
+      this.startBlockchainSyncInterval();
+    }
+    this.startSettlementInterval();
   }
 
   async getAccountsByDepositWalletAddress(walletAddress) {
@@ -199,6 +242,38 @@ class AccountService extends AsyncStreamEmitter {
     }
   }
 
+  /*
+    withdrawal.accountId: The id of the account from which to withdraw.
+    withdrawal.amount: The amount of tokens to withdraw.
+    withdrawal.walletAddress: The blockchain wallet address to send the tokens to.
+  */
+  async execWithdrawal(withdrawal) {
+    let settlementShardKey = getShardKey(withdrawal.accountId);
+    let transactionId = uuid.v4();
+
+    // TODO 2: Create signedTransaction here.
+
+    await this.crud.create({
+      type: 'Withdrawal',
+      value: {
+        createdDate: this.thinky.r.now(),
+        settled: false,
+        settlementShardKey,
+        transactionId,
+        ...withdrawal
+      }
+    });
+    // await this.crud.create({ // TODO 2
+    //   type: 'Transaction',
+    //   value: {
+    //     createdDate: this.thinky.r.now(),
+    //     settled: false,
+    //     settlementShardKey,
+    //     ...transaction
+    //   }
+    // });
+  }
+
   hashPassword(password, salt) {
     let hasher = crypto.createHash('sha256');
     hasher.update(password + salt);
@@ -286,7 +361,7 @@ class AccountService extends AsyncStreamEmitter {
 
     let walletCreateAttempts = 0;
     while (true) {
-      let wallet = generateWallet();
+      let wallet = await this.blockchainAdapter.generateWallet();
 
       credentials.depositWalletAddress = wallet.address;
 
@@ -357,11 +432,308 @@ class AccountService extends AsyncStreamEmitter {
     return accountData;
   }
 
-  async startSettlementLoop() {
-    if (this._intervalRef != null) {
-      clearInterval(this._intervalRef);
+  async processNextBlocks() {
+    let state;
+    try {
+      state = JSON.parse(
+        await readFile(STATE_FILE_PATH, {
+          encoding: 'utf8'
+        })
+      );
+    } catch (error) {
+      this.emit('error', {error});
     }
-    this._intervalRef = setInterval(async () => {
+
+    let heightResult;
+    try {
+      heightResult = await this.blockchainAdapter.fetchHeight();
+    } catch (error) {
+      this.emit('error', {error});
+      return false;
+    }
+    let {height} = heightResult;
+
+    if (!state) {
+      state = {
+        syncFromBlockHeight: height - 1
+      };
+    }
+
+    let {syncFromBlockHeight} = state;
+    this.lastBlockHeight = syncFromBlockHeight;
+
+    let blocksResult;
+    let lastTargetBlockHeight = syncFromBlockHeight + this.blockFetchLimit;
+    let safeHeightDiff = lastTargetBlockHeight - height;
+    if (safeHeightDiff < 0) {
+      safeHeightDiff = 0;
+    }
+
+    if (height <= syncFromBlockHeight) {
+      return true;
+    }
+
+    try {
+      blocksResult = await this.blockchainAdapter.fetchBlocks({
+        orderBy: 'height:asc',
+        offset: syncFromBlockHeight,
+        limit: this.blockFetchLimit - safeHeightDiff
+      });
+    } catch (error) {
+      this.emit('error', {error});
+      return false;
+    }
+
+    let blocks = blocksResult.blocks || [];
+
+    let blockCount = blocks.length;
+    for (let i = 0; i < blockCount; i++) {
+      let block = blocks[i];
+      let transactionCount = block.transactions.length;
+      for (let j = 0; j < transactionCount; j++) {
+        await this.processDepositTransaction(block.transactions[j]);
+      }
+      this.emit('processBlock', {block});
+    }
+
+    let lastBlock = blocks[blocks.length - 1];
+    if (lastBlock) {
+      syncFromBlockHeight = lastBlock.height;
+    }
+
+    await writeFile(
+      STATE_FILE_PATH,
+      JSON.stringify(
+        {
+          ...state,
+          syncFromBlockHeight
+        },
+        ' ',
+        2
+      )
+    );
+
+    return safeHeightDiff > 0;
+  }
+
+  async settlePendingDeposits(currentBlockHeight) {
+    if (this.shardInfo.shardIndex == null || this.shardInfo.shardCount == null) {
+      return;
+    }
+    let targetHeight = currentBlockHeight - this.requiredBlockConfirmations;
+    let shardRange = getShardRange(this.shardInfo.shardIndex, this.shardInfo.shardCount);
+    let unsettledDeposits = await this.thinky.r.table('Deposit')
+    .between(shardRange.start, shardRange.end, {index: 'settlementShardKey'})
+    .filter(this.thinky.r.row('height').le(targetHeight))
+    .orderBy(this.thinky.r.asc('createdDate'))
+    .run();
+
+    await Promise.all(
+      unsettledDeposits.map(async (deposit) => {
+        let blockchainTxnResult;
+        try {
+          blockchainTxnResult = await this.blockchainAdapter.fetchTransaction(deposit.id);
+        } catch (error) {
+          this.emit('error', {error});
+          return;
+        }
+        if (!blockchainTxnResult || !blockchainTxnResult.success) {
+          this.emit('error', {
+            error: new Error(
+              `The blockchain transaction ${
+                deposit.id
+              } could not be found on the blockchain after the required block confirmations`
+            )
+          });
+          await this.crud.update({
+            type: 'Deposit',
+            id: deposit.id,
+            value: {
+              canceled: true,
+              settled: true,
+              settledDate: this.thinky.r.now()
+            }
+          });
+          await this.crud.delete({
+            type: 'Deposit',
+            id: deposit.id,
+            field: 'settlementShardKey'
+          });
+          return;
+        }
+
+        if (
+          blockchainTxnResult.transaction &&
+          typeof blockchainTxnResult.transaction.confirmations === 'number' &&
+          blockchainTxnResult.transaction.confirmations < this.requiredBlockConfirmations
+        ) {
+          this.emit('error', {
+            error: new Error(
+              `The blockchain transaction ${
+                deposit.id
+              } had ${
+                blockchainTxnResult.transaction.confirmations
+              } confirmations. ${
+                this.requiredBlockConfirmations
+              } confirmations are required for settlement.`
+            )
+          });
+          return;
+        }
+
+        let transaction = {
+          id: deposit.transactionId,
+          accountId: deposit.accountId,
+          type: 'deposit',
+          amount: deposit.amount
+        };
+        try {
+          await this.execTransaction(transaction);
+        } catch (error) {
+          let existingTransaction = await this.thinky.r.table('Transaction').get(deposit.transactionId).run();
+          if (existingTransaction == null) {
+            // This means that the transaction could not be created because of an exception because it does not
+            // yet exist.
+            this.emit('error', {error});
+            return;
+          }
+          // If existingTransaction is not null, it means that the transaction already exists (and this caused the error).
+          // This could mean that this function failed to update/cleanup the underlying deposit on the last round.
+          // In this case, it should proceed with the cleanup (try again).
+        }
+        await this.crud.update({
+          type: 'Deposit',
+          id: deposit.id,
+          value: {
+            settled: true,
+            settledDate: this.thinky.r.now()
+          }
+        });
+        await this.crud.delete({
+          type: 'Deposit',
+          id: deposit.id,
+          field: 'settlementShardKey'
+        });
+      })
+    );
+  }
+
+  async execDeposit(blockchainTransaction) {
+    let account = await this.fetchAccountByWalletAddress(blockchainTransaction.senderId);
+    if (!account) {
+      return;
+    }
+
+    let settlementShardKey = getShardKey(account.id);
+    let transactionId = uuid.v4();
+    let deposit = {
+      id: blockchainTransaction.id,
+      accountId: account.id,
+      transactionId,
+      height: blockchainTransaction.height,
+      amount: String(blockchainTransaction.amount),
+      settlementShardKey,
+      createdDate: this.thinky.r.now()
+    };
+    let insertedDeposit;
+    try {
+      insertedDeposit = await this.crud.create({
+        type: 'Deposit',
+        value: deposit
+      });
+    } catch (error) {
+      // Check if the deposit and transaction have already been created.
+      // If a deposit exists without a matching transaction (e.g. because of a
+      // past insertion failure), create the matching transaction.
+      let deposit;
+      try {
+        deposit = await this.crud.read({
+          type: 'Deposit',
+          id: blockchainTransaction.id
+        });
+      } catch (err) {
+        throw new Error(
+          `Failed to create deposit with external ID ${
+            blockchainTransaction.id
+          } and no existing one could be found - ${error}`
+        );
+      }
+    }
+  }
+
+  async processDepositTransaction(blockchainTransaction) {
+    if (blockchainTransaction.recipientId === this.mainWalletAddress) {
+      await this.execDeposit(blockchainTransaction);
+      return;
+    }
+    let targetAccountList = await this.getAccountsByDepositWalletAddress(blockchainTransaction.recipientId);
+    if (targetAccountList.length > 1) {
+      throw new Error(
+        `Multiple accounts were associated with the deposit address ${blockchainTransaction.recipientId}`
+      );
+    }
+    if (targetAccountList.length < 1) {
+      return;
+    }
+
+    let targetAccount = targetAccountList[0];
+
+    let balanceResult = await this.blockchainAdapter.fetchWalletBalance(targetAccount.depositWalletAddress);
+    let fees = await this.blockchainAdapter.fetchFees(blockchainTransaction);
+    let amount = Number(balanceResult.balance) - fees; // TODO 2: Use BigInt
+
+    if (amount < 0) {
+      this.emit('error', {
+        error: new Error(
+          `Funds from the deposit wallet address ${
+            targetAccount.depositWalletAddress
+          } could not be moved to the main wallet because the deposit wallet balance was too low.`
+        )
+      });
+      return;
+    }
+
+    await this.blockchainAdapter.sendTransaction(
+      {
+        amount,
+        recipient: this.mainWalletAddress
+      },
+      targetAccount.depositWalletPassphrase
+    );
+  }
+
+  async startBlockchainSyncInterval() {
+    // Catch up to the latest height.
+    while (true) {
+      let done;
+      try {
+        done = await this.processNextBlocks();
+      } catch (error) {
+        this.emit('error', {error});
+      }
+      if (done) break;
+    }
+
+    if (this._blockIntervalRef != null) {
+      clearInterval(this._blockIntervalRef);
+    }
+    // Sync block by block.
+    this._blockIntervalRef = setInterval(async () => {
+      this.blockProcessingStream.write({time: Date.now()});
+      if (this.blockProcessingStream.getBackpressure() > HIGH_BACKPRESSURE_THRESHOLD) {
+        let error = new Error(
+          'The block processing getBackpressure is too high. This may cause delays in processing deposits. Consider increasing the blockPollInterval config option.'
+        );
+        this.emit('error', {error});
+      }
+    }, this.blockPollInterval);
+  }
+
+  async startSettlementInterval() {
+    if (this._settlementIntervalRef != null) {
+      clearInterval(this._settlementIntervalRef);
+    }
+    this._settlementIntervalRef = setInterval(async () => {
       this.settlementProcessingStream.write({time: Date.now()});
       if (this.settlementProcessingStream.getBackpressure() > HIGH_BACKPRESSURE_THRESHOLD) {
         let error = new Error(
