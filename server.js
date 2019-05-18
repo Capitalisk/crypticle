@@ -19,7 +19,6 @@ const config = {
 };
 
 const AccountService = require('./services/account-service');
-const BlockchainService = require('./services/blockchain-service');
 
 const ENVIRONMENT = process.env.ENV || 'dev';
 const ASYNGULAR_PORT = process.env.ASYNGULAR_PORT || 8000;
@@ -114,24 +113,9 @@ let accountService = new AccountService({
   }
 })();
 
-let blockchainService = new BlockchainService({
-  ...envConfig.services.blockchain,
-  thinky: crud.thinky,
-  crud,
-  mainInfo: envConfig.mainInfo,
-  accountService,
-  shardInfo
-});
-
 (async () => {
-  for await (let {error} of blockchainService.listener('error')) {
-    console.error('[BlockchainService]', error);
-  }
-})();
-
-(async () => {
-  for await (let {block} of blockchainService.listener('processBlock')) {
-    console.log('[BlockchainService]', `Processed block at height ${block.height}`);
+  for await (let {block} of accountService.listener('processBlock')) {
+    console.log('[AccountService]', `Processed block at height ${block.height}`);
   }
 })();
 
