@@ -54,7 +54,10 @@ class RiseAdapter {
   }
 
   async fetchFees(transaction) {
-    return Rise.txs.baseFees.send;
+    return {
+			success: true,
+			fees: Rise.txs.baseFees.send
+		};
   }
 }
 

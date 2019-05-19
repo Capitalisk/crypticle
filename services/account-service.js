@@ -34,10 +34,12 @@ class AccountService extends AsyncStreamEmitter {
     this.mainInfo = options.mainInfo;
     this.shardInfo = options.shardInfo;
     this.settlementInterval = options.transactionSettlementInterval;
+    this.withdrawalInterval = options.withdrawalProcessingInterval;
     this.maxSettlementsPerAccount = options.maxTransactionSettlementsPerAccount;
 
     this.mainWalletAddress = options.mainInfo.mainWalletAddress;
-    this.requiredBlockConfirmations = options.mainInfo.requiredBlockConfirmations;
+    this.requiredDepositBlockConfirmations = options.mainInfo.requiredDepositBlockConfirmations;
+    this.requiredWithdrawalBlockConfirmations = options.mainInfo.requiredWithdrawalBlockConfirmations;
     this.blockPollInterval = options.blockPollInterval;
     this.blockFetchLimit = options.blockFetchLimit;
     this.blockchainSync = options.blockchainSync;
@@ -71,8 +73,21 @@ class AccountService extends AsyncStreamEmitter {
     (async () => {
       for await (let packet of this.blockProcessingStream) {
         try {
-          await this.processNextBlocks();
+          await this.processBlockchainDeposits();
           await this.settlePendingDeposits(this.lastBlockHeight);
+        } catch (error) {
+          this.emit('error', {error});
+        }
+      }
+    })();
+
+
+    this.withdrawalProcessingStream = new WritableConsumableStream();
+
+    (async () => {
+      for await (let packet of this.withdrawalProcessingStream) {
+        try {
+          await this.processPendingWithdrawals(this.lastBlockHeight);
         } catch (error) {
           this.emit('error', {error});
         }
@@ -83,6 +98,7 @@ class AccountService extends AsyncStreamEmitter {
       this.startBlockchainSyncInterval();
     }
     this.startSettlementInterval();
+    this.startWithdrawalInterval();
   }
 
   async getAccountsByDepositWalletAddress(walletAddress) {
@@ -228,50 +244,6 @@ class AccountService extends AsyncStreamEmitter {
         );
       })
     );
-  }
-
-  async settleTransaction(transactionId) {
-    let result = await this.thinky.r.table('Transaction')
-    .get(transactionId)
-    .update({settled: true, settledDate: this.thinky.r.now()})
-    .run();
-
-    if (!result.replaced) {
-      throw new Error(
-        `Failed to settle transaction ${transactionId}`
-      );
-    }
-  }
-
-  /*
-    withdrawal.accountId: The id of the account from which to withdraw.
-    withdrawal.amount: The amount of tokens to withdraw.
-    withdrawal.walletAddress: The blockchain wallet address to send the tokens to.
-  */
-  async execWithdrawal(withdrawal) {
-    let settlementShardKey = getShardKey(withdrawal.accountId);
-    let transactionId = uuid.v4();
-
-    let signedTransaction = await this.blockchainAdapter.signTransaction(
-      {
-        kind: 'send',
-        amount,
-        recipient: withdrawal.walletAddress
-      },
-      this.blockchainNodeWalletPassphrase
-    );
-
-    await this.crud.create({
-      type: 'Withdrawal',
-      value: {
-        createdDate: this.thinky.r.now(),
-        settled: false,
-        settlementShardKey,
-        transactionId,
-        signedTransaction,
-        ...withdrawal
-      }
-    });
   }
 
   hashPassword(password, salt) {
@@ -432,7 +404,7 @@ class AccountService extends AsyncStreamEmitter {
     return accountData;
   }
 
-  async processNextBlocks() {
+  async processBlockchainDeposits() {
     let state;
     try {
       state = JSON.parse(
@@ -520,7 +492,7 @@ class AccountService extends AsyncStreamEmitter {
     if (this.shardInfo.shardIndex == null || this.shardInfo.shardCount == null) {
       return;
     }
-    let targetHeight = currentBlockHeight - this.requiredBlockConfirmations;
+    let targetHeight = currentBlockHeight - this.requiredDepositBlockConfirmations;
     let shardRange = getShardRange(this.shardInfo.shardIndex, this.shardInfo.shardCount);
     let unsettledDeposits = await this.thinky.r.table('Deposit')
     .between(shardRange.start, shardRange.end, {index: 'settlementShardKey'})
@@ -532,7 +504,7 @@ class AccountService extends AsyncStreamEmitter {
       unsettledDeposits.map(async (deposit) => {
         let blockchainTxnResult;
         try {
-          blockchainTxnResult = await this.blockchainAdapter.fetchTransaction(deposit.id);
+          blockchainTxnResult = await this.blockchainAdapter.fetchTransaction(deposit.id); // TODO 222 Use data instead of transaction as property
         } catch (error) {
           this.emit('error', {error});
           return;
@@ -565,7 +537,7 @@ class AccountService extends AsyncStreamEmitter {
         if (
           blockchainTxnResult.transaction &&
           typeof blockchainTxnResult.transaction.confirmations === 'number' &&
-          blockchainTxnResult.transaction.confirmations < this.requiredBlockConfirmations
+          blockchainTxnResult.transaction.confirmations < this.requiredDepositBlockConfirmations
         ) {
           this.emit('error', {
             error: new Error(
@@ -574,7 +546,7 @@ class AccountService extends AsyncStreamEmitter {
               } had ${
                 blockchainTxnResult.transaction.confirmations
               } confirmations. ${
-                this.requiredBlockConfirmations
+                this.requiredDepositBlockConfirmations
               } confirmations are required for settlement.`
             )
           });
@@ -679,15 +651,33 @@ class AccountService extends AsyncStreamEmitter {
     let targetAccount = targetAccountList[0];
 
     let balanceResult = await this.blockchainAdapter.fetchWalletBalance(targetAccount.depositWalletAddress);
-    let fees = await this.blockchainAdapter.fetchFees(blockchainTransaction);
-    let amount = Number(balanceResult.balance) - fees; // TODO 2: Use BigInt
+    if (!balanceResult.success) {
+      this.emit('error', {
+        error: new Error(
+          `Failed to fetch the balance of wallet address ${
+            targetAccount.depositWalletAddress
+          } during deposit processing`
+        )
+      });
+      return;
+    }
+    let feesResult = await this.blockchainAdapter.fetchFees(blockchainTransaction);
+    if (!feesResult.success) {
+      this.emit('error', {
+        error: new Error(
+          `Failed to fetch transaction fees for the blockchain transaction ${blockchainTransaction.id}`
+        )
+      });
+      return;
+    }
+    let amount = Number(balanceResult.balance) - feesResult.fees; // TODO 2: Use BigInt
 
     if (amount < 0) {
       this.emit('error', {
         error: new Error(
           `Funds from the deposit wallet address ${
             targetAccount.depositWalletAddress
-          } could not be moved to the main wallet because the deposit wallet balance was too low.`
+          } could not be moved to the main wallet because the deposit wallet balance was too low`
         )
       });
       return;
@@ -704,12 +694,109 @@ class AccountService extends AsyncStreamEmitter {
     await this.blockchainAdapter.sendTransaction(signedTransaction);
   }
 
+  /*
+    withdrawal.accountId: The id of the account from which to withdraw.
+    withdrawal.amount: The amount of tokens to withdraw.
+    withdrawal.walletAddress: The blockchain wallet address to send the tokens to.
+  */
+  async execWithdrawal(withdrawal) {
+    let settlementShardKey = getShardKey(withdrawal.accountId);
+    let transactionId = uuid.v4();
+
+    let signedTransaction = await this.blockchainAdapter.signTransaction(
+      {
+        kind: 'send',
+        amount,
+        recipient: withdrawal.walletAddress
+      },
+      this.blockchainNodeWalletPassphrase
+    );
+
+    await this.crud.create({
+      type: 'Withdrawal',
+      value: {
+        createdDate: this.thinky.r.now(),
+        settled: false,
+        settlementShardKey,
+        transactionId,
+        signedTransaction,
+        ...withdrawal,
+        id: signedTransaction.id
+      }
+    });
+
+    await this.execTransaction({
+      id: transactionId,
+      accountId: withdrawal.accountId,
+      type: 'withdrawal',
+      amount: withdrawal.amount
+    });
+  }
+
+  async processPendingWithdrawals(currentBlockHeight) {
+    if (this.shardInfo.shardIndex == null || this.shardInfo.shardCount == null) {
+      return;
+    }
+    let shardRange = getShardRange(this.shardInfo.shardIndex, this.shardInfo.shardCount);
+    let unprocessedWithdrawals = await this.thinky.r.table('Withdrawal')
+    .between(shardRange.start, shardRange.end, {index: 'settlementShardKey'})
+    .orderBy(this.thinky.r.asc('createdDate'))
+    .run();
+
+    await Promise.all(
+      unprocessedWithdrawals.map((withdrawal) => {
+        let transaction;
+        try {
+          transaction = await this.thinky.r.table('Transaction').get(withdrawal.transactionId).run();
+        } catch (error) {
+          await this.execTransaction({
+            id: withdrawal.transactionId,
+            accountId: withdrawal.accountId,
+            type: 'withdrawal',
+            amount: withdrawal.amount
+          });
+          return;
+        }
+        if (transaction.settled) {
+          let blockchainTxnResult;
+          try {
+            blockchainTxnResult = await this.blockchainAdapter.fetchTransaction(withdrawal.id);
+          } catch (error) {
+            this.emit('error', {error});
+            return;
+          }
+          if (blockchainTxnResult && blockchainTxnResult.success) {
+            let targetHeight = currentBlockHeight - this.requiredWithdrawalBlockConfirmations;
+            if (blockchainTxnResult.transaction && blockchainTxnResult.transaction.height <= targetHeight) {
+              await this.crud.update({
+                type: 'Withdrawal',
+                id: withdrawal.id,
+                value: {
+                  height: blockchainTxnResult.transaction.height,
+                  settled: true,
+                  settledDate: this.thinky.r.now()
+                }
+              });
+              await this.crud.delete({
+                type: 'Withdrawal',
+                id: withdrawal.id,
+                field: 'settlementShardKey'
+              });
+            }
+          } else {
+            await this.blockchainAdapter.sendTransaction(withdrawal.signedTransaction);
+          }
+        }
+      })
+    );
+  }
+
   async startBlockchainSyncInterval() {
     // Catch up to the latest height.
     while (true) {
       let done;
       try {
-        done = await this.processNextBlocks();
+        done = await this.processBlockchainDeposits();
       } catch (error) {
         this.emit('error', {error});
       }
@@ -744,6 +831,21 @@ class AccountService extends AsyncStreamEmitter {
         this.emit('error', {error});
       }
     }, this.settlementInterval);
+  }
+
+  async startWithdrawalInterval() {
+    if (this._withdrawalIntervalRef != null) {
+      clearInterval(this._withdrawalIntervalRef);
+    }
+    this._withdrawalIntervalRef = setInterval(async () => {
+      this.withdrawalProcessingStream.write({time: Date.now()});
+      if (this.withdrawalProcessingStream.getBackpressure() > HIGH_BACKPRESSURE_THRESHOLD) {
+        let error = new Error(
+          'The withdrawal processing getBackpressure is too high. This may cause delays in processing withdrawals.'
+        );
+        this.emit('error', {error});
+      }
+    }, this.withdrawalInterval);
   }
 }
 

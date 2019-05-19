@@ -4,6 +4,7 @@ module.exports = {
   services: {
     account: {
       transactionSettlementInterval: 5000,
+      withdrawalProcessingInterval: 5000,
       maxTransactionSettlementsPerAccount: 100,
       blockchainAdapterPath: null,
       blockchainSync: true,
@@ -23,7 +24,8 @@ module.exports = {
       unit: '100000000'
     },
     mainWalletAddress: '16237277499158857342R',
-    requiredBlockConfirmations: 3,
+    requiredDepositBlockConfirmations: 3,
+    requiredWithdrawalBlockConfirmations: 3,
     maxRecordDisplayAge: 2592000000
   }
 };

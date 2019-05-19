@@ -205,10 +205,10 @@ function getSchema(options) {
       fields: {
         accountId: type.string(),
         transactionId: type.string(),
+        height: type.number().default(null),
         signedTransaction: type.string(),
         walletAddress: type.string(),
         amount: type.string(),
-        lastAttempt: type.date().optional(),
         canceled: type.boolean().default(false),
         settled: type.boolean().default(false),
         settledDate: type.date().optional(),
@@ -218,7 +218,6 @@ function getSchema(options) {
       indexes: [
         'accountId',
         'transactionId',
-        'lastAttempt',
         'createdDate',
         'settlementShardKey',
         {
