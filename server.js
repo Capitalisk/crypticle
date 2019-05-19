@@ -48,14 +48,18 @@ const TOKEN_EXPIRY_SECONDS = 60 * 60;
 const envConfig = config[ENVIRONMENT];
 
 (async () => {
-  let {blockchainNodeWalletPassphrase} = await prompt([
-    {
-      type: 'password',
-      message: 'Please insert your hot wallet passphrase (to process blockchain withdrawals)',
-      name: 'blockchainNodeWalletPassphrase',
-      default: null
-    }
-  ]);
+  let {blockchainNodeWalletPassphrase} = envConfig.services.account;
+  if (!blockchainNodeWalletPassphrase) {
+    let result = await prompt([
+      {
+        type: 'input',
+        message: 'Insert your blockchain hot wallet passphrase (to process withdrawals):',
+        name: 'value',
+        default: null
+      }
+    ]);
+    blockchainNodeWalletPassphrase = result.value;
+  }
 
   const dataSchema = getSchema({
     dbName: DB_NAME,
@@ -188,6 +192,25 @@ const envConfig = config[ENVIRONMENT];
       (async () => {
         for await (let request of socket.procedure('getMainInfo')) {
           request.end(envConfig.mainInfo);
+        }
+      })();
+
+      (async () => {
+        // TODO 2: Respond with error in middleware if user is not logged in properly.
+        for await (let request of socket.procedure('withdrawBalance')) {
+          let withdrawalData = request.data || {};
+          try {
+            await accountService.execWithdrawal({
+              accountId: socket.authToken.accountId,
+              amount: withdrawalData.amount,
+              walletAddress: withdrawalData.walletAddress
+            });
+          } catch (error) {
+            request.error(error);
+            console.error(error);
+            continue;
+          }
+          request.end();
         }
       })();
 

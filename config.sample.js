@@ -6,6 +6,7 @@ module.exports = {
       transactionSettlementInterval: 5000,
       withdrawalProcessingInterval: 5000,
       maxTransactionSettlementsPerAccount: 100,
+      blockchainNodeWalletPassphrase: 'drastic spot aerobic web wave tourist library first scout fatal inherit arrange',
       blockchainAdapterPath: null,
       blockchainSync: true,
       blockchainNodeAddress: 'https://wallet.rise.vision',
@@ -23,7 +24,7 @@ module.exports = {
       symbol: 'RISE',
       unit: '100000000'
     },
-    mainWalletAddress: '5920507067941756798R',
+    mainWalletAddress: '16460447528999404929R',
     requiredDepositBlockConfirmations: 102,
     requiredWithdrawalBlockConfirmations: 102,
     maxRecordDisplayAge: 2592000000

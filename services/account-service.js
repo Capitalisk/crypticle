@@ -380,7 +380,7 @@ class AccountService extends AsyncStreamEmitter {
   }
 
   async verifyLoginCredentials(credentials) {
-    if (typeof credentials.username !== 'string') {
+    if (!credentials || typeof credentials.username !== 'string') {
       let err = new Error('Username was in an invalid format');
       err.name = 'InvalidCredentialsError';
       throw err;
@@ -678,7 +678,7 @@ class AccountService extends AsyncStreamEmitter {
       });
       return;
     }
-    let amount = Number(balanceResult.balance) - feesResult.fees; // TODO 2: Use BigInt
+    let amount = Number(balanceResult.balance) - Number(feesResult.fees); // TODO 2: Use BigInt
 
     if (amount < 0) {
       this.emit('error', {
@@ -714,11 +714,23 @@ class AccountService extends AsyncStreamEmitter {
     let signedTransaction = await this.blockchainAdapter.signTransaction(
       {
         kind: 'send',
-        amount,
+        amount: withdrawal.amount,
         recipient: withdrawal.walletAddress
       },
       this.blockchainNodeWalletPassphrase
     );
+
+    let feesResult = await this.blockchainAdapter.fetchFees(signedTransaction);
+    if (!feesResult.success) {
+      throw new Error(
+        `Failed to calculate fees when attempting to withdraw to wallet address ${
+          withdrawal.walletAddress
+        } from account ${
+          withdrawal.accountId
+        }`
+      );
+    }
+    let {fees} = feesResult;
 
     await this.crud.create({
       type: 'Withdrawal',
@@ -727,18 +739,26 @@ class AccountService extends AsyncStreamEmitter {
         settled: false,
         settlementShardKey,
         transactionId,
-        signedTransaction,
+        signedTransaction: JSON.stringify(signedTransaction),
         ...withdrawal,
+        fees,
         id: signedTransaction.id
       }
     });
 
-    await this.execTransaction({
-      id: transactionId,
-      accountId: withdrawal.accountId,
-      type: 'withdrawal',
-      amount: withdrawal.amount
-    });
+    let totalAmount = BigInt(withdrawal.amount) + BigInt(fees);
+    try {
+      await this.execTransaction({
+        id: transactionId,
+        accountId: withdrawal.accountId,
+        type: 'withdrawal',
+        amount: totalAmount.toString()
+      });
+    } catch (error) {
+      // If it fails here, the transaction will be created later during
+      // the processing phase.
+      this.emit('error', {error});
+    }
   }
 
   async processPendingWithdrawals(currentBlockHeight) {
@@ -757,11 +777,23 @@ class AccountService extends AsyncStreamEmitter {
         try {
           transaction = await this.thinky.r.table('Transaction').get(withdrawal.transactionId).run();
         } catch (error) {
+          let feesResult = await this.blockchainAdapter.fetchFees(signedTransaction);
+          if (!feesResult.success) {
+            throw new Error(
+              `Failed to calculate fees when attempting to process withdrawal to wallet address ${
+                withdrawal.walletAddress
+              } from account ${
+                withdrawal.accountId
+              }`
+            );
+          }
+          let {fees} = feesResult;
+          let totalAmount = BigInt(withdrawal.amount) + BigInt(fees);
           await this.execTransaction({
             id: withdrawal.transactionId,
             accountId: withdrawal.accountId,
             type: 'withdrawal',
-            amount: withdrawal.amount
+            amount: totalAmount.toString()
           });
           return;
         }
@@ -786,7 +818,8 @@ class AccountService extends AsyncStreamEmitter {
               });
             }
           } else {
-            await this.blockchainAdapter.sendTransaction(withdrawal.signedTransaction);
+            let signedTransaction = JSON.parse(withdrawal.signedTransaction);
+            await this.blockchainAdapter.sendTransaction(signedTransaction);
           }
         }
       })

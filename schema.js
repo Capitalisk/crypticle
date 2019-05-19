@@ -209,6 +209,7 @@ function getSchema(options) {
         signedTransaction: type.string(),
         walletAddress: type.string(),
         amount: type.string(),
+        fees: type.string(),
         canceled: type.boolean().default(false),
         settled: type.boolean().default(false),
         settledDate: type.date().optional(),
