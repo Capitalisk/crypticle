@@ -20,7 +20,7 @@ function getComponent(options) {
         viewParams: {
           accountId: socket.authToken && socket.authToken.accountId
         },
-        fields: ['transactionId', 'height', 'createdDate'],
+        fields: ['transactionId', 'amount', 'height', 'createdDate'],
         defaultFieldValues: {
           transaction: {}
         },
@@ -90,11 +90,13 @@ function getComponent(options) {
             <tr>
               <th>Withdrawal ID</th>
               <th>Amount</th>
+              <th>Height</th>
               <th>Date</th>
             </tr>
             <tr v-for="wit of withdrawals">
               <td>{{wit.id}}</td>
-              <td>{{toBlockchainUnits(wit.transaction.amount)}}<span v-if="mainInfo.cryptocurrency"> {{mainInfo.cryptocurrency.symbol}}</span></td>
+              <td>{{toBlockchainUnits(wit.amount)}}<span v-if="mainInfo.cryptocurrency"> {{mainInfo.cryptocurrency.symbol}}</span></td>
+              <td>{{wit.height}}</td>
               <td>{{toSimpleDate(wit.createdDate)}}</td>
             </tr>
           </table>

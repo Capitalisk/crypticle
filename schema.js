@@ -235,9 +235,7 @@ function getSchema(options) {
       views: {
         accountWithdrawalsPendingView: {
           paramFields: ['accountId'],
-          foreignAffectingFields: {
-            Transaction: ['settled']
-          },
+          affectingFields: ['settled'],
           transform: function (fullTableQuery, r, params) {
             let startTime = r.now().sub(options.maxRecordDisplayAge / 1000);
             return fullTableQuery
@@ -246,20 +244,13 @@ function getSchema(options) {
               [params.accountId, r.maxval],
               {index: 'accountIdCreatedDate', rightBound: 'closed'}
             )
-            .filter(
-              r.db(options.dbName).table('Transaction')
-              .getAll(r.row('transactionId'), {index: 'id'})
-              .filter(txn => txn('settled').eq(true))
-              .count().eq(0)
-            )
+            .filter(r.row('settled').eq(false))
             .orderBy(r.desc('createdDate'));
           }
         },
         accountWithdrawalsSettledView: {
           paramFields: ['accountId'],
-          foreignAffectingFields: {
-            Transaction: ['settled']
-          },
+          affectingFields: ['settled'],
           transform: function (fullTableQuery, r, params) {
             let startTime = r.now().sub(options.maxRecordDisplayAge / 1000);
             return fullTableQuery
@@ -268,12 +259,7 @@ function getSchema(options) {
               [params.accountId, r.maxval],
               {index: 'accountIdCreatedDate', rightBound: 'closed'}
             )
-            .filter(
-              r.db(options.dbName).table('Transaction')
-              .getAll(r.row('transactionId'), {index: 'id'})
-              .filter(txn => txn('settled').eq(true))
-              .count().gt(0)
-            )
+            .filter(r.row('settled').eq(true))
             .orderBy(r.desc('createdDate'));
           }
         }
