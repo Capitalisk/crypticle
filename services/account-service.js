@@ -81,7 +81,6 @@ class AccountService extends AsyncStreamEmitter {
       }
     })();
 
-
     this.withdrawalProcessingStream = new WritableConsumableStream();
 
     (async () => {
@@ -217,12 +216,21 @@ class AccountService extends AsyncStreamEmitter {
             value: txnData
           });
         }
+        account.isFullyProcessed = true;
+      })
+      .map((promise) => {
+        return promise.catch((error) => {
+          this.emit('error', {error});
+        });
       })
     );
 
     await Promise.all(
       unsettledAccoundIds.map(async (accountId) => {
         let account = accountLedger[accountId];
+        if (!account.isFullyProcessed) {
+          return;
+        }
         let txnsToRemoveShardKey = [];
         if (account.lastSettledTransaction) {
           txnsToRemoveShardKey.push(account.lastSettledTransaction);
@@ -242,6 +250,11 @@ class AccountService extends AsyncStreamEmitter {
             });
           })
         );
+      })
+      .map((promise) => {
+        return promise.catch((error) => {
+          this.emit('error', {error});
+        });
       })
     );
   }
@@ -502,13 +515,7 @@ class AccountService extends AsyncStreamEmitter {
 
     await Promise.all(
       unsettledDeposits.map(async (deposit) => {
-        let blockchainTxnResult;
-        try {
-          blockchainTxnResult = await this.blockchainAdapter.fetchTransaction(deposit.id); // TODO 222 Use data instead of transaction as property
-        } catch (error) {
-          this.emit('error', {error});
-          return;
-        }
+        let blockchainTxnResult = await this.blockchainAdapter.fetchTransaction(deposit.id); // TODO 222 Use data instead of transaction as property
         if (!blockchainTxnResult || !blockchainTxnResult.success) {
           this.emit('error', {
             error: new Error(
@@ -539,18 +546,15 @@ class AccountService extends AsyncStreamEmitter {
           typeof blockchainTxnResult.transaction.confirmations === 'number' &&
           blockchainTxnResult.transaction.confirmations < this.requiredDepositBlockConfirmations
         ) {
-          this.emit('error', {
-            error: new Error(
-              `The blockchain transaction ${
-                deposit.id
-              } had ${
-                blockchainTxnResult.transaction.confirmations
-              } confirmations. ${
-                this.requiredDepositBlockConfirmations
-              } confirmations are required for settlement.`
-            )
-          });
-          return;
+          throw new Error(
+            `The blockchain transaction ${
+              deposit.id
+            } had ${
+              blockchainTxnResult.transaction.confirmations
+            } confirmations. ${
+              this.requiredDepositBlockConfirmations
+            } confirmations are required for settlement.`
+          );
         }
 
         let transaction = {
@@ -566,8 +570,7 @@ class AccountService extends AsyncStreamEmitter {
           if (existingTransaction == null) {
             // This means that the transaction could not be created because of an exception because it does not
             // yet exist.
-            this.emit('error', {error});
-            return;
+            throw error;
           }
           // If existingTransaction is not null, it means that the transaction already exists (and this caused the error).
           // This could mean that this function failed to update/cleanup the underlying deposit on the last round.
@@ -585,6 +588,11 @@ class AccountService extends AsyncStreamEmitter {
           type: 'Deposit',
           id: deposit.id,
           field: 'settlementShardKey'
+        });
+      })
+      .map((promise) => {
+        return promise.catch((error) => {
+          this.emit('error', {error});
         });
       })
     );
@@ -744,7 +752,7 @@ class AccountService extends AsyncStreamEmitter {
     .run();
 
     await Promise.all(
-      unprocessedWithdrawals.map((withdrawal) => {
+      unprocessedWithdrawals.map(async (withdrawal) => {
         let transaction;
         try {
           transaction = await this.thinky.r.table('Transaction').get(withdrawal.transactionId).run();
@@ -758,13 +766,7 @@ class AccountService extends AsyncStreamEmitter {
           return;
         }
         if (transaction.settled) {
-          let blockchainTxnResult;
-          try {
-            blockchainTxnResult = await this.blockchainAdapter.fetchTransaction(withdrawal.id);
-          } catch (error) {
-            this.emit('error', {error});
-            return;
-          }
+          let blockchainTxnResult = await this.blockchainAdapter.fetchTransaction(withdrawal.id);
           if (blockchainTxnResult && blockchainTxnResult.success) {
             let targetHeight = currentBlockHeight - this.requiredWithdrawalBlockConfirmations;
             if (blockchainTxnResult.transaction && blockchainTxnResult.transaction.height <= targetHeight) {
@@ -787,6 +789,11 @@ class AccountService extends AsyncStreamEmitter {
             await this.blockchainAdapter.sendTransaction(withdrawal.signedTransaction);
           }
         }
+      })
+      .map((promise) => {
+        return promise.catch((error) => {
+          this.emit('error', {error});
+        });
       })
     );
   }
