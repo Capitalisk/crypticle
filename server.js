@@ -196,6 +196,7 @@ const envConfig = config[ENVIRONMENT];
       })();
 
       (async () => {
+        // TODO 2: Validate request data.
         // TODO 2: Respond with error in middleware if user is not logged in properly.
         for await (let request of socket.procedure('withdrawBalance')) {
           let withdrawalData = request.data || {};
@@ -203,7 +204,7 @@ const envConfig = config[ENVIRONMENT];
             await accountService.execWithdrawal({
               accountId: socket.authToken.accountId,
               amount: withdrawalData.amount,
-              walletAddress: withdrawalData.walletAddress
+              toWalletAddress: withdrawalData.toWalletAddress
             });
           } catch (error) {
             request.error(error);

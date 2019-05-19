@@ -30,19 +30,19 @@ class RiseAdapter {
   }
 
   async fetchHeight() {
-    return rise.blocks.getHeight();
+    return (await rise.blocks.getHeight()).height;
   }
 
   async fetchBlocks(queryParams) {
-    return rise.blocks.getBlocks(queryParams);
+    return (await rise.blocks.getBlocks(queryParams)).blocks;
   }
 
   async fetchTransaction(transactionId) {
-    return rise.transactions.get(transactionId);
+    return (await rise.transactions.get(transactionId)).transaction;
   }
 
   async fetchWalletBalance(walletAddress) {
-    return rise.accounts.getBalance(walletAddress);
+    return (await rise.accounts.getBalance(walletAddress)).balance;
   }
 
 	signTransaction(transaction, passphrase) {
@@ -54,10 +54,7 @@ class RiseAdapter {
   }
 
   async fetchFees(transaction) {
-    return {
-			success: true,
-			fees: Rise.txs.baseFees.send.toString()
-		};
+    return Rise.txs.baseFees.send.toString();
   }
 }
 

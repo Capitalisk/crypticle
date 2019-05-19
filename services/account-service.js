@@ -36,6 +36,7 @@ class AccountService extends AsyncStreamEmitter {
     this.settlementInterval = options.transactionSettlementInterval;
     this.withdrawalInterval = options.withdrawalProcessingInterval;
     this.maxSettlementsPerAccount = options.maxTransactionSettlementsPerAccount;
+    this.blockchainWithdrawalMaxBlocksRetry = options.blockchainWithdrawalMaxBlocksRetry;
 
     this.mainWalletAddress = options.mainInfo.mainWalletAddress;
     this.requiredDepositBlockConfirmations = options.mainInfo.requiredDepositBlockConfirmations;
@@ -429,14 +430,13 @@ class AccountService extends AsyncStreamEmitter {
       this.emit('error', {error});
     }
 
-    let heightResult;
+    let height;
     try {
-      heightResult = await this.blockchainAdapter.fetchHeight();
+      height = await this.blockchainAdapter.fetchHeight();
     } catch (error) {
       this.emit('error', {error});
       return false;
     }
-    let {height} = heightResult;
 
     if (!state) {
       state = {
@@ -447,7 +447,7 @@ class AccountService extends AsyncStreamEmitter {
     let {syncFromBlockHeight} = state;
     this.lastBlockHeight = syncFromBlockHeight;
 
-    let blocksResult;
+    let blocks;
     let lastTargetBlockHeight = syncFromBlockHeight + this.blockFetchLimit;
     let safeHeightDiff = lastTargetBlockHeight - height;
     if (safeHeightDiff < 0) {
@@ -459,7 +459,7 @@ class AccountService extends AsyncStreamEmitter {
     }
 
     try {
-      blocksResult = await this.blockchainAdapter.fetchBlocks({
+      blocks = await this.blockchainAdapter.fetchBlocks({
         orderBy: 'height:asc',
         offset: syncFromBlockHeight,
         limit: this.blockFetchLimit - safeHeightDiff
@@ -468,8 +468,6 @@ class AccountService extends AsyncStreamEmitter {
       this.emit('error', {error});
       return false;
     }
-
-    let blocks = blocksResult.blocks || [];
 
     let blockCount = blocks.length;
     for (let i = 0; i < blockCount; i++) {
@@ -515,8 +513,8 @@ class AccountService extends AsyncStreamEmitter {
 
     await Promise.all(
       unsettledDeposits.map(async (deposit) => {
-        let blockchainTxnResult = await this.blockchainAdapter.fetchTransaction(deposit.id); // TODO 222 Use data instead of transaction as property
-        if (!blockchainTxnResult || !blockchainTxnResult.success) {
+        let blockchainTxn = await this.blockchainAdapter.fetchTransaction(deposit.id);
+        if (blockchainTxn == null) {
           this.emit('error', {
             error: new Error(
               `The blockchain transaction ${
@@ -542,15 +540,14 @@ class AccountService extends AsyncStreamEmitter {
         }
 
         if (
-          blockchainTxnResult.transaction &&
-          typeof blockchainTxnResult.transaction.confirmations === 'number' &&
-          blockchainTxnResult.transaction.confirmations < this.requiredDepositBlockConfirmations
+          typeof blockchainTxn.confirmations === 'number' &&
+          blockchainTxn.confirmations < this.requiredDepositBlockConfirmations
         ) {
           throw new Error(
             `The blockchain transaction ${
               deposit.id
             } had ${
-              blockchainTxnResult.transaction.confirmations
+              blockchainTxn.confirmations
             } confirmations. ${
               this.requiredDepositBlockConfirmations
             } confirmations are required for settlement.`
@@ -658,8 +655,8 @@ class AccountService extends AsyncStreamEmitter {
 
     let targetAccount = targetAccountList[0];
 
-    let balanceResult = await this.blockchainAdapter.fetchWalletBalance(targetAccount.depositWalletAddress);
-    if (!balanceResult.success) {
+    let balance = await this.blockchainAdapter.fetchWalletBalance(targetAccount.depositWalletAddress);
+    if (balance == null) {
       this.emit('error', {
         error: new Error(
           `Failed to fetch the balance of wallet address ${
@@ -669,8 +666,8 @@ class AccountService extends AsyncStreamEmitter {
       });
       return;
     }
-    let feesResult = await this.blockchainAdapter.fetchFees(blockchainTransaction);
-    if (!feesResult.success) {
+    let fees = await this.blockchainAdapter.fetchFees(blockchainTransaction);
+    if (fees == null) {
       this.emit('error', {
         error: new Error(
           `Failed to fetch transaction fees for the blockchain transaction ${blockchainTransaction.id}`
@@ -678,7 +675,7 @@ class AccountService extends AsyncStreamEmitter {
       });
       return;
     }
-    let amount = Number(balanceResult.balance) - Number(feesResult.fees); // TODO 2: Use BigInt
+    let amount = Number(balance) - Number(fees); // TODO 2: Use BigInt
 
     if (amount < 0) {
       this.emit('error', {
@@ -705,7 +702,7 @@ class AccountService extends AsyncStreamEmitter {
   /*
     withdrawal.accountId: The id of the account from which to withdraw.
     withdrawal.amount: The amount of tokens to withdraw.
-    withdrawal.walletAddress: The blockchain wallet address to send the tokens to.
+    withdrawal.toWalletAddress: The blockchain wallet address to send the tokens to.
   */
   async execWithdrawal(withdrawal) {
     let settlementShardKey = getShardKey(withdrawal.accountId);
@@ -715,22 +712,27 @@ class AccountService extends AsyncStreamEmitter {
       {
         kind: 'send',
         amount: withdrawal.amount,
-        recipient: withdrawal.walletAddress
+        recipient: withdrawal.toWalletAddress
       },
       this.blockchainNodeWalletPassphrase
     );
 
-    let feesResult = await this.blockchainAdapter.fetchFees(signedTransaction);
-    if (!feesResult.success) {
+    let fees = await this.blockchainAdapter.fetchFees(signedTransaction);
+    if (fees == null) {
       throw new Error(
         `Failed to calculate fees when attempting to withdraw to wallet address ${
-          withdrawal.walletAddress
+          withdrawal.toWalletAddress
         } from account ${
           withdrawal.accountId
         }`
       );
     }
-    let {fees} = feesResult;
+    let height;
+    if (this.lastBlockHeight == null) {
+      height = await this.blockchainAdapter.fetchHeight();
+    } else {
+      height = this.lastBlockHeight;
+    }
 
     await this.crud.create({
       type: 'Withdrawal',
@@ -740,7 +742,11 @@ class AccountService extends AsyncStreamEmitter {
         settlementShardKey,
         transactionId,
         signedTransaction: JSON.stringify(signedTransaction),
-        ...withdrawal,
+        accountId: withdrawal.accountId,
+        amount: withdrawal.amount,
+        toWalletAddress: withdrawal.toWalletAddress,
+        fromWalletAddress: signedTransaction.senderId,
+        firstAttemptedHeight: height,
         fees,
         id: signedTransaction.id
       }
@@ -777,17 +783,16 @@ class AccountService extends AsyncStreamEmitter {
         try {
           transaction = await this.thinky.r.table('Transaction').get(withdrawal.transactionId).run();
         } catch (error) {
-          let feesResult = await this.blockchainAdapter.fetchFees(signedTransaction);
-          if (!feesResult.success) {
+          let fees = await this.blockchainAdapter.fetchFees(signedTransaction);
+          if (fees == null) {
             throw new Error(
               `Failed to calculate fees when attempting to process withdrawal to wallet address ${
-                withdrawal.walletAddress
+                withdrawal.toWalletAddress
               } from account ${
                 withdrawal.accountId
               }`
             );
           }
-          let {fees} = feesResult;
           let totalAmount = BigInt(withdrawal.amount) + BigInt(fees);
           await this.execTransaction({
             id: withdrawal.transactionId,
@@ -798,15 +803,15 @@ class AccountService extends AsyncStreamEmitter {
           return;
         }
         if (transaction.settled) {
-          let blockchainTxnResult = await this.blockchainAdapter.fetchTransaction(withdrawal.id);
-          if (blockchainTxnResult && blockchainTxnResult.success) {
+          let blockchainTxn = await this.blockchainAdapter.fetchTransaction(withdrawal.id);
+          if (blockchainTxn != null) {
             let targetHeight = currentBlockHeight - this.requiredWithdrawalBlockConfirmations;
-            if (blockchainTxnResult.transaction && blockchainTxnResult.transaction.height <= targetHeight) {
+            if (blockchainTxn.height <= targetHeight) {
               await this.crud.update({
                 type: 'Withdrawal',
                 id: withdrawal.id,
                 value: {
-                  height: blockchainTxnResult.transaction.height,
+                  height: blockchainTxn.height,
                   settled: true,
                   settledDate: this.thinky.r.now()
                 }
@@ -817,10 +822,38 @@ class AccountService extends AsyncStreamEmitter {
                 field: 'settlementShardKey'
               });
             }
-          } else {
-            let signedTransaction = JSON.parse(withdrawal.signedTransaction);
-            await this.blockchainAdapter.sendTransaction(signedTransaction);
+            return;
           }
+
+          let blocksDiff = currentBlockHeight - withdrawal.firstAttemptedHeight;
+          if (blocksDiff > this.blockchainWithdrawalMaxBlocksRetry) {
+            this.emit('error', {
+              error: new Error(
+                `Failed to process withdrawal ${
+                  withdrawal.id
+                } before the maximum retry threshold was reached`
+              )
+            });
+
+            await this.crud.update({
+              type: 'Withdrawal',
+              id: withdrawal.id,
+              value: {
+                canceled: true,
+                settled: true,
+                settledDate: this.thinky.r.now()
+              }
+            });
+            await this.crud.delete({
+              type: 'Withdrawal',
+              id: withdrawal.id,
+              field: 'settlementShardKey'
+            });
+            return;
+          }
+
+          let signedTransaction = JSON.parse(withdrawal.signedTransaction);
+          await this.blockchainAdapter.sendTransaction(signedTransaction);
         }
       })
       .map((promise) => {
