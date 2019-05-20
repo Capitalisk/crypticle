@@ -427,12 +427,15 @@ class AccountService extends AsyncStreamEmitter {
         })
       );
     } catch (error) {
-      this.emit('error', {error});
+      this.emit('info', {
+        info: `Could not find a valid state file at path ${STATE_FILE_PATH}. A new one will be created.`
+      });
     }
 
     let height;
     try {
-      height = await this.blockchainAdapter.fetchHeight();
+      // Stay one block late to allow for wallet balances to settle.
+      height = await this.blockchainAdapter.fetchHeight() - 1;
     } catch (error) {
       this.emit('error', {error});
       return false;
@@ -620,8 +623,6 @@ class AccountService extends AsyncStreamEmitter {
       });
     } catch (error) {
       // Check if the deposit and transaction have already been created.
-      // If a deposit exists without a matching transaction (e.g. because of a
-      // past insertion failure), create the matching transaction.
       let deposit;
       try {
         deposit = await this.crud.read({
@@ -630,7 +631,7 @@ class AccountService extends AsyncStreamEmitter {
         });
       } catch (err) {
         throw new Error(
-          `Failed to create deposit with external ID ${
+          `Failed to create deposit with ID ${
             blockchainTransaction.id
           } and no existing one could be found - ${error}`
         );
@@ -655,6 +656,16 @@ class AccountService extends AsyncStreamEmitter {
 
     let targetAccount = targetAccountList[0];
 
+    let fees = await this.blockchainAdapter.fetchFees(blockchainTransaction);
+    if (fees == null) {
+      this.emit('error', {
+        error: new Error(
+          `Failed to fetch transaction fees for the blockchain transaction ${blockchainTransaction.id}`
+        )
+      });
+      return;
+    }
+
     let balance = await this.blockchainAdapter.fetchWalletBalance(targetAccount.depositWalletAddress);
     if (balance == null) {
       this.emit('error', {
@@ -666,17 +677,8 @@ class AccountService extends AsyncStreamEmitter {
       });
       return;
     }
-    let fees = await this.blockchainAdapter.fetchFees(blockchainTransaction);
-    if (fees == null) {
-      this.emit('error', {
-        error: new Error(
-          `Failed to fetch transaction fees for the blockchain transaction ${blockchainTransaction.id}`
-        )
-      });
-      return;
-    }
-    let amount = Number(balance) - Number(fees); // TODO 2: Use BigInt
 
+    let amount = Number(balance) - Number(fees); // TODO 2: Use BigInt
     if (amount < 0) {
       this.emit('error', {
         error: new Error(

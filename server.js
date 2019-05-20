@@ -131,6 +131,12 @@ const envConfig = config[ENVIRONMENT];
   })();
 
   (async () => {
+    for await (let {info} of accountService.listener('info')) {
+      console.info('[AccountService]', info);
+    }
+  })();
+
+  (async () => {
     for await (let {block} of accountService.listener('processBlock')) {
       console.log('[AccountService]', `Processed block at height ${block.height}`);
     }
