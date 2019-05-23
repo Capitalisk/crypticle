@@ -702,12 +702,65 @@ class AccountService extends AsyncStreamEmitter {
   }
 
   /*
-    withdrawal.accountId: The id of the account from which to withdraw.
+    transfer.amount: The amount of tokens to transfer.
+    transfer.fromAccountId: The id of the account to debit.
+    transfer.toAccountId: The id of the account to credit.
+    transfer.debitId: The id (UUID) of the underlying debit transaction.
+    transfer.debitData: Custom string to attach to the debit transaction.
+    transfer.creditId: The id (UUID) of the underlying credit transaction.
+    transfer.creditData: Custom string to attach to the credit transaction.
+  */
+  async execTransfer(transfer) {
+    let debitSettlementShardKey = getShardKey(transfer.fromAccountId);
+
+    let debitTransaction = {
+      accountId: transfer.fromAccountId,
+      type: 'debit',
+      amount: transfer.amount,
+      counterpartyId: transfer.toAccountId,
+      data: transfer.debitData,
+      settled: false,
+      settlementShardKey: debitSettlementShardKey,
+      createdDate: this.thinky.r.now()
+    };
+    if (transfer.debitId != null) {
+      debitTransaction.id = transfer.debitId;
+    }
+
+    await this.crud.create({
+      type: 'Transaction',
+      value: debitTransaction
+    });
+
+    let creditSettlementShardKey = getShardKey(transfer.toAccountId);
+
+    let creditTransaction = {
+      accountId: transfer.toAccountId,
+      type: 'credit',
+      amount: transfer.amount,
+      counterpartyId: transfer.fromAccountId,
+      data: transfer.creditData,
+      settled: false,
+      settlementShardKey: creditSettlementShardKey,
+      createdDate: this.thinky.r.now()
+    };
+    if (transfer.creditId != null) {
+      creditTransaction.id = transfer.creditId;
+    }
+
+    await this.crud.create({
+      type: 'Transaction',
+      value: creditTransaction
+    });
+  }
+
+  /*
     withdrawal.amount: The amount of tokens to withdraw.
+    withdrawal.fromAccountId: The id of the account from which to withdraw.
     withdrawal.toWalletAddress: The blockchain wallet address to send the tokens to.
   */
   async execWithdrawal(withdrawal) {
-    let settlementShardKey = getShardKey(withdrawal.accountId);
+    let settlementShardKey = getShardKey(withdrawal.fromAccountId);
     let transactionId = uuid.v4();
 
     let signedTransaction = await this.blockchainAdapter.signTransaction(
@@ -725,7 +778,7 @@ class AccountService extends AsyncStreamEmitter {
         `Failed to calculate fees when attempting to withdraw to wallet address ${
           withdrawal.toWalletAddress
         } from account ${
-          withdrawal.accountId
+          withdrawal.fromAccountId
         }`
       );
     }
@@ -744,7 +797,7 @@ class AccountService extends AsyncStreamEmitter {
         settlementShardKey,
         transactionId,
         signedTransaction: JSON.stringify(signedTransaction),
-        accountId: withdrawal.accountId,
+        accountId: withdrawal.fromAccountId,
         amount: withdrawal.amount,
         toWalletAddress: withdrawal.toWalletAddress,
         fromWalletAddress: signedTransaction.senderId,
@@ -758,7 +811,7 @@ class AccountService extends AsyncStreamEmitter {
     try {
       await this.execTransaction({
         id: transactionId,
-        accountId: withdrawal.accountId,
+        accountId: withdrawal.fromAccountId,
         type: 'withdrawal',
         amount: totalAmount.toString()
       });

@@ -204,13 +204,37 @@ const envConfig = config[ENVIRONMENT];
       (async () => {
         // TODO 2: Validate request data.
         // TODO 2: Respond with error in middleware if user is not logged in properly.
-        for await (let request of socket.procedure('withdrawBalance')) {
+        for await (let request of socket.procedure('withdraw')) {
           let withdrawalData = request.data || {};
           try {
             await accountService.execWithdrawal({
-              accountId: socket.authToken.accountId,
               amount: withdrawalData.amount,
+              fromAccountId: socket.authToken.accountId,
               toWalletAddress: withdrawalData.toWalletAddress
+            });
+          } catch (error) {
+            request.error(error);
+            console.error(error);
+            continue;
+          }
+          request.end();
+        }
+      })();
+
+      (async () => {
+        // TODO 2: Validate request data.
+        // TODO 2: Respond with error in middleware if user is not logged in properly.
+        for await (let request of socket.procedure('transfer')) {
+          let transferData = request.data || {};
+          try {
+            await accountService.execTransfer({
+              amount: transferData.amount,
+              fromAccountId: socket.authToken.accountId,
+              toAccountId: transferData.toAccountId,
+              debitId: transferData.debitId,
+              debitData: transferData.debitData,
+              creditId: transferData.creditId,
+              creditData: transferData.creditData
             });
           } catch (error) {
             request.error(error);
