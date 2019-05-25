@@ -19,7 +19,7 @@ function getComponent(options) {
         viewParams: {
           accountId: socket.authToken && socket.authToken.accountId
         },
-        fields: ['amount', 'createdDate'],
+        fields: ['type', 'amount', 'data', 'createdDate'],
         pageOffset: 0,
         pageSize: 50,
         getCount: true
@@ -31,8 +31,11 @@ function getComponent(options) {
       };
     },
     methods: {
-      toBlockchainUnits: function (amount) {
+      toBlockchainUnits: function (amount, type) {
         let value = Number(amount) / Number(mainInfo.cryptocurrency.unit);
+        if (type === 'debit') {
+          value *= -1;
+        }
         return Math.round(value * 10000) / 10000;
       },
       toSimpleDate: function (dateString) {
@@ -55,11 +58,13 @@ function getComponent(options) {
                 <span>Transaction ID</span>
               </th>
               <th>Amount</th>
+              <th>Data</th>
               <th>Date</th>
             </tr>
             <tr v-for="transaction of transactions">
               <td>{{transaction.id}}</td>
-              <td>{{toBlockchainUnits(transaction.amount)}}<span v-if="mainInfo.cryptocurrency"> {{mainInfo.cryptocurrency.symbol}}</span></td>
+              <td>{{toBlockchainUnits(transaction.amount, transaction.type)}}<span v-if="mainInfo.cryptocurrency"> {{mainInfo.cryptocurrency.symbol}}</span></td>
+              <td>{{transaction.data}}</td>
               <td>{{toSimpleDate(transaction.createdDate)}}</td>
             </tr>
           </table>
