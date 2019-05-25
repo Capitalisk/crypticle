@@ -232,9 +232,8 @@ const envConfig = config[ENVIRONMENT];
               fromAccountId: socket.authToken.accountId,
               toAccountId: transferData.toAccountId,
               debitId: transferData.debitId,
-              debitData: transferData.debitData,
               creditId: transferData.creditId,
-              creditData: transferData.creditData
+              data: transferData.data
             });
           } catch (error) {
             request.error(error);

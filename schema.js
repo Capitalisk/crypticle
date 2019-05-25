@@ -31,7 +31,8 @@ function getSchema(options) {
         accountId: type.string(),
         type: type.string(), // Can be 'deposit', 'withdrawal', 'credit' or 'debit'
         amount: type.string(),
-        counterpartyId: type.string().optional(),
+        counterpartyAccountId: type.string().optional(),
+        counterpartyTransactionId: type.string().optional(),
         data: type.string().optional(),
         balance: type.string().optional(),
         settled: type.boolean().default(false),
@@ -80,6 +81,7 @@ function getSchema(options) {
         },
         accountTransfersPendingView: {
           paramFields: ['accountId'],
+          affectingFields: ['settled'],
           transform: function (fullTableQuery, r, params) {
             let startTime = r.now().sub(options.maxRecordDisplayAge / 1000);
             return fullTableQuery
@@ -98,6 +100,7 @@ function getSchema(options) {
         },
         accountTransfersSettledView: {
           paramFields: ['accountId'],
+          affectingFields: ['settled'],
           transform: function (fullTableQuery, r, params) {
             let startTime = r.now().sub(options.maxRecordDisplayAge / 1000);
             return fullTableQuery

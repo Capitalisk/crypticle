@@ -194,6 +194,12 @@ class AccountService extends AsyncStreamEmitter {
               txn.canceled = true;
             }
           } else if (txn.type === 'debit') {
+            if (txn.counterpartyAccountId != null) {
+              let transferCreditTxn = await this.thinky.r.table('Transaction').get(txn.counterpartyTransactionId).run();
+              if (transferCreditTxn == null) {
+                await this.execTransferCreditFromDebit(txn);
+              }
+            }
             let newBalance = account.balance - BigInt(txn.amount);
             if (newBalance >= 0n) {
               account.balance = newBalance;
@@ -701,57 +707,65 @@ class AccountService extends AsyncStreamEmitter {
     await this.blockchainAdapter.sendTransaction(signedTransaction);
   }
 
+  async execTransferCreditFromDebit(debitTransaction) {
+    let creditSettlementShardKey = getShardKey(debitTransaction.counterpartyAccountId);
+
+    let creditTransaction = {
+      id: debitTransaction.counterpartyTransactionId,
+      accountId: debitTransaction.counterpartyAccountId,
+      type: 'credit',
+      amount: debitTransaction.amount,
+      counterpartyAccountId: debitTransaction.accountId,
+      counterpartyTransactionId: debitTransaction.id,
+      data: debitTransaction.data,
+      settled: false,
+      settlementShardKey: creditSettlementShardKey,
+      createdDate: this.thinky.r.now()
+    };
+
+    await this.crud.create({
+      type: 'Transaction',
+      value: creditTransaction
+    });
+  }
+
   /*
     transfer.amount: The amount of tokens to transfer.
     transfer.fromAccountId: The id of the account to debit.
     transfer.toAccountId: The id of the account to credit.
     transfer.debitId: The id (UUID) of the underlying debit transaction.
-    transfer.debitData: Custom string to attach to the debit transaction.
     transfer.creditId: The id (UUID) of the underlying credit transaction.
-    transfer.creditData: Custom string to attach to the credit transaction.
+    transfer.data: Custom string to attach to the debit transaction.
   */
   async execTransfer(transfer) {
     let debitSettlementShardKey = getShardKey(transfer.fromAccountId);
 
+    if (transfer.debitId == null) {
+      transfer.debitId = uuid.v4();
+    }
+    if (transfer.creditId == null) {
+      transfer.creditId = uuid.v4();
+    }
+
     let debitTransaction = {
+      id: transfer.debitId,
       accountId: transfer.fromAccountId,
       type: 'debit',
       amount: transfer.amount,
-      counterpartyId: transfer.toAccountId,
-      data: transfer.debitData,
+      counterpartyAccountId: transfer.toAccountId,
+      counterpartyTransactionId: transfer.creditId,
+      data: transfer.data,
       settled: false,
       settlementShardKey: debitSettlementShardKey,
       createdDate: this.thinky.r.now()
     };
-    if (transfer.debitId != null) {
-      debitTransaction.id = transfer.debitId;
-    }
 
     await this.crud.create({
       type: 'Transaction',
       value: debitTransaction
     });
 
-    let creditSettlementShardKey = getShardKey(transfer.toAccountId);
-
-    let creditTransaction = {
-      accountId: transfer.toAccountId,
-      type: 'credit',
-      amount: transfer.amount,
-      counterpartyId: transfer.fromAccountId,
-      data: transfer.creditData,
-      settled: false,
-      settlementShardKey: creditSettlementShardKey,
-      createdDate: this.thinky.r.now()
-    };
-    if (transfer.creditId != null) {
-      creditTransaction.id = transfer.creditId;
-    }
-
-    await this.crud.create({
-      type: 'Transaction',
-      value: creditTransaction
-    });
+    await this.execTransferCreditFromDebit(debitTransaction);
   }
 
   /*
