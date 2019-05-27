@@ -19,7 +19,7 @@ function getComponent(options) {
         viewParams: {
           accountId: socket.authToken && socket.authToken.accountId
         },
-        fields: ['transactionId', 'amount', 'height', 'createdDate'],
+        fields: ['transactionId', 'amount', 'height', 'canceled', 'createdDate'],
         pageOffset: 0,
         pageSize: 10
       });
@@ -56,14 +56,14 @@ function getComponent(options) {
             <tr>
               <th>Deposit ID</th>
               <th>Amount</th>
-              <th>Height</th>
+              <th v-if="depositType === 'settled'">Height</th>
               <th v-if="depositType === 'settled'">Status</th>
               <th>Date</th>
             </tr>
             <tr v-for="dep of deposits">
               <td>{{dep.id}}</td>
               <td>{{toBlockchainUnits(dep.amount)}}<span v-if="mainInfo.cryptocurrency"> {{mainInfo.cryptocurrency.symbol}}</span></td>
-              <td>{{dep.height}}</td>
+              <td v-if="depositType === 'settled'">{{dep.height}}</td>
               <td v-if="depositType === 'settled'">{{getStatus(dep.canceled)}}</td>
               <td>{{toSimpleDate(dep.createdDate)}}</td>
             </tr>

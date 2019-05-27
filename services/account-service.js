@@ -777,6 +777,9 @@ class AccountService extends AsyncStreamEmitter {
     let settlementShardKey = getShardKey(withdrawal.fromAccountId);
     let transactionId = uuid.v4();
 
+    // TODO 2: Check if account has sufficient balance.
+    // TODO 2: Check that account doesn't have more than MAX_PENDING_WITHDRAWALS_PER_ACCOUNT concurrent pending withdrawals.
+
     let signedTransaction = await this.blockchainAdapter.signTransaction(
       {
         kind: 'send',
