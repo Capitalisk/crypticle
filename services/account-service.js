@@ -194,15 +194,17 @@ class AccountService extends AsyncStreamEmitter {
               txn.canceled = true;
             }
           } else if (txn.type === 'debit') {
-            if (txn.counterpartyAccountId != null) {
-              let transferCreditTxn = await this.thinky.r.table('Transaction').get(txn.counterpartyTransactionId).run();
-              if (transferCreditTxn == null) {
-                await this.execTransferCreditFromDebit(txn);
-              }
-            }
             let newBalance = account.balance - BigInt(txn.amount);
             if (newBalance >= 0n) {
               account.balance = newBalance;
+              // If the transaction is a valid tranfer between two accounts.
+              if (txn.counterpartyAccountId != null) {
+                let transferCreditTxn = await this.thinky.r.table('Transaction')
+                .get(txn.counterpartyTransactionId).run();
+                if (transferCreditTxn == null) {
+                  await this.execTransferCreditFromDebit(txn);
+                }
+              }
             } else {
               txn.canceled = true;
             }
@@ -764,8 +766,6 @@ class AccountService extends AsyncStreamEmitter {
       type: 'Transaction',
       value: debitTransaction
     });
-
-    await this.execTransferCreditFromDebit(debitTransaction);
   }
 
   /*

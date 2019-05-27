@@ -20,9 +20,6 @@ function getComponent(options) {
           accountId: socket.authToken && socket.authToken.accountId
         },
         fields: ['transactionId', 'amount', 'height', 'createdDate'],
-        defaultFieldValues: {
-          transaction: {}
-        },
         pageOffset: 0,
         pageSize: 10
       });
@@ -43,6 +40,9 @@ function getComponent(options) {
       },
       capitalize: function (message) {
         return message.charAt(0).toUpperCase() + message.slice(1)
+      },
+      getStatus: function (canceled) {
+        return canceled ? 'canceled' : 'processed';
       }
     },
     template: `
@@ -57,12 +57,14 @@ function getComponent(options) {
               <th>Deposit ID</th>
               <th>Amount</th>
               <th>Height</th>
+              <th v-if="depositType === 'settled'">Status</th>
               <th>Date</th>
             </tr>
             <tr v-for="dep of deposits">
               <td>{{dep.id}}</td>
               <td>{{toBlockchainUnits(dep.amount)}}<span v-if="mainInfo.cryptocurrency"> {{mainInfo.cryptocurrency.symbol}}</span></td>
               <td>{{dep.height}}</td>
+              <td v-if="depositType === 'settled'">{{getStatus(dep.canceled)}}</td>
               <td>{{toSimpleDate(dep.createdDate)}}</td>
             </tr>
           </table>

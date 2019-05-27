@@ -42,8 +42,11 @@ function getComponent(options) {
       <div class="component-container">
         <div class="content-body">
           <h4>
-            Wallet address
+            Account
           </h4>
+          <div>
+            <span>ID:</span> <span>{{account.id}}</span>
+          </div>
           <div>
             <span>Balance:</span> <span v-if="!lastSettledTransactions.length">0</span><span v-for="txn of lastSettledTransactions">{{toBlockchainUnits(txn.balance)}}</span><span v-if="mainInfo.cryptocurrency"> {{mainInfo.cryptocurrency.symbol}}</span>
           </div>

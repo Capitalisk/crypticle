@@ -21,45 +21,9 @@ function getComponent(options) {
           accountId: socket.authToken && socket.authToken.accountId
         },
         fields: ['transactionId', 'amount', 'height', 'createdDate'],
-        defaultFieldValues: {
-          transaction: {}
-        },
         pageOffset: 0,
         pageSize: 10
       });
-
-      (async () => {
-        for await (let withdrawalModel of this.withdrawalCollection.listener('modelDestroy')) {
-          withdrawalModel.transactionModel.destroy();
-          delete withdrawalModel.transactionModel;
-        }
-      })();
-
-      (async () => {
-        for await (let event of this.withdrawalCollection.listener('modelChange')) {
-          if (event.resourceField !== 'transactionId') {
-            continue;
-          }
-          let withdrawalModel = this.withdrawalCollection.agModels[event.resourceId];
-          let originalTransactionModel = withdrawalModel.transactionModel;
-          let transactionId = event.newValue;
-          if (
-            transactionId &&
-            (!originalTransactionModel || withdrawalModel.transactionModel.id !== transactionId)
-          ) {
-            withdrawalModel.transactionModel = new AGModel({
-              socket,
-              type: 'Transaction',
-              id: transactionId,
-              fields: ['amount', 'settledDate']
-            });
-            withdrawalModel.value.transaction = withdrawalModel.transactionModel.value;
-            if (originalTransactionModel) {
-              originalTransactionModel.destroy();
-            }
-          }
-        }
-      })();
 
       return {
         mainInfo,
@@ -77,6 +41,9 @@ function getComponent(options) {
       },
       capitalize: function (message) {
         return message.charAt(0).toUpperCase() + message.slice(1)
+      },
+      getStatus: function (canceled) {
+        return canceled ? 'canceled' : 'processed';
       }
     },
     template: `
@@ -91,12 +58,14 @@ function getComponent(options) {
               <th>Withdrawal ID</th>
               <th>Amount</th>
               <th>Height</th>
+              <th v-if="withdrawalType === 'settled'">Status</th>
               <th>Date</th>
             </tr>
             <tr v-for="wit of withdrawals">
               <td>{{wit.id}}</td>
               <td>{{toBlockchainUnits(wit.amount)}}<span v-if="mainInfo.cryptocurrency"> {{mainInfo.cryptocurrency.symbol}}</span></td>
               <td>{{wit.height}}</td>
+              <td v-if="withdrawalType === 'settled'">{{getStatus(wit.canceled)}}</td>
               <td>{{toSimpleDate(wit.createdDate)}}</td>
             </tr>
           </table>

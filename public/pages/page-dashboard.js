@@ -1,14 +1,14 @@
 import getDepositsComponent from '/components/component-deposits.js';
 import getWithdrawalsComponent from '/components/component-withdrawals.js';
 import getTransfersComponent from '/components/component-transfers.js';
-import getWalletComponent from '/components/component-wallet.js';
+import getAccountComponent from '/components/component-account.js';
 
 function getPageComponent(pageOptions) {
   let {socket, mainInfo} = pageOptions;
 
   return {
     components: {
-      'component-wallet': getWalletComponent({
+      'component-account': getAccountComponent({
         socket,
         mainInfo
       }),
@@ -44,14 +44,16 @@ function getPageComponent(pageOptions) {
       })
     },
     data: function () {
-      return {};
+      return {
+        accountId: socket.authToken && socket.authToken.accountId
+      };
     },
     methods: {},
     template: `
       <div class="page-container">
         <h2 class="content-row heading">Dashboard</h2>
         <div class="content-body">
-          <component-wallet></component-wallet>
+          <component-account></component-account>
 
           <component-settled-transfers></component-settled-transfers>
           <component-pending-transfers></component-pending-transfers>
