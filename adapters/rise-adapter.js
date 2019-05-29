@@ -6,9 +6,9 @@ const tweetnacl = require('tweetnacl');
 const crypto = require('crypto');
 
 function hashSha256(data) {
-	const dataHash = crypto.createHash('sha256');
-	dataHash.update(data, 'utf8');
-	return dataHash.digest();
+  const dataHash = crypto.createHash('sha256');
+  dataHash.update(data, 'utf8');
+  return dataHash.digest();
 }
 
 class RiseAdapter {
@@ -45,9 +45,9 @@ class RiseAdapter {
     return (await rise.accounts.getBalance(walletAddress)).balance;
   }
 
-	signTransaction(transaction, passphrase) {
-		return Rise.txs.createAndSign(transaction, passphrase);
-	}
+  signTransaction(transaction, passphrase) {
+    return Rise.txs.createAndSign(transaction, passphrase);
+  }
 
   async sendTransaction(signedTransaction) {
     return rise.transactions.put(signedTransaction);
