@@ -21,7 +21,7 @@ function getComponent(options) {
         },
         fields: ['type', 'amount', 'data', 'canceled', 'createdDate'],
         pageOffset: 0,
-        pageSize: 20,
+        pageSize: 15,
         getCount: true
       });
       return {
