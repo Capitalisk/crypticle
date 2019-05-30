@@ -49,31 +49,36 @@ function getComponent(options) {
       }
     },
     template: `
-      <div class="component-container">
-        <div class="content-body">
-          <h4>
-            <span v-if="transactionType">{{capitalize(transactionType)}} transfers</span>
-            <span v-if="!transactionType">Transfers</span>
-          </h4>
-          <table>
+      <div class="component-container container is-fullhd">
+        <h4 class="title is-4" v-if="transactionType">{{capitalize(transactionType)}} transfers</h4>
+        <h4 class="title is-4" v-if="!transactionType">Transfers</h4>
+        <table class="table is-striped is-bordered is-fullwidth">
+          <thead>
             <tr>
               <th>
                 <span>Transaction ID</span>
               </th>
-              <th>Amount</th>
               <th>Data</th>
               <th v-if="transactionType === 'settled'">Status</th>
+              <th>Amount</th>
               <th>Date</th>
             </tr>
-            <tr v-for="transaction of transactions">
-              <td>{{transaction.id}}</td>
-              <td>{{toBlockchainUnits(transaction.amount, transaction.type)}}<span v-if="mainInfo.cryptocurrency"> {{mainInfo.cryptocurrency.symbol}}</span></td>
-              <td>{{transaction.data}}</td>
-              <td v-if="transactionType === 'settled'">{{getStatus(transaction.canceled)}}</td>
-              <td>{{toSimpleDate(transaction.createdDate)}}</td>
+          </thead>
+          <tbody>
+            <template v-for="transaction of transactions">
+              <tr v-bind:class="{'table-row-failure': transaction.canceled}">
+                <td class="table-cell-id table-first-column">{{transaction.id}}</td>
+                <td>{{transaction.data}}</td>
+                <td v-if="transactionType === 'settled'" class="table-cell-status">{{getStatus(transaction.canceled)}}</td>
+                <td class="table-cell-amount">{{toBlockchainUnits(transaction.amount, transaction.type)}}<span v-if="mainInfo.cryptocurrency"> {{mainInfo.cryptocurrency.symbol}}</span></td>
+                <td class="table-cell-date">{{toSimpleDate(transaction.createdDate)}}</td>
+              </tr>
+            </template>
+            <tr v-if="transactions.length <= 0">
+              <td class="table-empty-row tranfer-table-empty-row" colspan="5">No transfers</td>
             </tr>
-          </table>
-        </div>
+          </tbody>
+        </table>
       </div>
     `
   };

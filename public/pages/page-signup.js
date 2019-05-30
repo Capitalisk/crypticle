@@ -51,37 +51,35 @@ function getPageComponent(pageOptions) {
       }
     },
     template: `
-      <div class="page-container">
-        <h2 class="content-row heading">Sign up</h2>
-        <div class="content-body">
-          <div v-if="error" class="error-container">
-            <span>{{error}}</span>
-          </div>
-          <div v-if="success" class="success-container">
-            <span>{{success}}</span>
-          </div>
-          <span v-if="showConsoleLink"><a href="#/console">Click here</a> to go to the console.</span>
-          <div class="form-area">
-            <div class="signup-label">
-              Username:
-            </div>
-            <input type="text" v-model="username" class="form-control" @keydown.enter="signup">
-          </div>
-          <div class="form-area">
-            <div class="signup-label">
-              Password:
-            </div>
-            <input type="password" v-model="password" class="form-control" @keydown.enter="signup">
-          </div>
-          <div v-if="type === 'admin'" class="form-area">
-            <div class="signup-label">
-              Admin signup key:
-            </div>
-            <input type="password" v-model="adminSignupKey" class="form-control" @keydown.enter="signup">
-          </div>
-          <div class="form-area" style="padding-top: 10px;">
-            <input type="button" class="form-control" value="Sign up" @click="signup">
-          </div>
+      <div class="page-container container signup-container">
+        <h2 class="title is-2">Sign up</h2>
+        <div v-if="error" class="has-text-danger field">
+          <span>{{error}}</span>
+        </div>
+        <div v-if="success" class="has-text-success field">
+          <span>{{success}}</span>
+        </div>
+        <div v-if="showConsoleLink" class="field"><a href="#/console">Click here</a> to go to the console.</div>
+        <div class="field">
+          <label class="label" for="signup-form-username">
+            Username
+          </label>
+          <input id="signup-form-username" type="text" v-model="username" class="input" @keydown.enter="signup">
+        </div>
+        <div class="field">
+          <label class="label" for="signup-form-password">
+            Password
+          </label>
+          <input id="signup-form-password" type="password" v-model="password" class="input" @keydown.enter="signup">
+        </div>
+        <div v-if="type === 'admin'" class="field">
+          <label class="label" for="signup-form-admin-signup-key">
+            Admin signup key
+          </label>
+          <input id="signup-form-admin-signup-key" type="password" v-model="adminSignupKey" class="input" @keydown.enter="signup">
+        </div>
+        <div class="field">
+          <input type="button" class="button is-medium is-link" value="Sign up" @click="signup">
         </div>
       </div>
     `

@@ -10,7 +10,7 @@ function getComponent(options) {
         socket,
         type: 'Account',
         id: socket.authToken && socket.authToken.accountId,
-        fields: ['depositWalletAddress']
+        fields: ['depositWalletAddress', 'admin']
       });
       this.lastSettledTransactionsCollection = new AGCollection({
         socket,
@@ -39,21 +39,38 @@ function getComponent(options) {
       }
     },
     template: `
-      <div class="component-container">
-        <div class="content-body">
-          <h4>
-            Account
-          </h4>
-          <div>
-            <span>ID:</span> <span>{{account.id}}</span>
-          </div>
-          <div>
-            <span>Balance:</span> <span v-if="!lastSettledTransactions.length">0</span><span v-for="txn of lastSettledTransactions">{{toBlockchainUnits(txn.balance)}}</span><span v-if="mainInfo.cryptocurrency"> {{mainInfo.cryptocurrency.symbol}}</span>
-          </div>
-          <div>
-            To top up your account, send {{mainInfo.cryptocurrency.symbol}} tokens to the following wallet address: <b>{{account.depositWalletAddress}}</b>
-          </div>
-        </div>
+      <div class="component-container container is-fullhd">
+        <h4 class="title is-4">
+          Account
+        </h4>
+        <table class="table is-bordered">
+          <tbody>
+            <tr v-if="account.admin" class="table-row-success">
+              <td colspan="2">This account has admin privileges.</td>
+            </tr>
+            <tr>
+              <td><b>Account ID</b></td>
+              <td>{{account.id}}</td>
+            </tr>
+            <tr>
+              <td><b>Balance</b></td>
+              <td v-if="!lastSettledTransactions.length">
+                <span>0</span>
+                <span v-if="mainInfo.cryptocurrency">{{mainInfo.cryptocurrency.symbol}}</span>
+              </td>
+              <td v-for="txn of lastSettledTransactions">
+                <span v-for="txn of lastSettledTransactions">{{toBlockchainUnits(txn.balance)}}</span>
+                <span v-if="mainInfo.cryptocurrency">{{mainInfo.cryptocurrency.symbol}}</span>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <b>Deposit wallet address ({{mainInfo.cryptocurrency.symbol}})</b>
+              </td>
+              <td>{{account.depositWalletAddress}}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     `
   };

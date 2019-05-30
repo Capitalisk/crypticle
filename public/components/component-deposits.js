@@ -46,13 +46,11 @@ function getComponent(options) {
       }
     },
     template: `
-      <div class="component-container">
-        <div class="content-body">
-          <h4>
-            <span v-if="depositType">{{capitalize(depositType)}} deposits</span>
-            <span v-if="!depositType">Deposits</span>
-          </h4>
-          <table>
+      <div class="component-container container is-fullhd">
+        <h4 class="title is-4" v-if="depositType">{{capitalize(depositType)}} deposits</h4>
+        <h4 class="title is-4" v-if="!depositType">Deposits</h4>
+        <table class="table is-striped is-bordered is-fullwidth">
+          <thead>
             <tr>
               <th>Deposit ID</th>
               <th>Amount</th>
@@ -60,15 +58,22 @@ function getComponent(options) {
               <th v-if="depositType === 'settled'">Status</th>
               <th>Date</th>
             </tr>
-            <tr v-for="dep of deposits">
-              <td>{{dep.id}}</td>
-              <td>{{toBlockchainUnits(dep.amount)}}<span v-if="mainInfo.cryptocurrency"> {{mainInfo.cryptocurrency.symbol}}</span></td>
-              <td v-if="depositType === 'settled'">{{dep.height}}</td>
-              <td v-if="depositType === 'settled'">{{getStatus(dep.canceled)}}</td>
-              <td>{{toSimpleDate(dep.createdDate)}}</td>
+          </thead>
+          <tbody>
+            <template v-for="dep of deposits">
+              <tr v-bind:class="{'table-row-failure': dep.canceled}">
+                <td class="table-cell-id table-first-column">{{dep.id}}</td>
+                <td class="table-cell-amount">{{toBlockchainUnits(dep.amount)}}<span v-if="mainInfo.cryptocurrency"> {{mainInfo.cryptocurrency.symbol}}</span></td>
+                <td v-if="depositType === 'settled'" class="table-cell-height">{{dep.height}}</td>
+                <td v-if="depositType === 'settled'" class="table-cell-status">{{getStatus(dep.canceled)}}</td>
+                <td class="table-cell-date">{{toSimpleDate(dep.createdDate)}}</td>
+              </tr>
+            </template>
+            <tr v-if="deposits.length <= 0">
+              <td class="table-empty-row deposit-table-empty-row" colspan="5">No deposits</td>
             </tr>
-          </table>
-        </div>
+          </tbody>
+        </table>
       </div>
     `
   };

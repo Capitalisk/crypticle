@@ -27,27 +27,25 @@ function getPageComponent(pageOptions) {
       }
     },
     template: `
-      <div class="page-container">
-        <h2 class="content-row heading">Login</h2>
-        <div class="content-body">
-          <div v-if="error" class="form-area">
-            <span class="error-container">{{error}}</span>
-          </div>
-          <div class="form-area">
-            <div class="login-label">
-              Username:
-            </div>
-            <input type="text" v-model="username" class="form-control" @keydown.enter="login">
-          </div>
-          <div class="form-area">
-            <div class="login-label">
-              Password:
-            </div>
-            <input type="password" v-model="password" class="form-control" @keydown.enter="login">
-          </div>
-          <div class="form-area" style="padding-top: 10px;">
-            <input type="button" class="form-control" value="Login" @click="login">
-          </div>
+      <div class="page-container container login-container">
+        <h2 class="title is-2">Login</h2>
+        <div v-if="error" class="field has-text-danger">
+          <span>{{error}}</span>
+        </div>
+        <div class="field">
+          <label class="label" for="login-form-username">
+            Username
+          </label>
+          <input id="login-form-username" type="text" v-model="username" class="input" @keydown.enter="login">
+        </div>
+        <div class="field">
+          <label class="label" for="login-form-password">
+            Password
+          </label>
+          <input id="login-form-password" type="password" v-model="password" class="input" @keydown.enter="login">
+        </div>
+        <div class="field">
+          <input type="button" class="button is-medium is-link" value="Login" @click="login">
         </div>
       </div>
     `

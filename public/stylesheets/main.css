@@ -2,15 +2,36 @@
   padding: 20px;
 }
 
-.error-container {
-  color: #990000;
+.table .table-cell-amount {
+  text-align: right;
 }
 
-.success-container {
-  color: #009900;
+.table .table-cell-date {
+  text-align: right;
 }
 
-.content-body {
-  display: flex;
-  flex-direction: column;
+.spacer {
+  height: 24px;
+  width: 100%;
+}
+
+.table .table-row-failure {
+  background: #FFECEC !important;
+}
+
+.table .table-row-success {
+  background: #ECFFEC !important;
+}
+
+.login-container {
+  max-width: 500px;
+}
+
+.signup-container {
+  max-width: 500px;
+}
+
+.hr-big-spacing {
+  margin-top: 70px;
+  margin-bottom: 70px;
 }

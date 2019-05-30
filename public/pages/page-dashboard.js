@@ -48,22 +48,49 @@ function getPageComponent(pageOptions) {
         accountId: socket.authToken && socket.authToken.accountId
       };
     },
-    methods: {},
+    methods: {
+      logout: function () {
+        socket.deauthenticate();
+      }
+    },
     template: `
-      <div class="page-container">
-        <h2 class="content-row heading">Dashboard</h2>
-        <div class="content-body">
-          <component-account></component-account>
+      <div class="page-container container is-fullhd">
+        <nav class="navbar" role="navigation" aria-label="main navigation">
+          <div class="navbar-brand">
+            <h2 class="navbar-item title is-2">
+              Crypticle console
+            </h2>
+          </div>
+          <div class="navbar-end">
+            <div class="navbar-item">
+              <div class="buttons">
+                <input type="button" class="button is-primary" value="Logout" @click="logout">
+              </div>
+            </div>
+          </div>
+        </nav>
 
-          <component-settled-transfers></component-settled-transfers>
-          <component-pending-transfers></component-pending-transfers>
+        <div class="spacer"></div>
 
-          <component-settled-deposits></component-settled-deposits>
-          <component-pending-deposits></component-pending-deposits>
+        <component-account></component-account>
 
-          <component-settled-withdrawals></component-settled-withdrawals>
-          <component-pending-withdrawals></component-pending-withdrawals>
-        </div>
+        <hr class="hr hr-big-spacing" />
+
+        <component-settled-transfers></component-settled-transfers>
+        <div class="spacer"></div>
+        <component-pending-transfers></component-pending-transfers>
+
+        <hr class="hr hr-big-spacing" />
+
+        <component-settled-deposits></component-settled-deposits>
+        <div class="spacer"></div>
+        <component-pending-deposits></component-pending-deposits>
+
+        <hr class="hr hr-big-spacing" />
+
+        <component-settled-withdrawals></component-settled-withdrawals>
+        <div class="spacer"></div>
+        <component-pending-withdrawals></component-pending-withdrawals>
       </div>
     `
   };

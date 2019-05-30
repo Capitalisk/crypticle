@@ -47,29 +47,34 @@ function getComponent(options) {
       }
     },
     template: `
-      <div class="component-container">
-        <div class="content-body">
-          <h4>
-            <span v-if="withdrawalType">{{capitalize(withdrawalType)}} withdrawals</span>
-            <span v-if="!withdrawalType">Withdrawals</span>
-          </h4>
-          <table>
+      <div class="component-container container is-fullhd">
+        <h4 class="title is-4" v-if="withdrawalType">{{capitalize(withdrawalType)}} withdrawals</h4>
+        <h4 class="title is-4" v-if="!withdrawalType">Withdrawals</h4>
+        <table class="table is-striped is-bordered is-fullwidth">
+          <thead>
             <tr>
-              <th>Withdrawal ID</th>
+              <th class="table-cell-id">Withdrawal ID</th>
               <th>Amount</th>
               <th v-if="withdrawalType === 'settled'">Height</th>
               <th v-if="withdrawalType === 'settled'">Status</th>
               <th>Date</th>
             </tr>
-            <tr v-for="wit of withdrawals">
-              <td>{{wit.id}}</td>
-              <td>{{toBlockchainUnits(wit.amount)}}<span v-if="mainInfo.cryptocurrency"> {{mainInfo.cryptocurrency.symbol}}</span></td>
-              <td v-if="withdrawalType === 'settled'">{{wit.height}}</td>
-              <td v-if="withdrawalType === 'settled'">{{getStatus(wit.canceled)}}</td>
-              <td>{{toSimpleDate(wit.createdDate)}}</td>
+          </thead>
+          <tbody>
+            <template v-for="wit of withdrawals">
+              <tr v-bind:class="{'table-row-failure': wit.canceled}">
+                <td class="table-cell-id table-first-column">{{wit.id}}</td>
+                <td class="table-cell-amount">{{toBlockchainUnits(wit.amount)}}<span v-if="mainInfo.cryptocurrency"> {{mainInfo.cryptocurrency.symbol}}</span></td>
+                <td v-if="withdrawalType === 'settled'" class="table-cell-height">{{wit.height}}</td>
+                <td v-if="withdrawalType === 'settled'" class="table-cell-status">{{getStatus(wit.canceled)}}</td>
+                <td class="table-cell-date">{{toSimpleDate(wit.createdDate)}}</td>
+              </tr>
+            </template
+            <tr v-if="withdrawals.length <= 0">
+              <td class="table-empty-row withdrawals-table-empty-row" colspan="5">No withdrawals</td>
             </tr>
-          </table>
-        </div>
+          </tbody>
+        </table>
       </div>
     `
   };
