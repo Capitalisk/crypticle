@@ -37,6 +37,7 @@ class AccountService extends AsyncStreamEmitter {
     this.withdrawalInterval = options.withdrawalProcessingInterval;
     this.maxSettlementsPerAccount = options.maxTransactionSettlementsPerAccount;
     this.blockchainWithdrawalMaxBlocksRetry = options.blockchainWithdrawalMaxBlocksRetry;
+    this.adminSignupKey = options.adminSignupKey;
 
     this.mainWalletAddress = options.mainInfo.mainWalletAddress;
     this.requiredDepositBlockConfirmations = options.mainInfo.requiredDepositBlockConfirmations;
@@ -384,6 +385,21 @@ class AccountService extends AsyncStreamEmitter {
         throw accountCreateError;
       }
     }
+
+    if (this.adminSignupKey != null && credentials.adminSignupKey != null) {
+      if (credentials.adminSignupKey === this.adminSignupKey) {
+        credentials.admin = true;
+      } else {
+        let accountCreateError = new Error(
+          'Failed to create admin account because the specified admin signup key was incorrect.'
+        );
+        accountCreateError.name = 'AccountCreateError';
+        throw accountCreateError;
+      }
+    } else {
+      credentials.admin = false;
+    }
+    delete credentials.adminSignupKey;
 
     return credentials;
   }
@@ -875,6 +891,19 @@ class AccountService extends AsyncStreamEmitter {
           return;
         }
         if (transaction.settled) {
+          if (transaction.canceled) {
+            await this.crud.update({
+              type: 'Withdrawal',
+              id: withdrawal.id,
+              value: {
+                canceled: true,
+                settled: true,
+                settledDate: this.thinky.r.now()
+              }
+            });
+            return;
+          }
+
           let blockchainTxn = await this.blockchainAdapter.fetchTransaction(withdrawal.id);
           if (blockchainTxn != null) {
             let targetHeight = currentBlockHeight - this.requiredWithdrawalBlockConfirmations;

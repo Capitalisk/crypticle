@@ -19,6 +19,7 @@ function getSchema(options) {
         passwordResetKey: type.string().optional(),
         passwordResetExpiry: type.date().optional(),
         active: type.boolean().default(true),
+        admin: type.boolean().default(false),
         createdDate: type.date()
       },
       indexes: ['username', 'depositWalletAddress'],

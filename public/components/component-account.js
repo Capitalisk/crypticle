@@ -51,7 +51,7 @@ function getComponent(options) {
             <span>Balance:</span> <span v-if="!lastSettledTransactions.length">0</span><span v-for="txn of lastSettledTransactions">{{toBlockchainUnits(txn.balance)}}</span><span v-if="mainInfo.cryptocurrency"> {{mainInfo.cryptocurrency.symbol}}</span>
           </div>
           <div>
-            To top up your account, you should send {{mainInfo.cryptocurrency.symbol}} tokens to the following wallet address: <b>{{account.depositWalletAddress}}</b>
+            To top up your account, send {{mainInfo.cryptocurrency.symbol}} tokens to the following wallet address: <b>{{account.depositWalletAddress}}</b>
           </div>
         </div>
       </div>

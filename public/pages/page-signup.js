@@ -4,6 +4,12 @@ function getPageComponent(pageOptions) {
   let {socket} = pageOptions;
 
   return {
+    props: {
+      type: {
+        type: String,
+        default: null
+      }
+    },
     data: function () {
       this.accountCollection = new AGCollection({
         socket,
@@ -17,6 +23,7 @@ function getPageComponent(pageOptions) {
         error: null,
         username: '',
         password: '',
+        adminSignupKey: '',
         showConsoleLink: false
       };
     },
@@ -26,6 +33,9 @@ function getPageComponent(pageOptions) {
           username: this.username,
           password: this.password
         };
+        if (this.type === 'admin') {
+          details.adminSignupKey = this.adminSignupKey;
+        }
         try {
           await this.accountCollection.create(details);
         } catch (error) {
@@ -62,6 +72,12 @@ function getPageComponent(pageOptions) {
               Password:
             </div>
             <input type="password" v-model="password" class="form-control" @keydown.enter="signup">
+          </div>
+          <div v-if="type === 'admin'" class="form-area">
+            <div class="signup-label">
+              Admin signup key:
+            </div>
+            <input type="password" v-model="adminSignupKey" class="form-control" @keydown.enter="signup">
           </div>
           <div class="form-area" style="padding-top: 10px;">
             <input type="button" class="form-control" value="Sign up" @click="signup">

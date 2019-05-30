@@ -3,7 +3,10 @@ import getLoginPageComponent from '/pages/page-login.js';
 import getSignupPageComponent from '/pages/page-signup.js';
 import getDashboardPageComponent from '/pages/page-dashboard.js';
 
-let socket = window.socket = asyngularClient.create();
+let socket = window.socket = asyngularClient.create({
+  batchInterval: 50
+});
+socket.startBatching();
 
 let pageOptions = {
   socket,
@@ -80,15 +83,15 @@ const Console = {
 };
 
 let routes = [
-  { path: '/', component: PageHome, props: true },
-  { path: '/signup', component: PageSignup, props: true },
-  // { path: '/category/:categoryId/product/:productId', component: PageProductDetails, props: true }, // TODO 2
+  {path: '/signup', component: PageSignup, props: (route) => ({type: route.query.type})},
+  {path: '/', component: PageHome, props: true},
+  // {path: '/category/:categoryId/product/:productId', component: PageProductDetails, props: true}, // TODO 2
   {
     path: '/console',
     component: Console,
     props: true,
     children: [
-      { path: '/', component: PageDashboard, props: true }
+      {path: '/', component: PageDashboard, props: true}
     ]
   }
 ];

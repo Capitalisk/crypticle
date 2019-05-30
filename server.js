@@ -66,7 +66,9 @@ const envConfig = config[ENVIRONMENT];
     maxRecordDisplayAge: envConfig.mainInfo.maxRecordDisplayAge
   });
 
-  let agOptions = {};
+  let agOptions = {
+    batchInterval: 50
+  };
 
   if (process.env.ASYNGULAR_OPTIONS) {
     let envOptions = JSON.parse(process.env.ASYNGULAR_OPTIONS);
@@ -121,7 +123,8 @@ const envConfig = config[ENVIRONMENT];
     crud,
     mainInfo: envConfig.mainInfo,
     shardInfo,
-    blockchainNodeWalletPassphrase
+    blockchainNodeWalletPassphrase,
+    adminSignupKey: envConfig.adminSignupKey
   });
 
   (async () => {
@@ -167,6 +170,9 @@ const envConfig = config[ENVIRONMENT];
     for await (let {socket} of agServer.listener('connection')) {
       // Handle socket connection.
 
+      // Batch everything to improve performance.
+      socket.startBatching();
+
       (async () => {
         for await (let request of socket.procedure('login')) {
           let accountData;
@@ -190,6 +196,9 @@ const envConfig = config[ENVIRONMENT];
             username: accountData.username,
             accountId: accountData.id
           };
+          if (accountData.admin === true) {
+            token.admin = true;
+          }
           socket.setAuthToken(token, {expiresIn: TOKEN_EXPIRY_SECONDS});
           request.end();
         }
@@ -230,6 +239,51 @@ const envConfig = config[ENVIRONMENT];
             await accountService.execTransfer({
               amount: transferData.amount,
               fromAccountId: socket.authToken.accountId,
+              toAccountId: transferData.toAccountId,
+              debitId: transferData.debitId,
+              creditId: transferData.creditId,
+              data: transferData.data
+            });
+          } catch (error) {
+            request.error(error);
+            console.error(error);
+            continue;
+          }
+          request.end();
+        }
+      })();
+
+      (async () => {
+        // TODO 2: Validate request data.
+        // TODO 2: Respond with error in middleware if user is not logged in properly.
+        // TODO 2: Respond with error in middleware if user is not admin.
+        for await (let request of socket.procedure('adminWithdraw')) {
+          let withdrawalData = request.data || {};
+          try {
+            await accountService.execWithdrawal({
+              amount: withdrawalData.amount,
+              fromAccountId: withdrawalData.fromAccountId,
+              toWalletAddress: withdrawalData.toWalletAddress
+            });
+          } catch (error) {
+            request.error(error);
+            console.error(error);
+            continue;
+          }
+          request.end();
+        }
+      })();
+
+      (async () => {
+        // TODO 2: Validate request data.
+        // TODO 2: Respond with error in middleware if user is not logged in properly.
+        // TODO 2: Respond with error in middleware if user is not admin.
+        for await (let request of socket.procedure('adminTransfer')) {
+          let transferData = request.data || {};
+          try {
+            await accountService.execTransfer({
+              amount: transferData.amount,
+              fromAccountId: transferData.fromAccountId,
               toAccountId: transferData.toAccountId,
               debitId: transferData.debitId,
               creditId: transferData.creditId,
