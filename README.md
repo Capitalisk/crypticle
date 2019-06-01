@@ -15,8 +15,3 @@ Some potential use cases:
 - Games
 
 After a Crypticle node has been attached to a specific Blockchain and has started accepting deposits from users, it becomes difficult for a service provider to move away from that blockchain without violating the implicit agreement that they have with their users. Attaching services to a specific blockchain using Crypticle should therefore help to create sustainable demand for the underlying blockchain token.
-
-## FAQs
-
-Q: Doesn't this go against the principles behind blockchain and decentralization?
-A: Crypticle aims to be decentralized but not trustless. The core philosophy behind Crypticle is that money should be stored safely (trustlessly) but spent efficiently (trustfully). Every time an entity sends money to another entity, the payer must implicitly trust that the payee will deliver a certain amount of value (e.g. good or service) in return; it's possible that the payee could receive the money but not deliver the good or service. In the context of a marketplace, the risk of a bad actor can never be fully mitigated. Crypticle is a pragmatic solution which allow cryptocurrency users to make unlimited free off-chain transactions with a service provider that they trust. As a user, you can deposit a limited amount of funds directly on the provider's Crypticle service wallet but the actual payments will happen off-chain directly with the provider. Unused funds can be withdrawn back to the safety of your blockchain wallet at any time (assuming that the provider is operating a legitimate service).
