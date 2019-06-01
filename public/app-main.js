@@ -67,7 +67,7 @@ let Console = {
 
 let routes = [
   {path: '/', component: PageHome, props: true},
-  {path: '/signup', component: PageSignup, props: (route) => ({type: route.query.type})},
+  {path: '/signup', component: PageSignup, props: (route) => ({kind: route.query.kind})},
   {path: '/login', component: PageLogin, props: (route) => ({redirect: route.query.redirect})},
   {
     path: '/console',

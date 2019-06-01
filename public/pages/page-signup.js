@@ -5,7 +5,7 @@ function getPageComponent(pageOptions) {
 
   return {
     props: {
-      type: {
+      kind: {
         type: String,
         default: null
       }
@@ -33,7 +33,7 @@ function getPageComponent(pageOptions) {
           username: this.username,
           password: this.password
         };
-        if (this.type === 'admin') {
+        if (this.kind === 'admin') {
           details.adminSignupKey = this.adminSignupKey;
         }
         try {
@@ -72,7 +72,7 @@ function getPageComponent(pageOptions) {
           </label>
           <input id="signup-form-password" type="password" v-model="password" class="input" @keydown.enter="signup">
         </div>
-        <div v-if="type === 'admin'" class="field">
+        <div v-if="kind === 'admin'" class="field">
           <label class="label" for="signup-form-admin-signup-key">
             Admin signup key
           </label>
