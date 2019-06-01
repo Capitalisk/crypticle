@@ -3,6 +3,12 @@ function getPageComponent(pageOptions) {
   let {socket} = pageOptions;
 
   return {
+    props: {
+      redirect: {
+        type: String,
+        default: null
+      }
+    },
     data: function () {
       return {
         error: null,
@@ -20,10 +26,15 @@ function getPageComponent(pageOptions) {
           await socket.invoke('login', details);
         } catch (error) {
           this.error = `Failed to login. ${error.message}`;
-
           return;
         }
         this.error = '';
+
+        await socket.listener('authenticate').once();
+
+        if (this.redirect != null) {
+          window.location.href = decodeURIComponent(this.redirect);
+        }
       }
     },
     template: `

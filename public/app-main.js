@@ -34,11 +34,58 @@ function isSocketAuthenticated() {
   return socket.authState === 'authenticated';
 }
 
-const Console = {
+let Console = {
   components: {
     'page-login': PageLogin,
     'page-dashboard': PageDashboard
   },
+  data: function () {
+    return {
+      isAuthenticated: false
+    };
+  },
+  created: function () {
+    this.isAuthenticated = isSocketAuthenticated();
+
+    (async () => {
+      for await (let event of socket.listener('authStateChange')) {
+        this.isAuthenticated = isSocketAuthenticated();
+      }
+    })();
+  },
+  template: `
+    <div class="console container is-fullhd">
+      <div v-if="isAuthenticated" class="container is-fullhd">
+        <router-view></router-view>
+      </div>
+      <div v-if="!isAuthenticated" class="container is-fullhd">
+        <page-login></page-login>
+      </div>
+    </div>
+  `
+};
+
+let routes = [
+  {path: '/', component: PageHome, props: true},
+  {path: '/signup', component: PageSignup, props: (route) => ({type: route.query.type})},
+  {path: '/login', component: PageLogin, props: (route) => ({redirect: route.query.redirect})},
+  {
+    path: '/console',
+    component: Console,
+    props: true,
+    children: [
+      {path: '/', component: PageDashboard, props: true}
+    ]
+  }
+];
+
+let router = new VueRouter({
+  routes
+});
+
+new Vue({
+  el: '#app',
+  router,
   data: function () {
     return {
       isAuthenticated: false
@@ -70,44 +117,39 @@ const Console = {
   destroyed: function () {
     window.removeEventListener('storage', this._localStorageAuthHandler);
   },
-  template: `
-    <div class="console">
-      <div v-if="isAuthenticated">
-        <router-view></router-view>
-      </div>
-      <div v-if="!isAuthenticated">
-        <page-login></page-login>
-      </div>
-    </div>
-  `
-};
-
-let routes = [
-  {path: '/signup', component: PageSignup, props: (route) => ({type: route.query.type})},
-  {path: '/', component: PageHome, props: true},
-  // {path: '/category/:categoryId/product/:productId', component: PageProductDetails, props: true}, // TODO 2
-  {
-    path: '/console',
-    component: Console,
-    props: true,
-    children: [
-      {path: '/', component: PageDashboard, props: true}
-    ]
-  }
-];
-
-let router = new VueRouter({
-  routes
-});
-
-new Vue({
-  el: '#app',
-  router,
-  data: function () {
-    return {};
+  methods: {
+    logout: function () {
+      socket.deauthenticate();
+    }
   },
   template: `
-    <div class="app-wrapper">
+    <div class="app-wrapper container is-fullhd">
+      <nav class="navbar" role="navigation" aria-label="main navigation">
+        <div class="navbar-brand">
+          <h2 class="navbar-item title is-2">
+            <a href="#/">Crypticle</a>
+          </h2>
+        </div>
+        <div v-if="isAuthenticated" class="navbar-end">
+          <div class="navbar-item">
+            <div class="buttons">
+            <a v-if="location.hash !== '#/console'" class="button is-link" href="#/console">Console</a>
+              <a class="button is-primary" href="#/signup">Signup</a>
+              <input type="button" class="button is-primary" value="Logout" @click="logout">
+            </div>
+          </div>
+        </div>
+        <div v-if="!isAuthenticated" class="navbar-end">
+          <div class="navbar-item">
+            <div class="buttons">
+            <a v-if="location.hash !== '#/console'" class="button is-link" href="#/console">Console</a>
+            <a class="button is-primary" href="#/signup">Signup</a>
+              <a class="button is-primary" href="#/login?redirect=${encodeURIComponent('#/')}">Login</a>
+            </div>
+          </div>
+        </div>
+      </nav>
+      <div class="spacer"></div>
       <router-view></router-view>
     </div>
   `

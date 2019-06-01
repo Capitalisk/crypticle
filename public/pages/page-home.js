@@ -8,9 +8,8 @@ function getPageComponent(pageOptions) {
     },
     methods: {},
     template: `
-      <div class="page-container">
-        <h2 class="content-row heading">Home</h2>
-        <div class="content-body">
+      <div class="page-container container is-fullhd">
+        <div class="container is-fullhd">
           Coming soon...
         </div>
       </div>

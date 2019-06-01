@@ -69,9 +69,9 @@ function getComponent(options) {
                 <td v-if="withdrawalType === 'settled'" class="table-cell-status">{{getStatus(wit.canceled)}}</td>
                 <td class="table-cell-date">{{toSimpleDate(wit.createdDate)}}</td>
               </tr>
-            </template
+            </template>
             <tr v-if="withdrawals.length <= 0">
-              <td class="table-empty-row withdrawals-table-empty-row" colspan="5">No withdrawals</td>
+              <td class="table-empty-row withdrawals-table-empty-row" colspan="5">No {{withdrawalType}} withdrawals</td>
             </tr>
           </tbody>
         </table>

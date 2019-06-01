@@ -75,7 +75,7 @@ function getComponent(options) {
               </tr>
             </template>
             <tr v-if="transactions.length <= 0">
-              <td class="table-empty-row tranfer-table-empty-row" colspan="5">No transfers</td>
+              <td class="table-empty-row tranfer-table-empty-row" colspan="5">No {{transactionType}} transfers</td>
             </tr>
           </tbody>
         </table>

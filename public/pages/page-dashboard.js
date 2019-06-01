@@ -48,27 +48,9 @@ function getPageComponent(pageOptions) {
         accountId: socket.authToken && socket.authToken.accountId
       };
     },
-    methods: {
-      logout: function () {
-        socket.deauthenticate();
-      }
-    },
     template: `
       <div class="page-container container is-fullhd">
-        <nav class="navbar" role="navigation" aria-label="main navigation">
-          <div class="navbar-brand">
-            <h2 class="navbar-item title is-2">
-              Crypticle console
-            </h2>
-          </div>
-          <div class="navbar-end">
-            <div class="navbar-item">
-              <div class="buttons">
-                <input type="button" class="button is-primary" value="Logout" @click="logout">
-              </div>
-            </div>
-          </div>
-        </nav>
+        <h3 class="title is-3">Dashboard</h3>
 
         <div class="spacer"></div>
 
