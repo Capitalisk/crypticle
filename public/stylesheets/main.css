@@ -35,3 +35,12 @@
   margin-top: 70px;
   margin-bottom: 70px;
 }
+
+.hr-medium-spacing {
+  margin-top: 50px;
+  margin-bottom: 50px;
+}
+
+.code-snippet {
+  padding: 0;
+}
