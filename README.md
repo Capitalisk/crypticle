@@ -33,7 +33,7 @@ After a Crypticle node has been attached to a specific Blockchain and has starte
 - `npm start`
 
 Note that by default, a new JWT `authKey` will be generated every time you start the node; this will cause your sessions to be lost when you stop the node.
-To keep your sessions, launch the node using this command:
+To keep your sessions across node restarts, launch the node using this command:
 
 - `ASYNGULAR_OPTIONS='{"authKey": "test"}' npm start`
 
