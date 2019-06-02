@@ -1,5 +1,7 @@
 # Crypticle
 
+## This project is pre-alpha and is not yet ready for production.
+
 A multi-tenant hot wallet manager and off-chain payment microservice. Crypticle lets users convert value between blockchain tokens and pegged credit which can be efficiently spent and/or transferred between accounts within the context of a centralized service/platform. The credit is entrusted to the service provider and is pegged to the value of the underlying blockchain tokens - This credit can be used to support high-thoughput off-chain transactions (related to a specific service). Any unused credit can be converted back into trustless blockchain tokens at any time.
 
 The goal of this project is to automate the payment and accounting layer for SaaS services and platforms using blockchain technology.
