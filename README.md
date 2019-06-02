@@ -20,7 +20,7 @@ After a Crypticle node has been attached to a specific Blockchain and has starte
 
 ### Software requirements
 
-- Node.js v11.13.0 or higher: https://nodejs.org/en/
+- Node.js v11.13 or higher: https://nodejs.org/en/
 - RethinkDB v2.3 or higher: https://rethinkdb.com/
 
 ### Run from source
