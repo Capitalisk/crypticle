@@ -14,7 +14,7 @@ function getPageComponent(pageOptions) {
 
           <p>
             Crypticle exposes a realtime WebSocket API for performing transactions and listening for realtime changes.
-            The API adheres the <a href="https://github.com/SocketCluster/socketcluster/blob/master/socketcluster-protocol.md#socketcluster-protocol-v1">SocketCluster protocol</a>.
+            The API adheres to the <a href="https://github.com/SocketCluster/socketcluster/blob/master/socketcluster-protocol.md#socketcluster-protocol-v1">SocketCluster protocol</a>.
             The following examples make use of the <a href="https://github.com/SocketCluster/asyngular-client">Asyngular JavaScript client</a>.
           </p>
 
