@@ -30,8 +30,6 @@ function getPageComponent(pageOptions) {
         }
         this.error = '';
 
-        await socket.listener('authenticate').once();
-
         if (this.redirect != null) {
           window.location.href = decodeURIComponent(this.redirect);
         }
