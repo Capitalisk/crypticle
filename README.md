@@ -32,15 +32,16 @@ After a Crypticle node has been attached to a specific Blockchain and has starte
 - `cd public && npm install ; cd ..`
 - `npm start`
 
-Note that by default, your JWT `authKey` will be generated every time you start the node; this will cause your sessions to be lost when you stop the node.
-To keep your sessions, launch the node with:
+Note that by default, a new JWT `authKey` will be generated every time you start the node; this will cause your sessions to be lost when you stop the node.
+To keep your sessions, launch the node using this command:
 
 - `ASYNGULAR_OPTIONS='{"authKey": "test"}' npm start`
 
-## Deploying and scaling on Kubernetes
+## Deploy and scale on Kubernetes
 
-The node is designed to be deployed and scale on Kubernetes.
+The node is designed to be deployed and scaled on Kubernetes.
 Transactions are automatically sharded across available nodes.
+More info on this coming soon.
 
 ## Contributions
 
