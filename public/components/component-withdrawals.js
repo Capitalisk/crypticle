@@ -22,12 +22,14 @@ function getComponent(options) {
         },
         fields: ['transactionId', 'amount', 'height', 'canceled', 'createdDate'],
         pageOffset: 0,
-        pageSize: 10
+        pageSize: 10,
+        getCount: true
       });
 
       return {
         mainInfo,
         withdrawals: this.withdrawalCollection.value,
+        withdrawalsMeta: this.withdrawalCollection.meta,
         withdrawalType: options.type
       };
     },
@@ -44,37 +46,62 @@ function getComponent(options) {
       },
       getStatus: function (canceled) {
         return canceled ? 'canceled' : 'processed';
+      },
+      goToPrevPage: function () {
+        this.withdrawalCollection.fetchPreviousPage();
+      },
+      goToNextPage: function () {
+        this.withdrawalCollection.fetchNextPage();
+      }
+    },
+    computed: {
+      firstItemIndex: function () {
+        if (!this.withdrawals.length) {
+          return 0;
+        }
+        return this.withdrawalsMeta.pageOffset + 1;
+      },
+      lastItemIndex: function () {
+        return this.withdrawalsMeta.pageOffset + this.withdrawals.length;
+      },
+      hasMultiplePages: function () {
+        return this.withdrawalsMeta.count > this.withdrawalsMeta.pageSize;
       }
     },
     template: `
       <div class="component-container container is-fullhd">
         <h4 class="title is-4" v-if="withdrawalType">{{capitalize(withdrawalType)}} withdrawals</h4>
         <h4 class="title is-4" v-if="!withdrawalType">Withdrawals</h4>
-        <table class="table is-striped is-bordered is-fullwidth">
-          <thead>
-            <tr>
-              <th class="table-cell-id">Withdrawal ID</th>
-              <th>Amount</th>
-              <th v-if="withdrawalType === 'settled'">Height</th>
-              <th v-if="withdrawalType === 'settled'">Status</th>
-              <th>Date</th>
-            </tr>
-          </thead>
-          <tbody>
-            <template v-for="wit of withdrawals">
-              <tr v-bind:class="{'table-row-failure': wit.canceled}">
-                <td class="table-cell-id table-first-column">{{wit.id}}</td>
-                <td class="table-cell-amount">{{toBlockchainUnits(wit.amount)}}<span v-if="mainInfo.cryptocurrency"> {{mainInfo.cryptocurrency.symbol}}</span></td>
-                <td v-if="withdrawalType === 'settled'" class="table-cell-height">{{wit.height}}</td>
-                <td v-if="withdrawalType === 'settled'" class="table-cell-status">{{getStatus(wit.canceled)}}</td>
-                <td class="table-cell-date">{{toSimpleDate(wit.createdDate)}}</td>
+        <div v-bind:class="{'withdrawals-paginated-table-container': hasMultiplePages}">
+          <table class="table is-striped is-bordered is-fullwidth withdrawals-table">
+            <thead>
+              <tr>
+                <th class="table-cell-id">Withdrawal ID</th>
+                <th>Amount</th>
+                <th v-if="withdrawalType === 'settled'">Height</th>
+                <th v-if="withdrawalType === 'settled'">Status</th>
+                <th>Date</th>
               </tr>
-            </template>
-            <tr v-if="withdrawals.length <= 0">
-              <td class="table-empty-row withdrawals-table-empty-row" colspan="5">No {{withdrawalType}} withdrawals</td>
-            </tr>
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              <template v-for="wit of withdrawals">
+                <tr v-bind:class="{'table-row-failure': wit.canceled}">
+                  <td class="table-cell-id table-first-column">{{wit.id}}</td>
+                  <td class="table-cell-amount">{{toBlockchainUnits(wit.amount)}}<span v-if="mainInfo.cryptocurrency"> {{mainInfo.cryptocurrency.symbol}}</span></td>
+                  <td v-if="withdrawalType === 'settled'" class="table-cell-height">{{wit.height}}</td>
+                  <td v-if="withdrawalType === 'settled'" class="table-cell-status">{{getStatus(wit.canceled)}}</td>
+                  <td class="table-cell-date">{{toSimpleDate(wit.createdDate)}}</td>
+                </tr>
+              </template>
+              <tr v-if="withdrawals.length <= 0">
+                <td class="table-empty-row withdrawals-table-empty-row" colspan="5">No {{withdrawalType}} withdrawals</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="paginator-container">
+          <input type="button" class="button" value="Previous page" v-bind:disabled="firstItemIndex <= 1" @click="goToPrevPage" /> <div class="paginator-text">Items <b>{{firstItemIndex}}</b> to <b>{{lastItemIndex}}</b> of <b>{{withdrawalsMeta.count}}</b></div> <input type="button" class="button" value="Next page" v-bind:disabled="lastItemIndex >= withdrawalsMeta.count" @click="goToNextPage" />
+        </div>
       </div>
     `
   };

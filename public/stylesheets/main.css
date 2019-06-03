@@ -23,6 +23,41 @@
   background: #ECFFEC !important;
 }
 
+.transfers-paginated-table-container {
+  min-height: 452px;
+}
+
+.deposits-paginated-table-container {
+  min-height: 452px;
+}
+
+.withdrawals-paginated-table-container {
+  min-height: 452px;
+}
+
+.table.transfers-table {
+  margin-bottom: 15px;
+}
+
+.table.deposits-table {
+  margin-bottom: 15px;
+}
+
+.table.withdrawals-table {
+  margin-bottom: 15px;
+}
+
+.paginator-container {
+  margin-bottom: 24px;
+}
+
+.paginator-text {
+  display: inline-block;
+  line-height: 36px;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
 .login-container {
   max-width: 500px;
 }
