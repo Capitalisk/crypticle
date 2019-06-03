@@ -21,12 +21,14 @@ function getComponent(options) {
         },
         fields: ['balance'],
         pageOffset: 0,
-        pageSize: 1
+        pageSize: 1,
+        getCount: true
       });
       return {
         mainInfo,
         account: this.accountModel.value,
-        lastSettledTransactions: this.lastSettledTransactionsCollection.value
+        lastSettledTransactions: this.lastSettledTransactionsCollection.value,
+        lastSettledTransactionsMeta: this.lastSettledTransactionsCollection.meta
       };
     },
     methods: {
@@ -36,6 +38,14 @@ function getComponent(options) {
       },
       capitalize: function (message) {
         return message.charAt(0).toUpperCase() + message.slice(1)
+      }
+    },
+    computed: {
+      isBalanceReady: function () {
+        return this.lastSettledTransactionsMeta.count != null && (
+          this.lastSettledTransactionsMeta.count === 0 ||
+          (this.lastSettledTransactions.length > 0 && this.lastSettledTransactions[0].balance != null)
+        );
       }
     },
     template: `
@@ -54,14 +64,21 @@ function getComponent(options) {
             </tr>
             <tr>
               <td><b>Balance</b></td>
-              <td v-if="!lastSettledTransactions.length">
-                <span>0</span>
-                <span v-if="mainInfo.cryptocurrency">{{mainInfo.cryptocurrency.symbol}}</span>
-              </td>
-              <td v-for="txn of lastSettledTransactions">
-                <span v-for="txn of lastSettledTransactions">{{toBlockchainUnits(txn.balance)}}</span>
-                <span v-if="mainInfo.cryptocurrency">{{mainInfo.cryptocurrency.symbol}}</span>
-              </td>
+              <template v-if="!isBalanceReady">
+                <td>
+                  <span>Loading...</span>
+                </td>
+              </template>
+              <template v-if="isBalanceReady">
+                <td v-if="!lastSettledTransactions.length">
+                  <span>0</span>
+                  <span v-if="mainInfo.cryptocurrency">{{mainInfo.cryptocurrency.symbol}}</span>
+                </td>
+                <td v-for="txn of lastSettledTransactions">
+                  <span v-for="txn of lastSettledTransactions">{{toBlockchainUnits(txn.balance)}}</span>
+                  <span v-if="mainInfo.cryptocurrency">{{mainInfo.cryptocurrency.symbol}}</span>
+                </td>
+              </template>
             </tr>
             <tr>
               <td>
