@@ -19,7 +19,7 @@ function getComponent(options) {
         viewParams: {
           accountId: socket.authToken && socket.authToken.accountId
         },
-        fields: ['type', 'amount', 'data', 'canceled', 'createdDate'],
+        fields: ['type', 'amount', 'counterpartyAccountId', 'data', 'canceled', 'createdDate'],
         pageOffset: 0,
         pageSize: 10,
         getCount: true
@@ -77,9 +77,8 @@ function getComponent(options) {
           <table class="table is-striped is-bordered is-fullwidth transfers-table">
             <thead>
               <tr>
-                <th>
-                  <span>Transaction ID</span>
-                </th>
+                <th>Transaction ID</th>
+                <th>Counterparty account ID</th>
                 <th>Data</th>
                 <th v-if="transactionType === 'settled'">Status</th>
                 <th>Amount</th>
@@ -90,6 +89,7 @@ function getComponent(options) {
               <template v-for="transaction of transactions">
                 <tr v-bind:class="{'table-row-failure': transaction.canceled}">
                   <td class="table-cell-id table-first-column">{{transaction.id}}</td>
+                  <td>{{transaction.counterpartyAccountId}}</td>
                   <td>{{transaction.data}}</td>
                   <td v-if="transactionType === 'settled'" class="table-cell-status">{{getStatus(transaction.canceled)}}</td>
                   <td class="table-cell-amount">{{toBlockchainUnits(transaction.amount, transaction.type)}}<span v-if="mainInfo.cryptocurrency"> {{mainInfo.cryptocurrency.symbol}}</span></td>
