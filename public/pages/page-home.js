@@ -9,7 +9,7 @@ function getPageComponent(pageOptions) {
     methods: {},
     template: `
       <div class="page-container container is-fullhd">
-        <div class="container is-fullhd">
+        <div class="container is-fullhd content">
           <h4 class="title is-4">API overview</h4>
 
           <p>
@@ -33,8 +33,22 @@ function getPageComponent(pageOptions) {
             <li class="list-item"><code>amount</code> is the amount of funds to send to the specified Crypticle account - It is expressed in the smallest possible cryptocurrency unit.</li>
             <li class="list-item"><code>toAccountId</code> is the ID of the Crypticle account to send the funds to.</li>
             <li class="list-item"><code>data</code> is a custom string to add to both the debit and credit transactions which will be created as a result of the transfer.</li>
+            <li class="list-item"><code>debitId</code> is an optional ID (string in UUID format) to use for the underlying debit transaction. If not provided, it will be automatically generated on the backend.</li>
+            <li class="list-item"><code>creditId</code> is an optional ID (string in UUID format) to use for the underlying credit transaction. If not provided, it will be automatically generated on the backend.</li>
           </ul>
+
           <div class="spacer"></div>
+
+          <h5 class="title is-5">getBalance</h5>
+          <pre class="code-snippet"><code>
+    let balance = await socket.invoke('getBalance')
+          </code></pre>
+          <p>
+            Returns the current logged in user's account balance as a string.
+          </p>
+
+          <div class="spacer"></div>
+
           <h5 class="title is-5">Withdrawal</h5>
           <pre class="code-snippet"><code>
     socket.invoke('withdraw', {
@@ -46,7 +60,9 @@ function getPageComponent(pageOptions) {
             <li class="list-item"><code>amount</code> is the amount of funds to withdraw from your Crypticle account - It is expressed in the smallest possible cryptocurrency unit.</li>
             <li class="list-item"><code>toWalletAddress</code> is the blockchain wallet address to send the funds to.</li>
           </ul>
+
           <div class="spacer"></div>
+
           <h5 class="title is-5">Deposit</h5>
           <p>
             To make a deposit, send a blockchain transaction to the deposit address of your Crypticle account (as shown on your console dashboard). The deposit wallet address for your account is shown on your console dashboard.
@@ -55,7 +71,7 @@ function getPageComponent(pageOptions) {
 
         <hr class="hr hr-medium-spacing" />
 
-        <div class="container is-fullhd">
+        <div class="container is-fullhd content">
           <h4 class="title is-4">Admin RPCs</h4>
           <h5 class="title is-5">Transfer</h5>
           <pre class="code-snippet"><code>
@@ -71,8 +87,27 @@ function getPageComponent(pageOptions) {
             <li class="list-item"><code>fromAccountId</code> is the ID of the Crypticle account from which to take the funds from.</li>
             <li class="list-item"><code>toAccountId</code> is the ID of the Crypticle account to send the funds to.</li>
             <li class="list-item"><code>data</code> is a custom string to add to both the debit and credit transactions which will be created as a result of the transfer.</li>
+            <li class="list-item"><code>debitId</code> is an optional ID (string in UUID format) to use for the underlying debit transaction. If not provided, it will be automatically generated on the backend.</li>
+            <li class="list-item"><code>creditId</code> is an optional ID (string in UUID format) to use for the underlying credit transaction. If not provided, it will be automatically generated on the backend.</li>
           </ul>
+
           <div class="spacer"></div>
+
+          <h5 class="title is-5">adminGetBalance</h5>
+          <pre class="code-snippet"><code>
+    let balance = await socket.invoke('adminGetBalance', {
+      accountId: '213288af-9239-494d-844d-d064ced6f9ea'
+    })
+          </code></pre>
+          <ul class="list">
+            <li class="list-item"><code>accountId</code> is the ID of the Crypticle account to get the balance from.</li>
+          </ul>
+          <p>
+            Returns the current balance of the specified account as a string.
+          </p>
+
+          <div class="spacer"></div>
+
           <h5 class="title is-5">Withdrawal</h5>
           <pre class="code-snippet"><code>
     socket.invoke('adminWithdraw', {
@@ -86,10 +121,76 @@ function getPageComponent(pageOptions) {
             <li class="list-item"><code>fromAccountId</code> is the ID of the Crypticle account from which to withdraw the funds.</li>
             <li class="list-item"><code>toWalletAddress</code> is the blockchain wallet address to send the funds to.</li>
           </ul>
+
           <div class="spacer"></div>
+
           <h5 class="title is-5">Deposit</h5>
           <p>
             To make a deposit, send a blockchain transaction to the deposit address of the relevant Crypticle account.
+          </p>
+        </div>
+
+        <hr class="hr hr-medium-spacing" />
+
+        <div class="container is-fullhd content">
+          <h4 class="title is-4">Realtime CRUD channels</h4>
+
+          <p>
+            Modifying data within Crypticle will cause change notifications to be published to specific channels.
+            A channel can either represent a field of a specific resource or an entire view (collection).
+          </p>
+
+          <div class="spacer"></div>
+
+          <h5 class="title is-5">Resource field changes</h5>
+          <p>
+            You can subscribe to and consume realtime changes from a resource field channel like this:
+          </p>
+
+          <pre class="code-snippet"><code>
+    // This example shows how to detect when the 'settled' property of the
+    // transaction with ID 1336b876-fda0-42dc-8834-b407d4d9d5fc has changed.
+
+    let transactionSettledChannel = socket.subscribe(
+      '<b>crud>Transaction/1336b876-fda0-42dc-8834-b407d4d9d5fc/settled</b>'
+    );
+
+    (async () => {
+      for await (let {value} of transactionSettledChannel) {
+        // value will be true when the transaction has settled.
+      }
+    })();
+          </code></pre>
+          <p>
+            Note that it's possible to subscribe to a channel for any resource field defined in schema.js provided that the current authenticated user has the required access rights.
+          </p>
+
+          <div class="spacer"></div>
+
+          <h5 class="title is-5">View changes</h5>
+          <p>
+            You can subscribe to and consume realtime change notifications from a view channel like this:
+          </p>
+
+          <pre class="code-snippet"><code>
+    // This example shows how to detect when a transaction has been added to the
+    // 'lastSettledTransactions' view for the account with ID 213288af-9239-494d-844d-d064ced6f9ea.
+
+    let lastSettledTransactionsChannel = socket.subscribe(
+      '<b>crud>lastSettledTransactions({"accountId":"213288af-9239-494d-844d-d064ced6f9ea"}):Transaction</b>'
+    );
+
+    (async () => {
+      for await (let data of lastSettledTransactionsChannel) {
+        // This loop will iterate once when whenever the view has been
+        // modified (e.g. a new transaction was added). The data variable is always undefined.
+        // It's a good time to re-fetch the latest account balance.
+        let balance = await socket.invoke('getBalance');
+      }
+    })();
+          </code></pre>
+          <p>
+            Note that it's possible to subscribe to a channel for any view defined in schema.js provided that the current authenticated user has the required access rights.
           </p>
         </div>
       </div>

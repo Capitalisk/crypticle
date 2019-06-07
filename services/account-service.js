@@ -129,10 +129,14 @@ class AccountService extends AsyncStreamEmitter {
 
   async fetchAccountBalance(accountId) {
     return this.thinky.r.table('Transaction')
-    .getAll(accountId, {index: 'accountId'})
-    .orderBy(this.thinky.r.desc('createdDate'))
+    .between(
+      [accountId, this.thinky.r.minval],
+      [accountId, this.thinky.r.maxval],
+      {index: 'accountIdSettledDate', rightBound: 'closed'}
+    )
+    .orderBy({index: this.thinky.r.desc('accountIdSettledDate')})
     .nth(0)
-    .getField('amount');
+    .getField('balance');
   }
 
   async fetchAccountSettlementLedger(maxSettlementsPerAccount) {

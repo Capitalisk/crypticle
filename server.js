@@ -222,7 +222,9 @@ const envConfig = config[ENVIRONMENT];
               toWalletAddress: withdrawalData.toWalletAddress
             });
           } catch (error) {
-            request.error(error);
+            request.error(
+              new Error('Failed to execute withdrawal due to a server error')
+            );
             console.error(error);
             continue;
           }
@@ -245,11 +247,31 @@ const envConfig = config[ENVIRONMENT];
               data: transferData.data
             });
           } catch (error) {
-            request.error(error);
+            request.error(
+              new Error('Failed to execute transfer due to a server error')
+            );
             console.error(error);
             continue;
           }
           request.end();
+        }
+      })();
+
+      (async () => {
+        // TODO 2: Validate request data.
+        // TODO 2: Respond with error in middleware if user is not logged in properly.
+        for await (let request of socket.procedure('getBalance')) {
+          let balance;
+          try {
+            balance = await accountService.fetchAccountBalance(socket.authToken.accountId);
+          } catch (error) {
+            request.error(
+              new Error('Failed to execute getBalance due to a server error')
+            );
+            console.error(error);
+            continue;
+          }
+          request.end(balance);
         }
       })();
 
@@ -266,7 +288,9 @@ const envConfig = config[ENVIRONMENT];
               toWalletAddress: withdrawalData.toWalletAddress
             });
           } catch (error) {
-            request.error(error);
+            request.error(
+              new Error('Failed to execute adminWithdraw due to a server error')
+            );
             console.error(error);
             continue;
           }
@@ -290,11 +314,32 @@ const envConfig = config[ENVIRONMENT];
               data: transferData.data
             });
           } catch (error) {
-            request.error(error);
+            request.error(
+              new Error('Failed to execute adminTransfer due to a server error')
+            );
             console.error(error);
             continue;
           }
           request.end();
+        }
+      })();
+
+      (async () => {
+        // TODO 2: Validate request data.
+        // TODO 2: Respond with error in middleware if user is not logged in properly.
+        for await (let request of socket.procedure('adminGetBalance')) {
+          let getBalanceData = request.data || {};
+          let balance;
+          try {
+            balance = await accountService.fetchAccountBalance(getBalanceData.accountId);
+          } catch (error) {
+            request.error(
+              new Error('Failed to execute adminGetBalance due to a server error')
+            );
+            console.error(error);
+            continue;
+          }
+          request.end(balance);
         }
       })();
 
