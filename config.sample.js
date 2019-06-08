@@ -29,7 +29,7 @@ module.exports = {
     mainWalletAddress: '16460447528999404929R',
     requiredDepositBlockConfirmations: 102,
     requiredWithdrawalBlockConfirmations: 102,
-    paginationShowTotalCounts: true,
+    paginationShowTotalCounts: false,
     maxRecordDisplayAge: 2592000000
   }
 };
