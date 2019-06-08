@@ -23,7 +23,7 @@ function getComponent(options) {
         fields: ['transactionId', 'amount', 'height', 'canceled', 'createdDate'],
         pageOffset: 0,
         pageSize: 10,
-        getCount: true
+        getCount: mainInfo.paginationShowTotalCounts
       });
 
       return {
@@ -68,6 +68,11 @@ function getComponent(options) {
         return this.withdrawalsMeta.count > this.withdrawalsMeta.pageSize;
       }
     },
+    watch: {
+      'mainInfo.paginationShowTotalCounts': function (value) {
+        this.withdrawalCollection.getCount = value;
+      }
+    },
     template: `
       <div class="component-container container is-fullhd">
         <h4 class="title is-4" v-if="withdrawalType">{{capitalize(withdrawalType)}} withdrawals</h4>
@@ -99,8 +104,11 @@ function getComponent(options) {
             </tbody>
           </table>
         </div>
-        <div class="paginator-container">
+        <div v-if="mainInfo.paginationShowTotalCounts" class="paginator-container">
           <input type="button" class="button" value="Previous page" v-bind:disabled="firstItemIndex <= 1" @click="goToPrevPage" /> <div class="paginator-text">Items <b>{{firstItemIndex}}</b> to <b>{{lastItemIndex}}</b> of <b>{{withdrawalsMeta.count}}</b></div> <input type="button" class="button" value="Next page" v-bind:disabled="lastItemIndex >= withdrawalsMeta.count" @click="goToNextPage" />
+        </div>
+        <div v-if="!mainInfo.paginationShowTotalCounts" class="paginator-container">
+          <input type="button" class="button" value="Previous page" v-bind:disabled="firstItemIndex <= 1" @click="goToPrevPage" /> <div class="paginator-text">Items <b>{{firstItemIndex}}</b> to <b>{{lastItemIndex}}</b></div> <input type="button" class="button" value="Next page" @click="goToNextPage" />
         </div>
       </div>
     `

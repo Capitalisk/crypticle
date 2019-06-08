@@ -76,7 +76,8 @@ function getSchema(options) {
               [params.accountId, r.maxval],
               {index: 'accountIdSettledDate', rightBound: 'closed'}
             )
-            .orderBy({index: r.desc('accountIdSettledDate')});
+            .orderBy({index: r.desc('accountIdSettledDate')})
+            .limit(10); // This limit is necessary for performance reasons.
           }
         },
         accountTransfersPendingView: {

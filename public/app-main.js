@@ -11,7 +11,12 @@ socket.startBatching();
 let pageOptions = {
   socket,
   mainInfo: {
-    cryptocurrency: {}
+    cryptocurrency: {},
+    mainWalletAddress: null,
+    requiredDepositBlockConfirmations: null,
+    requiredWithdrawalBlockConfirmations: null,
+    paginationShowTotalCounts: true,
+    maxRecordDisplayAge: null
   }
 };
 
