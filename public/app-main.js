@@ -15,7 +15,7 @@ let pageOptions = {
     mainWalletAddress: null,
     requiredDepositBlockConfirmations: null,
     requiredWithdrawalBlockConfirmations: null,
-    paginationShowTotalCounts: true,
+    paginationShowTotalCounts: false,
     maxRecordDisplayAge: null
   }
 };

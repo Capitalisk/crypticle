@@ -103,12 +103,9 @@ function getComponent(options) {
             </tbody>
           </table>
         </div>
-        <div v-if="mainInfo.paginationShowTotalCounts" class="paginator-container">
-          <input type="button" class="button" value="Previous page" v-bind:disabled="firstItemIndex <= 1" @click="goToPrevPage" /> <div class="paginator-text">Items <b>{{firstItemIndex}}</b> to <b>{{lastItemIndex}}</b> of <b>{{depositsMeta.count}}</b></div> <input type="button" class="button" value="Next page" v-bind:disabled="lastItemIndex >= depositsMeta.count" @click="goToNextPage" />
-        </div>
-        <div v-if="!mainInfo.paginationShowTotalCounts" class="paginator-container">
-          <input type="button" class="button" value="Previous page" v-bind:disabled="firstItemIndex <= 1" @click="goToPrevPage" /> <div class="paginator-text">Items <b>{{firstItemIndex}}</b> to <b>{{lastItemIndex}}</b></div> <input type="button" class="button" value="Next page" @click="goToNextPage" />
-        </div>
+        <input type="button" class="button" value="Previous page" v-bind:disabled="!depositsMeta.pageOffset" @click="goToPrevPage" />
+        <div class="paginator-text">Items <b>{{firstItemIndex}}</b> to <b>{{lastItemIndex}}</b><span v-if="mainInfo.paginationShowTotalCounts"> of <b>{{depositsMeta.count}}</b></span></div>
+        <input type="button" class="button" value="Next page" v-bind:disabled="depositsMeta.isLastPage" @click="goToNextPage" />
       </div>
     `
   };
