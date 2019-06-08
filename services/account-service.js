@@ -198,23 +198,25 @@ class AccountService extends AsyncStreamEmitter {
             } else {
               txn.canceled = true;
             }
-          } else if (txn.type === 'debit') {
-            let newBalance = account.balance - BigInt(txn.amount);
-            if (newBalance >= 0n) {
-              account.balance = newBalance;
-              // If the transaction is a valid tranfer between two accounts.
-              if (txn.counterpartyAccountId != null) {
-                let transferCreditTxn = await this.thinky.r.table('Transaction')
-                .get(txn.counterpartyTransactionId).run();
-                if (transferCreditTxn == null) {
-                  await this.execTransferCreditFromDebit(txn);
+          } else if (txn.type === 'transfer') {
+            if (txn.recordType === 'debit') {
+              let newBalance = account.balance - BigInt(txn.amount);
+              if (newBalance >= 0n) {
+                account.balance = newBalance;
+                // If the transaction is a valid tranfer between two accounts.
+                if (txn.counterpartyAccountId != null) {
+                  let transferCreditTxn = await this.thinky.r.table('Transaction')
+                  .get(txn.counterpartyTransactionId).run();
+                  if (transferCreditTxn == null) {
+                    await this.execTransferCreditFromDebit(txn);
+                  }
                 }
+              } else {
+                txn.canceled = true;
               }
             } else {
-              txn.canceled = true;
+              account.balance += BigInt(txn.amount);
             }
-          } else if (txn.type === 'credit') {
-            account.balance += BigInt(txn.amount);
           } else if (txn.type === 'deposit') {
             account.balance += BigInt(txn.amount);
           }
@@ -589,6 +591,7 @@ class AccountService extends AsyncStreamEmitter {
           id: deposit.transactionId,
           accountId: deposit.accountId,
           type: 'deposit',
+          recordType: 'credit',
           amount: deposit.amount
         };
         try {
@@ -735,7 +738,8 @@ class AccountService extends AsyncStreamEmitter {
     let creditTransaction = {
       id: debitTransaction.counterpartyTransactionId,
       accountId: debitTransaction.counterpartyAccountId,
-      type: 'credit',
+      type: 'transfer',
+      recordType: 'credit',
       amount: debitTransaction.amount,
       counterpartyAccountId: debitTransaction.accountId,
       counterpartyTransactionId: debitTransaction.id,
@@ -772,7 +776,8 @@ class AccountService extends AsyncStreamEmitter {
     let debitTransaction = {
       id: transfer.debitId,
       accountId: transfer.fromAccountId,
-      type: 'debit',
+      type: 'transfer',
+      recordType: 'debit',
       amount: transfer.amount,
       counterpartyAccountId: transfer.toAccountId,
       counterpartyTransactionId: transfer.creditId,
@@ -850,6 +855,7 @@ class AccountService extends AsyncStreamEmitter {
         id: transactionId,
         accountId: withdrawal.fromAccountId,
         type: 'withdrawal',
+        recordType: 'debit',
         amount: totalAmount.toString()
       });
     } catch (error) {
@@ -890,6 +896,7 @@ class AccountService extends AsyncStreamEmitter {
             id: withdrawal.transactionId,
             accountId: withdrawal.accountId,
             type: 'withdrawal',
+            recordType: 'debit',
             amount: totalAmount.toString()
           });
           return;

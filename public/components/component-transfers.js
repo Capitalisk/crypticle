@@ -19,7 +19,7 @@ function getComponent(options) {
         viewParams: {
           accountId: socket.authToken && socket.authToken.accountId
         },
-        fields: ['type', 'amount', 'counterpartyAccountId', 'data', 'canceled', 'createdDate'],
+        fields: ['type', 'recordType', 'amount', 'counterpartyAccountId', 'data', 'canceled', 'createdDate'],
         pageOffset: 0,
         pageSize: 10,
         getCount: true
@@ -32,9 +32,9 @@ function getComponent(options) {
       };
     },
     methods: {
-      toBlockchainUnits: function (amount, type) {
+      toBlockchainUnits: function (amount, recordType) {
         let value = Number(amount) / Number(mainInfo.cryptocurrency.unit);
-        if (type === 'debit') {
+        if (recordType === 'debit') {
           value *= -1;
         }
         return Math.round(value * 10000) / 10000;
@@ -92,7 +92,7 @@ function getComponent(options) {
                   <td>{{transaction.counterpartyAccountId}}</td>
                   <td>{{transaction.data}}</td>
                   <td v-if="transactionType === 'settled'" class="table-cell-status">{{getStatus(transaction.canceled)}}</td>
-                  <td class="table-cell-amount">{{toBlockchainUnits(transaction.amount, transaction.type)}}<span v-if="mainInfo.cryptocurrency"> {{mainInfo.cryptocurrency.symbol}}</span></td>
+                  <td class="table-cell-amount">{{toBlockchainUnits(transaction.amount, transaction.recordType)}}<span v-if="mainInfo.cryptocurrency"> {{mainInfo.cryptocurrency.symbol}}</span></td>
                   <td class="table-cell-date">{{toSimpleDate(transaction.createdDate)}}</td>
                 </tr>
               </template>

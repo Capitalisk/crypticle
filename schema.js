@@ -30,7 +30,8 @@ function getSchema(options) {
     Transaction: {
       fields: {
         accountId: type.string(),
-        type: type.string(), // Can be 'deposit', 'withdrawal', 'credit' or 'debit'
+        type: type.string(), // Can be 'deposit', 'withdrawal' or 'transfer'
+        recordType: type.string(), // Can be 'credit' or 'debit'
         amount: type.string(),
         counterpartyAccountId: type.string().optional(),
         counterpartyTransactionId: type.string().optional(),
@@ -44,15 +45,13 @@ function getSchema(options) {
       },
       indexes: [
         'accountId',
-        'settled',
-        'settledDate',
         'settlementShardKey',
         'createdDate',
         {
-          name: 'accountIdCreatedDate',
+          name: 'accountIdTypeSettledCreatedDate',
           type: 'compound', // Compound indexes are ordered lexicographically
           fn: function (r) {
-            return [r.row('accountId'), r.row('createdDate')];
+            return [r.row('accountId'), r.row('type'), r.row('settled'), r.row('createdDate')];
           }
         },
         {
@@ -87,16 +86,11 @@ function getSchema(options) {
             let startTime = r.now().sub(options.maxRecordDisplayAge / 1000);
             return fullTableQuery
             .between(
-              [params.accountId, startTime],
-              [params.accountId, r.maxval],
-              {index: 'accountIdCreatedDate', rightBound: 'closed'}
+              [params.accountId, 'transfer', false, startTime],
+              [params.accountId, 'transfer', false, r.maxval],
+              {index: 'accountIdTypeSettledCreatedDate', rightBound: 'closed'}
             )
-            .filter(
-              r.row('type').eq('credit')
-              .or(r.row('type').eq('debit'))
-            )
-            .filter(r.row('settled').eq(false))
-            .orderBy(r.desc('createdDate'));
+            .orderBy({index: r.desc('accountIdTypeSettledCreatedDate')});
           }
         },
         accountTransfersSettledView: {
@@ -106,16 +100,11 @@ function getSchema(options) {
             let startTime = r.now().sub(options.maxRecordDisplayAge / 1000);
             return fullTableQuery
             .between(
-              [params.accountId, startTime],
-              [params.accountId, r.maxval],
-              {index: 'accountIdCreatedDate', rightBound: 'closed'}
+              [params.accountId, 'transfer', true, startTime],
+              [params.accountId, 'transfer', true, r.maxval],
+              {index: 'accountIdTypeSettledCreatedDate', rightBound: 'closed'}
             )
-            .filter(
-              r.row('type').eq('credit')
-              .or(r.row('type').eq('debit'))
-            )
-            .filter(r.row('settled').eq(true))
-            .orderBy(r.desc('settledDate'));
+            .orderBy({index: r.desc('accountIdTypeSettledCreatedDate')});
           }
         }
       }
@@ -138,10 +127,10 @@ function getSchema(options) {
         'createdDate',
         'settlementShardKey',
         {
-          name: 'accountIdCreatedDate',
+          name: 'accountIdSettledCreatedDate',
           type: 'compound', // Compound indexes are ordered lexicographically
           fn: function (r) {
-            return [r.row('accountId'), r.row('createdDate')];
+            return [r.row('accountId'), r.row('settled'), r.row('createdDate')];
           }
         }
       ],
@@ -161,46 +150,30 @@ function getSchema(options) {
       views: {
         accountDepositsPendingView: {
           paramFields: ['accountId'],
-          foreignAffectingFields: {
-            Transaction: ['settled']
-          },
+          affectingFields: ['settled'],
           transform: function (fullTableQuery, r, params) {
             let startTime = r.now().sub(options.maxRecordDisplayAge / 1000);
             return fullTableQuery
             .between(
-              [params.accountId, startTime],
-              [params.accountId, r.maxval],
-              {index: 'accountIdCreatedDate', rightBound: 'closed'}
+              [params.accountId, false, startTime],
+              [params.accountId, false, r.maxval],
+              {index: 'accountIdSettledCreatedDate', rightBound: 'closed'}
             )
-            .filter(
-              r.db(options.dbName).table('Transaction')
-              .getAll(r.row('transactionId'), {index: 'id'})
-              .filter(txn => txn('settled').eq(true))
-              .count().eq(0)
-            )
-            .orderBy(r.desc('createdDate'));
+            .orderBy({index: r.desc('accountIdSettledCreatedDate')});
           }
         },
         accountDepositsSettledView: {
           paramFields: ['accountId'],
-          foreignAffectingFields: {
-            Transaction: ['settled']
-          },
+          affectingFields: ['settled'],
           transform: function (fullTableQuery, r, params) {
             let startTime = r.now().sub(options.maxRecordDisplayAge / 1000);
             return fullTableQuery
             .between(
-              [params.accountId, startTime],
-              [params.accountId, r.maxval],
-              {index: 'accountIdCreatedDate', rightBound: 'closed'}
+              [params.accountId, true, startTime],
+              [params.accountId, true, r.maxval],
+              {index: 'accountIdSettledCreatedDate', rightBound: 'closed'}
             )
-            .filter(
-              r.db(options.dbName).table('Transaction')
-              .getAll(r.row('transactionId'), {index: 'id'})
-              .filter(txn => txn('settled').eq(true))
-              .count().gt(0)
-            )
-            .orderBy(r.desc('createdDate'));
+            .orderBy({index: r.desc('accountIdSettledCreatedDate')});
           }
         }
       }
@@ -229,10 +202,10 @@ function getSchema(options) {
         'createdDate',
         'settlementShardKey',
         {
-          name: 'accountIdCreatedDate',
+          name: 'accountIdSettledCreatedDate',
           type: 'compound', // Compound indexes are ordered lexicographically
           fn: function (r) {
-            return [r.row('accountId'), r.row('createdDate')];
+            return [r.row('accountId'), r.row('settled'), r.row('createdDate')];
           }
         }
       ],
@@ -247,12 +220,11 @@ function getSchema(options) {
             let startTime = r.now().sub(options.maxRecordDisplayAge / 1000);
             return fullTableQuery
             .between(
-              [params.accountId, startTime],
-              [params.accountId, r.maxval],
-              {index: 'accountIdCreatedDate', rightBound: 'closed'}
+              [params.accountId, false, startTime],
+              [params.accountId, false, r.maxval],
+              {index: 'accountIdSettledCreatedDate', rightBound: 'closed'}
             )
-            .filter(r.row('settled').eq(false))
-            .orderBy(r.desc('createdDate'));
+            .orderBy({index: r.desc('accountIdSettledCreatedDate')});
           }
         },
         accountWithdrawalsSettledView: {
@@ -262,12 +234,11 @@ function getSchema(options) {
             let startTime = r.now().sub(options.maxRecordDisplayAge / 1000);
             return fullTableQuery
             .between(
-              [params.accountId, startTime],
-              [params.accountId, r.maxval],
-              {index: 'accountIdCreatedDate', rightBound: 'closed'}
+              [params.accountId, true, startTime],
+              [params.accountId, true, r.maxval],
+              {index: 'accountIdSettledCreatedDate', rightBound: 'closed'}
             )
-            .filter(r.row('settled').eq(true))
-            .orderBy(r.desc('createdDate'));
+            .orderBy({index: r.desc('accountIdSettledCreatedDate')});
           }
         }
       }
