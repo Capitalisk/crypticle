@@ -65,7 +65,7 @@ function getComponent(options) {
         return this.withdrawalsMeta.pageOffset + this.withdrawals.length;
       },
       hasMultiplePages: function () {
-        return this.withdrawalsMeta.count > this.withdrawalsMeta.pageSize;
+        return this.withdrawalsMeta.pageOffset > 0 || !this.withdrawalsMeta.isLastPage;
       }
     },
     watch: {

@@ -64,7 +64,7 @@ function getComponent(options) {
         return this.depositsMeta.pageOffset + this.deposits.length;
       },
       hasMultiplePages: function () {
-        return this.depositsMeta.count > this.depositsMeta.pageSize;
+        return this.depositsMeta.pageOffset > 0 || !this.depositsMeta.isLastPage;
       }
     },
     watch: {
