@@ -1,7 +1,7 @@
 module.exports = {
   origin: 'https://crypticle.io',
   adminEmailAddress: 'Crypticle <grosjona@yahoo.com.au>',
-  adminSignupKey: '313e7cc1-ad75-4030-a927-6a09f39c1603',
+  secretSignupKey: '313e7cc1-ad75-4030-a927-6a09f39c1603',
   services: {
     account: {
       transactionSettlementInterval: 5000,
@@ -30,6 +30,7 @@ module.exports = {
     requiredDepositBlockConfirmations: 102,
     requiredWithdrawalBlockConfirmations: 102,
     paginationShowTotalCounts: false,
-    maxRecordDisplayAge: 2592000000
+    maxRecordDisplayAge: 2592000000,
+    alwaysRequireSecretSignupKey: false
   }
 };

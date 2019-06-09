@@ -1,7 +1,7 @@
 import AGCollection from '/node_modules/ag-collection/ag-collection.js';
 
 function getPageComponent(pageOptions) {
-  let {socket} = pageOptions;
+  let {socket, mainInfo} = pageOptions;
 
   return {
     props: {
@@ -23,18 +23,20 @@ function getPageComponent(pageOptions) {
         error: null,
         username: '',
         password: '',
-        adminSignupKey: '',
-        showConsoleLink: false
+        secretSignupKey: null,
+        showConsoleLink: false,
+        mainInfo
       };
     },
     methods: {
       signup: async function () {
         let details = {
           username: this.username,
-          password: this.password
+          password: this.password,
+          secretSignupKey: this.secretSignupKey
         };
         if (this.kind === 'admin') {
-          details.adminSignupKey = this.adminSignupKey;
+          details.admin = true;
         }
         try {
           await this.accountCollection.create(details);
@@ -72,11 +74,11 @@ function getPageComponent(pageOptions) {
           </label>
           <input id="signup-form-password" type="password" v-model="password" class="input" @keydown.enter="signup">
         </div>
-        <div v-if="kind === 'admin'" class="field">
+        <div v-if="kind === 'admin' || mainInfo.alwaysRequireSecretSignupKey" class="field">
           <label class="label" for="signup-form-admin-signup-key">
             Admin signup key
           </label>
-          <input id="signup-form-admin-signup-key" type="password" v-model="adminSignupKey" class="input" @keydown.enter="signup">
+          <input id="signup-form-admin-signup-key" type="password" v-model="secretSignupKey" class="input" @keydown.enter="signup">
         </div>
         <div class="field">
           <input type="button" class="button is-medium is-link" value="Sign up" @click="signup">

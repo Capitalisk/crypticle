@@ -37,11 +37,12 @@ class AccountService extends AsyncStreamEmitter {
     this.withdrawalInterval = options.withdrawalProcessingInterval;
     this.maxSettlementsPerAccount = options.maxTransactionSettlementsPerAccount;
     this.blockchainWithdrawalMaxBlocksRetry = options.blockchainWithdrawalMaxBlocksRetry;
-    this.adminSignupKey = options.adminSignupKey;
+    this.secretSignupKey = options.secretSignupKey;
 
     this.mainWalletAddress = options.mainInfo.mainWalletAddress;
     this.requiredDepositBlockConfirmations = options.mainInfo.requiredDepositBlockConfirmations;
     this.requiredWithdrawalBlockConfirmations = options.mainInfo.requiredWithdrawalBlockConfirmations;
+    this.alwaysRequireSecretSignupKey = options.mainInfo.alwaysRequireSecretSignupKey;
     this.blockPollInterval = options.blockPollInterval;
     this.blockFetchLimit = options.blockFetchLimit;
     this.blockchainSync = options.blockchainSync;
@@ -283,6 +284,15 @@ class AccountService extends AsyncStreamEmitter {
 
   async sanitizeSignupCredentials(credentials) {
     credentials = {...credentials};
+
+    if (this.alwaysRequireSecretSignupKey && credentials.secretSignupKey !== this.secretSignupKey) {
+      let accountCreateError = new Error(
+        'Failed to create account because the specified secret signup key was incorrect. An account cannot be created without a valid secret key.'
+      );
+      accountCreateError.name = 'AccountCreateError';
+      throw accountCreateError;
+    }
+
     if (!credentials || credentials.username == null || credentials.password == null) {
       let error = new Error('Account credentials were not provided.');
       error.name = 'NoCredentialsProvidedError';
@@ -392,12 +402,10 @@ class AccountService extends AsyncStreamEmitter {
       }
     }
 
-    if (this.adminSignupKey != null && credentials.adminSignupKey != null) {
-      if (credentials.adminSignupKey === this.adminSignupKey) {
-        credentials.admin = true;
-      } else {
+    if (credentials.admin) {
+      if (credentials.secretSignupKey !== this.secretSignupKey) {
         let accountCreateError = new Error(
-          'Failed to create admin account because the specified admin signup key was incorrect.'
+          'Failed to create admin account because the specified secret signup key was incorrect.'
         );
         accountCreateError.name = 'AccountCreateError';
         throw accountCreateError;
@@ -405,7 +413,7 @@ class AccountService extends AsyncStreamEmitter {
     } else {
       credentials.admin = false;
     }
-    delete credentials.adminSignupKey;
+    delete credentials.secretSignupKey;
 
     return credentials;
   }

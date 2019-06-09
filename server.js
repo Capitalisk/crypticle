@@ -124,7 +124,7 @@ const envConfig = config[ENVIRONMENT];
     mainInfo: envConfig.mainInfo,
     shardInfo,
     blockchainNodeWalletPassphrase,
-    adminSignupKey: envConfig.adminSignupKey
+    secretSignupKey: envConfig.secretSignupKey
   });
 
   (async () => {
