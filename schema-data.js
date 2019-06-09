@@ -184,7 +184,7 @@ function getSchema(options) {
         accountId: type.string(),
         transactionId: type.string(),
         height: type.number().default(null),
-        firstAttemptedHeight: type.number().default(null),
+        attemptCount: type.number().default(0),
         signedTransaction: type.string(),
         toWalletAddress: type.string(),
         fromWalletAddress: type.string(),

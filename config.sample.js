@@ -5,7 +5,7 @@ module.exports = {
   services: {
     account: {
       transactionSettlementInterval: 5000,
-      withdrawalProcessingInterval: 5000,
+      withdrawalProcessingInterval: 15000,
       maxTransactionSettlementsPerAccount: 10,
       maxConcurrentWithdrawalsPerAccount: 10,
       blockchainNodeWalletPassphrase: 'drastic spot aerobic web wave tourist library first scout fatal inherit arrange',
@@ -14,7 +14,7 @@ module.exports = {
       blockchainNodeAddress: 'https://wallet.rise.vision',
       blockPollInterval: 5000,
       blockFetchLimit: 100,
-      blockchainWithdrawalMaxBlocksRetry: 303
+      blockchainWithdrawalMaxAttempts: 20
     },
     fiat: {
       name: 'stripe',

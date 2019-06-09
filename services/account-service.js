@@ -35,7 +35,7 @@ class AccountService extends AsyncStreamEmitter {
     this.withdrawalInterval = options.withdrawalProcessingInterval;
     this.maxTransactionSettlementsPerAccount = options.maxTransactionSettlementsPerAccount;
     this.maxConcurrentWithdrawalsPerAccount = options.maxConcurrentWithdrawalsPerAccount;
-    this.blockchainWithdrawalMaxBlocksRetry = options.blockchainWithdrawalMaxBlocksRetry;
+    this.blockchainWithdrawalMaxAttempts = options.blockchainWithdrawalMaxAttempts;
     this.secretSignupKey = options.secretSignupKey;
 
     this.mainWalletAddress = options.mainInfo.mainWalletAddress;
@@ -910,7 +910,6 @@ class AccountService extends AsyncStreamEmitter {
         amount: withdrawal.amount,
         toWalletAddress: withdrawal.toWalletAddress,
         fromWalletAddress: signedTransaction.senderId,
-        firstAttemptedHeight: height,
         fees,
         id: signedTransaction.id
       }
@@ -1004,8 +1003,7 @@ class AccountService extends AsyncStreamEmitter {
             return;
           }
 
-          let blocksDiff = currentBlockHeight - withdrawal.firstAttemptedHeight;
-          if (blocksDiff > this.blockchainWithdrawalMaxBlocksRetry) { // TODO 2: Change to retry attempt counting
+          if (withdrawal.attemptCount > this.blockchainWithdrawalMaxAttempts) {
             this.emit('error', {
               error: new Error(
                 `Failed to process withdrawal ${
@@ -1030,6 +1028,16 @@ class AccountService extends AsyncStreamEmitter {
             });
             return;
           }
+
+          await this.thinky.r.table('Withdrawal').get(withdrawal.id).update({
+            attemptCount: this.thinky.r.row('attemptCount').add(1)
+          }).run();
+
+          this.crud.notifyResourceUpdate({
+            type: 'Withdrawal',
+            id: withdrawal.id,
+            fields: ['attemptCount']
+          });
 
           let signedTransaction = JSON.parse(withdrawal.signedTransaction);
           await this.blockchainAdapter.sendTransaction(signedTransaction);
