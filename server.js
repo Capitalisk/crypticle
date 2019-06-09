@@ -170,6 +170,32 @@ const envConfig = config[ENVIRONMENT];
     validateRequestDataSchema(request.data, request.procedure);
   }
 
+  function verifyUserAuth(request, socket) {
+    if (!socket.authToken) {
+      let error = new Error(
+        `Cannot invoke the ${
+          request.procedure
+        } procedure while not authenticated.`
+      );
+      error.name = 'NotAuthenticatedError';
+      error.isClientError = true;
+      throw error;
+    }
+  }
+
+  function verifyAdminUserAuth(request, socket) {
+    if (!socket.authToken || !socket.authToken.admin) {
+      let error = new Error(
+        `Cannot invoke the ${
+          request.procedure
+        } procedure while not authenticated as an admin.`
+      );
+      error.name = 'NotAuthenticatedAsAdminError';
+      error.isClientError = true;
+      throw error;
+    }
+  }
+
   // HTTP request handling loop.
   (async () => {
     for await (let requestData of httpServer.listener('request')) {
@@ -268,9 +294,9 @@ const envConfig = config[ENVIRONMENT];
       })();
 
       (async () => {
-        // TODO 2: Respond with error in middleware if user is not logged in properly.
         for await (let request of socket.procedure('withdraw')) {
           try {
+            verifyUserAuth(request, socket);
             validateRequestSchema(request);
           } catch (error) {
             request.error(error);
@@ -301,9 +327,9 @@ const envConfig = config[ENVIRONMENT];
       })();
 
       (async () => {
-        // TODO 2: Respond with error in middleware if user is not logged in properly.
         for await (let request of socket.procedure('transfer')) {
           try {
+            verifyUserAuth(request, socket);
             validateRequestSchema(request);
           } catch (error) {
             request.error(error);
@@ -337,9 +363,9 @@ const envConfig = config[ENVIRONMENT];
       })();
 
       (async () => {
-        // TODO 2: Respond with error in middleware if user is not logged in properly.
         for await (let request of socket.procedure('getBalance')) {
           try {
+            verifyUserAuth(request, socket);
             validateRequestSchema(request);
           } catch (error) {
             request.error(error);
@@ -366,10 +392,9 @@ const envConfig = config[ENVIRONMENT];
       })();
 
       (async () => {
-        // TODO 2: Respond with error in middleware if user is not logged in properly.
-        // TODO 2: Respond with error in middleware if user is not admin.
         for await (let request of socket.procedure('adminWithdraw')) {
           try {
+            verifyAdminUserAuth(request, socket);
             validateRequestSchema(request);
           } catch (error) {
             request.error(error);
@@ -400,10 +425,9 @@ const envConfig = config[ENVIRONMENT];
       })();
 
       (async () => {
-        // TODO 2: Respond with error in middleware if user is not logged in properly.
-        // TODO 2: Respond with error in middleware if user is not admin.
         for await (let request of socket.procedure('adminTransfer')) {
           try {
+            verifyAdminUserAuth(request, socket);
             validateRequestSchema(request);
           } catch (error) {
             request.error(error);
@@ -437,9 +461,9 @@ const envConfig = config[ENVIRONMENT];
       })();
 
       (async () => {
-        // TODO 2: Respond with error in middleware if user is not logged in properly.
         for await (let request of socket.procedure('adminGetBalance')) {
           try {
+            verifyAdminUserAuth(request, socket);
             validateRequestSchema(request);
           } catch (error) {
             request.error(error);
