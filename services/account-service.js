@@ -290,12 +290,14 @@ class AccountService extends AsyncStreamEmitter {
         'Failed to create account because the specified secret signup key was incorrect. An account cannot be created without a valid secret key.'
       );
       accountCreateError.name = 'AccountCreateError';
+      accountCreateError.isClientError = true;
       throw accountCreateError;
     }
 
     if (!credentials || credentials.username == null || credentials.password == null) {
       let error = new Error('Account credentials were not provided.');
       error.name = 'NoCredentialsProvidedError';
+      error.isClientError = true;
       throw error;
     }
     if (
@@ -311,6 +313,7 @@ class AccountService extends AsyncStreamEmitter {
         } characters in length.`
       );
       error.name = 'InvalidUsernameError';
+      error.isClientError = true;
       throw error;
     }
     credentials.username = credentials.username.trim();
@@ -328,6 +331,7 @@ class AccountService extends AsyncStreamEmitter {
         } characters in length.`
       );
       error.name = 'InvalidPasswordError';
+      error.isClientError = true;
       throw error;
     }
 
@@ -359,6 +363,7 @@ class AccountService extends AsyncStreamEmitter {
     } catch (error) {
       let badLookupError = new Error('Failed to check against existing account data in the database.');
       badLookupError.name = 'BadAccountLookupError';
+      badLookupError.isClientError = true;
       throw badLookupError;
     }
 
@@ -367,6 +372,7 @@ class AccountService extends AsyncStreamEmitter {
         `An account with the username ${credentials.username} already exists.`
       );
       alreadyTakenError.name = 'SignUpUsernameTakenError';
+      alreadyTakenError.isClientError = true;
       throw alreadyTakenError;
     }
 
@@ -386,6 +392,7 @@ class AccountService extends AsyncStreamEmitter {
       } catch (error) {
         let badLookupError = new Error('Failed to check against existing account data in the database.');
         badLookupError.name = 'BadAccountLookupError';
+        badLookupError.isClientError = true;
         throw badLookupError;
       }
 
@@ -398,6 +405,7 @@ class AccountService extends AsyncStreamEmitter {
       if (++walletCreateAttempts >= MAX_WALLET_CREATE_ATTEMPTS) {
         let accountCreateError = new Error('Failed to generate an account wallet');
         accountCreateError.name = 'AccountCreateError';
+        accountCreateError.isClientError = true;
         throw accountCreateError;
       }
     }
@@ -408,6 +416,7 @@ class AccountService extends AsyncStreamEmitter {
           'Failed to create admin account because the specified secret signup key was incorrect.'
         );
         accountCreateError.name = 'AccountCreateError';
+        accountCreateError.isClientError = true;
         throw accountCreateError;
       }
     } else {
@@ -422,6 +431,7 @@ class AccountService extends AsyncStreamEmitter {
     if (!credentials || typeof credentials.username !== 'string') {
       let err = new Error('Username was in an invalid format');
       err.name = 'InvalidCredentialsError';
+      err.isClientError = true;
       throw err;
     }
     credentials.username = credentials.username.trim();
@@ -433,6 +443,7 @@ class AccountService extends AsyncStreamEmitter {
     if (!results || !results[0]) {
       let err = new Error('Invalid username or password.');
       err.name = 'InvalidCredentialsError';
+      err.isClientError = true;
       throw err;
     }
 
@@ -441,6 +452,7 @@ class AccountService extends AsyncStreamEmitter {
     if (accountData.active === false) {
       let accountInactiveError = new Error('Your account is currently disabled.');
       accountInactiveError.name = 'AccountInactiveError';
+      accountInactiveError.isClientError = true;
       throw accountInactiveError;
     }
 
@@ -451,6 +463,7 @@ class AccountService extends AsyncStreamEmitter {
     if (accountData.password !== hashedPassword) {
       let err = new Error('Wrong password.');
       err.name = 'InvalidCredentialsError';
+      err.isClientError = true;
       throw err;
     }
     return accountData;

@@ -174,15 +174,36 @@ const envConfig = config[ENVIRONMENT];
       socket.startBatching();
 
       (async () => {
+        for await (let request of socket.procedure('signup')) {
+          let accountData;
+          try {
+            accountData = await accountService.sanitizeSignupCredentials(request.data);
+            await crud.create({
+              type: 'Account',
+              value: accountData
+            });
+          } catch (error) {
+            if (error.isClientError) {
+              request.error(error);
+            } else {
+              let clientError = new Error('Failed to signup.');
+              clientError.name = 'FailedToSignupError';
+              request.error(clientError);
+            }
+            console.error(error);
+            continue;
+          }
+          request.end();
+        }
+      })();
+
+      (async () => {
         for await (let request of socket.procedure('login')) {
           let accountData;
           try {
             accountData = await accountService.verifyLoginCredentials(request.data);
           } catch (error) {
-            if (
-              error.name === 'InvalidCredentialsError' ||
-              error.name === 'AccountInactiveError'
-            ) {
+            if (error.isClientError) {
               request.error(error);
             } else {
               let clientError = new Error('Failed to login.');

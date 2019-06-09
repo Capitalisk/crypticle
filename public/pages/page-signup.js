@@ -33,13 +33,11 @@ function getPageComponent(pageOptions) {
         let details = {
           username: this.username,
           password: this.password,
+          admin: this.kind === 'admin',
           secretSignupKey: this.secretSignupKey
         };
-        if (this.kind === 'admin') {
-          details.admin = true;
-        }
         try {
-          await this.accountCollection.create(details);
+          await socket.invoke('signup', details);
         } catch (error) {
           this.error = `Failed to sign up. ${error.message}`;
           this.showConsoleLink = false;

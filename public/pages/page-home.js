@@ -21,6 +21,53 @@ function getPageComponent(pageOptions) {
           <hr class="hr hr-medium-spacing" />
 
           <h4 class="title is-4">Account RPCs</h4>
+          <h5 class="title is-5">Signup</h5>
+          <pre class="code-snippet"><code>
+    socket.invoke('signup', {
+      username: 'alice123',
+      password: 'password123',
+      admin: false,
+      secretSignupKey: '313e7cc1-ad75-4030-a927-6a09f39c1603'
+    })
+          </code></pre>
+          <ul class="list">
+            <li class="list-item"><code>username</code> is the account username.</li>
+            <li class="list-item"><code>password</code> is the account password.</li>
+            <li class="list-item"><code>admin</code> is a boolean which indicates whether or not the account should have admin privileges.</li>
+            <li class="list-item">
+              <p>
+                <code>secretSignupKey</code> is a secret key which needs to be provided if either:
+              </p>
+              <ul>
+                <li>
+                  The account being created is an admin account.
+                </li>
+                <li>
+                  The server side <code>alwaysRequireSecretSignupKey</code> config is <code>true</code>.
+                </li>
+              </ul>
+              <p>
+                If required, this key needs to match <code>secretSignupKey</code> from the service config file.
+              </p>
+            </li>
+          </ul>
+
+          <div class="spacer"></div>
+
+          <h5 class="title is-5">Login</h5>
+          <pre class="code-snippet"><code>
+    socket.invoke('login', {
+      username: 'alice123',
+      password: 'password123'
+    })
+          </code></pre>
+          <ul class="list">
+            <li class="list-item"><code>username</code> is the account username.</li>
+            <li class="list-item"><code>password</code> is the account password.</li>
+          </ul>
+
+          <div class="spacer"></div>
+
           <h5 class="title is-5">Transfer</h5>
           <pre class="code-snippet"><code>
     socket.invoke('transfer', {
@@ -39,7 +86,7 @@ function getPageComponent(pageOptions) {
 
           <div class="spacer"></div>
 
-          <h5 class="title is-5">getBalance</h5>
+          <h5 class="title is-5">Get balance</h5>
           <pre class="code-snippet"><code>
     let balance = await socket.invoke('getBalance')
           </code></pre>
@@ -93,7 +140,7 @@ function getPageComponent(pageOptions) {
 
           <div class="spacer"></div>
 
-          <h5 class="title is-5">adminGetBalance</h5>
+          <h5 class="title is-5">Get balance</h5>
           <pre class="code-snippet"><code>
     let balance = await socket.invoke('adminGetBalance', {
       accountId: '213288af-9239-494d-844d-d064ced6f9ea'
