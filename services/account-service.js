@@ -23,8 +23,6 @@ const MAX_PASSWORD_LENGTH = 50;
 
 const HIGH_BACKPRESSURE_THRESHOLD = 10;
 
-// TODO 2: Always use BigInt instead of number when handling transaction amounts.
-
 class AccountService extends AsyncStreamEmitter {
   constructor(options) {
     super();
@@ -35,7 +33,8 @@ class AccountService extends AsyncStreamEmitter {
     this.shardInfo = options.shardInfo;
     this.settlementInterval = options.transactionSettlementInterval;
     this.withdrawalInterval = options.withdrawalProcessingInterval;
-    this.maxSettlementsPerAccount = options.maxTransactionSettlementsPerAccount;
+    this.maxTransactionSettlementsPerAccount = options.maxTransactionSettlementsPerAccount;
+    this.maxConcurrentWithdrawalsPerAccount = options.maxConcurrentWithdrawalsPerAccount;
     this.blockchainWithdrawalMaxBlocksRetry = options.blockchainWithdrawalMaxBlocksRetry;
     this.secretSignupKey = options.secretSignupKey;
 
@@ -140,7 +139,7 @@ class AccountService extends AsyncStreamEmitter {
     .getField('balance');
   }
 
-  async fetchAccountSettlementLedger(maxSettlementsPerAccount) {
+  async fetchAccountSettlementLedger(maxTransactionSettlementsPerAccount) {
     if (this.shardInfo.shardIndex == null || this.shardInfo.shardCount == null) {
       return {};
     }
@@ -170,8 +169,8 @@ class AccountService extends AsyncStreamEmitter {
         account.lastSettledTransaction = txn;
         account.balance = BigInt(txn.balance);
       } else if (
-        maxSettlementsPerAccount == null ||
-        account.unsettledTransactions.length < maxSettlementsPerAccount
+        maxTransactionSettlementsPerAccount == null ||
+        account.unsettledTransactions.length < maxTransactionSettlementsPerAccount
       ) {
         account.unsettledTransactions.push(txn);
       }
@@ -181,7 +180,7 @@ class AccountService extends AsyncStreamEmitter {
   }
 
   async settlePendingTransactions() {
-    let accountLedger = await this.fetchAccountSettlementLedger(this.maxSettlementsPerAccount);
+    let accountLedger = await this.fetchAccountSettlementLedger(this.maxTransactionSettlementsPerAccount);
     let unsettledAccoundIds = Object.keys(accountLedger);
 
     await Promise.all(
@@ -730,8 +729,8 @@ class AccountService extends AsyncStreamEmitter {
       return;
     }
 
-    let amount = Number(balance) - Number(fees); // TODO 2: Use BigInt
-    if (amount < 0) {
+    let amount = BigInt(balance) - BigInt(fees);
+    if (amount < 0n) {
       this.emit('error', {
         error: new Error(
           `Funds from the deposit wallet address ${
@@ -745,7 +744,7 @@ class AccountService extends AsyncStreamEmitter {
     let signedTransaction = await this.blockchainAdapter.signTransaction(
       {
         kind: 'send',
-        amount,
+        amount: amount.toString(),
         recipient: this.mainWalletAddress
       },
       targetAccount.depositWalletPassphrase
@@ -814,6 +813,41 @@ class AccountService extends AsyncStreamEmitter {
     });
   }
 
+  async fetchAccountPendingWithdrawalsCount(accountId) {
+    return this.thinky.r.table('Withdrawal')
+    .between(
+      [accountId, false, this.thinky.r.minval],
+      [accountId, false, this.thinky.r.maxval],
+      {index: 'accountIdSettledCreatedDate'}
+    )
+    .count()
+    .run();
+  }
+
+  /*
+    withdrawal.amount: The amount of tokens to withdraw.
+    withdrawal.fromAccountId: The id of the account from which to withdraw.
+    withdrawal.toWalletAddress: The blockchain wallet address to send the tokens to.
+  */
+  async attemptWithdrawal(withdrawal) {
+    let pendingWithdrawalsCount = await this.fetchAccountPendingWithdrawalsCount(withdrawal.fromAccountId);
+    if (this.maxConcurrentWithdrawalsPerAccount != null && pendingWithdrawalsCount > this.maxConcurrentWithdrawalsPerAccount) {
+      let error = Error(
+        `Failed to withdraw to wallet address ${
+          withdrawal.toWalletAddress
+        } from account ${
+          withdrawal.fromAccountId
+        } because the account had more than ${
+          this.maxConcurrentWithdrawalsPerAccount
+        } concurrent pending withdrawals`
+      );
+      error.name = 'MaxConcurrentWithdrawalsError';
+      error.isClientError = true;
+      throw error;
+    }
+    return this.execWithdrawal(withdrawal);
+  }
+
   /*
     withdrawal.amount: The amount of tokens to withdraw.
     withdrawal.fromAccountId: The id of the account from which to withdraw.
@@ -822,9 +856,6 @@ class AccountService extends AsyncStreamEmitter {
   async execWithdrawal(withdrawal) {
     let settlementShardKey = getShardKey(withdrawal.fromAccountId);
     let transactionId = uuid.v4();
-
-    // TODO 2: Check if account has sufficient balance.
-    // TODO 2: Check that account doesn't have more than MAX_PENDING_WITHDRAWALS_PER_ACCOUNT concurrent pending withdrawals.
 
     let signedTransaction = await this.blockchainAdapter.signTransaction(
       {

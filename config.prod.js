@@ -7,6 +7,7 @@ module.exports = {
       transactionSettlementInterval: 5000,
       withdrawalProcessingInterval: 5000,
       maxTransactionSettlementsPerAccount: 10,
+      maxConcurrentWithdrawalsPerAccount: 10,
       blockchainNodeWalletPassphrase: 'drastic spot aerobic web wave tourist library first scout fatal inherit arrange',
       blockchainAdapterPath: null,
       blockchainSync: true,

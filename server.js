@@ -237,15 +237,19 @@ const envConfig = config[ENVIRONMENT];
         for await (let request of socket.procedure('withdraw')) {
           let withdrawalData = request.data || {};
           try {
-            await accountService.execWithdrawal({
+            await accountService.attemptWithdrawal({
               amount: withdrawalData.amount,
               fromAccountId: socket.authToken.accountId,
               toWalletAddress: withdrawalData.toWalletAddress
             });
           } catch (error) {
-            request.error(
-              new Error('Failed to execute withdrawal due to a server error')
-            );
+            if (error.isClientError) {
+              request.error(error);
+            } else {
+              request.error(
+                new Error('Failed to execute withdrawal due to a server error')
+              );
+            }
             console.error(error);
             continue;
           }
@@ -268,9 +272,13 @@ const envConfig = config[ENVIRONMENT];
               data: transferData.data
             });
           } catch (error) {
-            request.error(
-              new Error('Failed to execute transfer due to a server error')
-            );
+            if (error.isClientError) {
+              request.error(error);
+            } else {
+              request.error(
+                new Error('Failed to execute transfer due to a server error')
+              );
+            }
             console.error(error);
             continue;
           }
@@ -286,9 +294,13 @@ const envConfig = config[ENVIRONMENT];
           try {
             balance = await accountService.fetchAccountBalance(socket.authToken.accountId);
           } catch (error) {
-            request.error(
-              new Error('Failed to execute getBalance due to a server error')
-            );
+            if (error.isClientError) {
+              request.error(error);
+            } else {
+              request.error(
+                new Error('Failed to get account balance due to a server error')
+              );
+            }
             console.error(error);
             continue;
           }
@@ -309,9 +321,13 @@ const envConfig = config[ENVIRONMENT];
               toWalletAddress: withdrawalData.toWalletAddress
             });
           } catch (error) {
-            request.error(
-              new Error('Failed to execute adminWithdraw due to a server error')
-            );
+            if (error.isClientError) {
+              request.error(error);
+            } else {
+              request.error(
+                new Error('Failed to execute withdrawal due to a server error')
+              );
+            }
             console.error(error);
             continue;
           }
@@ -335,9 +351,13 @@ const envConfig = config[ENVIRONMENT];
               data: transferData.data
             });
           } catch (error) {
-            request.error(
-              new Error('Failed to execute adminTransfer due to a server error')
-            );
+            if (error.isClientError) {
+              request.error(error);
+            } else {
+              request.error(
+                new Error('Failed to execute transfer due to a server error')
+              );
+            }
             console.error(error);
             continue;
           }
@@ -354,9 +374,14 @@ const envConfig = config[ENVIRONMENT];
           try {
             balance = await accountService.fetchAccountBalance(getBalanceData.accountId);
           } catch (error) {
-            request.error(
-              new Error('Failed to execute adminGetBalance due to a server error')
-            );
+            if (error.isClientError) {
+              request.error(error);
+            } else {
+              request.error(
+                new Error('Failed to get account balance due to a server error')
+              );
+            }
+
             console.error(error);
             continue;
           }
