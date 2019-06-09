@@ -8,10 +8,12 @@ const morgan = require('morgan');
 const uuid = require('uuid');
 const agcBrokerClient = require('agc-broker-client');
 const agCrudRethink = require('ag-crud-rethink');
+const Validator = require('jsonschema').Validator;
 const inquirer = require('inquirer');
 const prompt = inquirer.createPromptModule();
 
-const getSchema = require('./schema');
+const getDataSchema = require('./schema-data');
+const getRequestSchema = require('./schema-request');
 
 const configDev = require('./config.dev');
 const configProd = require('./config.prod');
@@ -61,10 +63,13 @@ const envConfig = config[ENVIRONMENT];
     blockchainNodeWalletPassphrase = result.value;
   }
 
-  const dataSchema = getSchema({
+  const dataSchema = getDataSchema({
     dbName: DB_NAME,
     maxRecordDisplayAge: envConfig.mainInfo.maxRecordDisplayAge
   });
+
+  let requestValidator = new Validator();
+  let requestSchema = getRequestSchema();
 
   let agOptions = {
     batchInterval: 50
@@ -158,6 +163,24 @@ const envConfig = config[ENVIRONMENT];
     res.status(200).send('OK');
   });
 
+  function validateRequestSchema(request, procedureName) {
+    let schema = requestSchema[procedureName];
+    if (!schema) {
+      let error = new Error(`Could not find a schema for the ${procedureName} procedure.`);
+      error.name = 'NoMatchingRequestSchemaError';
+      error.isClientError = true;
+      throw error;
+    }
+    let validationResult = requestValidator.validate(request.data, schema);
+    if (!validationResult.valid) {
+      let error = new Error(`Schema validation for the ${procedureName} procedure failed.`);
+      error.name = 'RequestSchemaValidationError';
+      error.errors = validationResult.errors;
+      error.isClientError = true;
+      throw error;
+    }
+  }
+
   // HTTP request handling loop.
   (async () => {
     for await (let requestData of httpServer.listener('request')) {
@@ -175,6 +198,14 @@ const envConfig = config[ENVIRONMENT];
 
       (async () => {
         for await (let request of socket.procedure('signup')) {
+          try {
+            validateRequestSchema(request, 'signup');
+          } catch (error) {
+            request.error(error);
+            console.error(error);
+            continue;
+          }
+
           let accountData;
           try {
             accountData = await accountService.sanitizeSignupCredentials(request.data);
@@ -199,6 +230,14 @@ const envConfig = config[ENVIRONMENT];
 
       (async () => {
         for await (let request of socket.procedure('login')) {
+          try {
+            validateRequestSchema(request, 'login');
+          } catch (error) {
+            request.error(error);
+            console.error(error);
+            continue;
+          }
+
           let accountData;
           try {
             accountData = await accountService.verifyLoginCredentials(request.data);
@@ -227,15 +266,30 @@ const envConfig = config[ENVIRONMENT];
 
       (async () => {
         for await (let request of socket.procedure('getMainInfo')) {
+          try {
+            validateRequestSchema(request, 'getMainInfo');
+          } catch (error) {
+            request.error(error);
+            console.error(error);
+            continue;
+          }
+
           request.end(envConfig.mainInfo);
         }
       })();
 
       (async () => {
-        // TODO 2: Validate request data.
         // TODO 2: Respond with error in middleware if user is not logged in properly.
         for await (let request of socket.procedure('withdraw')) {
-          let withdrawalData = request.data || {};
+          try {
+            validateRequestSchema(request, 'withdraw');
+          } catch (error) {
+            request.error(error);
+            console.error(error);
+            continue;
+          }
+
+          let withdrawalData = request.data;
           try {
             await accountService.attemptWithdrawal({
               amount: withdrawalData.amount,
@@ -258,10 +312,17 @@ const envConfig = config[ENVIRONMENT];
       })();
 
       (async () => {
-        // TODO 2: Validate request data.
         // TODO 2: Respond with error in middleware if user is not logged in properly.
         for await (let request of socket.procedure('transfer')) {
-          let transferData = request.data || {};
+          try {
+            validateRequestSchema(request, 'transfer');
+          } catch (error) {
+            request.error(error);
+            console.error(error);
+            continue;
+          }
+
+          let transferData = request.data;
           try {
             await accountService.execTransfer({
               amount: transferData.amount,
@@ -287,9 +348,16 @@ const envConfig = config[ENVIRONMENT];
       })();
 
       (async () => {
-        // TODO 2: Validate request data.
         // TODO 2: Respond with error in middleware if user is not logged in properly.
         for await (let request of socket.procedure('getBalance')) {
+          try {
+            validateRequestSchema(request, 'getBalance');
+          } catch (error) {
+            request.error(error);
+            console.error(error);
+            continue;
+          }
+
           let balance;
           try {
             balance = await accountService.fetchAccountBalance(socket.authToken.accountId);
@@ -309,11 +377,18 @@ const envConfig = config[ENVIRONMENT];
       })();
 
       (async () => {
-        // TODO 2: Validate request data.
         // TODO 2: Respond with error in middleware if user is not logged in properly.
         // TODO 2: Respond with error in middleware if user is not admin.
         for await (let request of socket.procedure('adminWithdraw')) {
-          let withdrawalData = request.data || {};
+          try {
+            validateRequestSchema(request, 'adminWithdraw');
+          } catch (error) {
+            request.error(error);
+            console.error(error);
+            continue;
+          }
+
+          let withdrawalData = request.data;
           try {
             await accountService.execWithdrawal({
               amount: withdrawalData.amount,
@@ -336,11 +411,18 @@ const envConfig = config[ENVIRONMENT];
       })();
 
       (async () => {
-        // TODO 2: Validate request data.
         // TODO 2: Respond with error in middleware if user is not logged in properly.
         // TODO 2: Respond with error in middleware if user is not admin.
         for await (let request of socket.procedure('adminTransfer')) {
-          let transferData = request.data || {};
+          try {
+            validateRequestSchema(request, 'adminTransfer');
+          } catch (error) {
+            request.error(error);
+            console.error(error);
+            continue;
+          }
+
+          let transferData = request.data;
           try {
             await accountService.execTransfer({
               amount: transferData.amount,
@@ -366,10 +448,17 @@ const envConfig = config[ENVIRONMENT];
       })();
 
       (async () => {
-        // TODO 2: Validate request data.
         // TODO 2: Respond with error in middleware if user is not logged in properly.
         for await (let request of socket.procedure('adminGetBalance')) {
-          let getBalanceData = request.data || {};
+          try {
+            validateRequestSchema(request, 'adminGetBalance');
+          } catch (error) {
+            request.error(error);
+            console.error(error);
+            continue;
+          }
+
+          let getBalanceData = request.data;
           let balance;
           try {
             balance = await accountService.fetchAccountBalance(getBalanceData.accountId);
