@@ -163,17 +163,17 @@ const envConfig = config[ENVIRONMENT];
     res.status(200).send('OK');
   });
 
-  function validateRequestSchema(request, procedureName) {
-    let schema = requestSchema[procedureName];
+  function validateRequestSchema(request) {
+    let schema = requestSchema[request.procedure];
     if (!schema) {
-      let error = new Error(`Could not find a schema for the ${procedureName} procedure.`);
+      let error = new Error(`Could not find a schema for the ${request.procedure} procedure.`);
       error.name = 'NoMatchingRequestSchemaError';
       error.isClientError = true;
       throw error;
     }
     let validationResult = requestValidator.validate(request.data, schema);
     if (!validationResult.valid) {
-      let error = new Error(`Schema validation for the ${procedureName} procedure failed.`);
+      let error = new Error(`Schema validation for the ${request.procedure} procedure failed.`);
       error.name = 'RequestSchemaValidationError';
       error.errors = validationResult.errors;
       error.isClientError = true;
@@ -199,7 +199,7 @@ const envConfig = config[ENVIRONMENT];
       (async () => {
         for await (let request of socket.procedure('signup')) {
           try {
-            validateRequestSchema(request, 'signup');
+            validateRequestSchema(request);
           } catch (error) {
             request.error(error);
             console.error(error);
@@ -231,7 +231,7 @@ const envConfig = config[ENVIRONMENT];
       (async () => {
         for await (let request of socket.procedure('login')) {
           try {
-            validateRequestSchema(request, 'login');
+            validateRequestSchema(request);
           } catch (error) {
             request.error(error);
             console.error(error);
@@ -267,7 +267,7 @@ const envConfig = config[ENVIRONMENT];
       (async () => {
         for await (let request of socket.procedure('getMainInfo')) {
           try {
-            validateRequestSchema(request, 'getMainInfo');
+            validateRequestSchema(request);
           } catch (error) {
             request.error(error);
             console.error(error);
@@ -282,7 +282,7 @@ const envConfig = config[ENVIRONMENT];
         // TODO 2: Respond with error in middleware if user is not logged in properly.
         for await (let request of socket.procedure('withdraw')) {
           try {
-            validateRequestSchema(request, 'withdraw');
+            validateRequestSchema(request);
           } catch (error) {
             request.error(error);
             console.error(error);
@@ -315,7 +315,7 @@ const envConfig = config[ENVIRONMENT];
         // TODO 2: Respond with error in middleware if user is not logged in properly.
         for await (let request of socket.procedure('transfer')) {
           try {
-            validateRequestSchema(request, 'transfer');
+            validateRequestSchema(request);
           } catch (error) {
             request.error(error);
             console.error(error);
@@ -351,7 +351,7 @@ const envConfig = config[ENVIRONMENT];
         // TODO 2: Respond with error in middleware if user is not logged in properly.
         for await (let request of socket.procedure('getBalance')) {
           try {
-            validateRequestSchema(request, 'getBalance');
+            validateRequestSchema(request);
           } catch (error) {
             request.error(error);
             console.error(error);
@@ -381,7 +381,7 @@ const envConfig = config[ENVIRONMENT];
         // TODO 2: Respond with error in middleware if user is not admin.
         for await (let request of socket.procedure('adminWithdraw')) {
           try {
-            validateRequestSchema(request, 'adminWithdraw');
+            validateRequestSchema(request);
           } catch (error) {
             request.error(error);
             console.error(error);
@@ -415,7 +415,7 @@ const envConfig = config[ENVIRONMENT];
         // TODO 2: Respond with error in middleware if user is not admin.
         for await (let request of socket.procedure('adminTransfer')) {
           try {
-            validateRequestSchema(request, 'adminTransfer');
+            validateRequestSchema(request);
           } catch (error) {
             request.error(error);
             console.error(error);
@@ -451,7 +451,7 @@ const envConfig = config[ENVIRONMENT];
         // TODO 2: Respond with error in middleware if user is not logged in properly.
         for await (let request of socket.procedure('adminGetBalance')) {
           try {
-            validateRequestSchema(request, 'adminGetBalance');
+            validateRequestSchema(request);
           } catch (error) {
             request.error(error);
             console.error(error);

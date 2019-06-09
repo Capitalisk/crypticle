@@ -807,10 +807,25 @@ class AccountService extends AsyncStreamEmitter {
       createdDate: this.thinky.r.now()
     };
 
-    await this.crud.create({
-      type: 'Transaction',
-      value: debitTransaction
-    });
+    try {
+      await this.crud.create({
+        type: 'Transaction',
+        value: debitTransaction
+      });
+    } catch (error) {
+      if (error.name === 'DuplicatePrimaryKeyError') {
+        let clientError = new Error(
+          `Failed to process the debit transaction because a transaction with the ID ${
+            transfer.debitId
+          } already exists.`
+        );
+        clientError.name = 'DebitTransactionAlreadyExistsError';
+        clientError.debitId = transfer.debitId;
+        clientError.isClientError = true;
+        throw clientError;
+      }
+      throw error;
+    }
   }
 
   async fetchAccountPendingWithdrawalsCount(accountId) {
@@ -990,7 +1005,7 @@ class AccountService extends AsyncStreamEmitter {
           }
 
           let blocksDiff = currentBlockHeight - withdrawal.firstAttemptedHeight;
-          if (blocksDiff > this.blockchainWithdrawalMaxBlocksRetry) {
+          if (blocksDiff > this.blockchainWithdrawalMaxBlocksRetry) { // TODO 2: Change to retry attempt counting
             this.emit('error', {
               error: new Error(
                 `Failed to process withdrawal ${
