@@ -2,6 +2,120 @@ const agCrudRethink = require('ag-crud-rethink');
 const thinky = agCrudRethink.thinky;
 const type = thinky.type;
 
+let allowedAccountReadFields = {
+  username: true,
+  depositWalletAddress: true,
+  nationalCurrency: true,
+  active: true,
+  admin: true,
+  createdDate: true
+};
+
+let allowedAccountUpdateFields = {
+  nationalCurrency: true
+};
+
+let allowedAdminAccountUpdateFields = {
+  username: true,
+  depositWalletAddress: true,
+  depositWalletPassphrase: true,
+  depositWalletPrivateKey: true,
+  depositWalletPublicKey: true,
+  password: true,
+  passwordSalt: true,
+  stripeCustomerId: true,
+  stripePaymentSetup: true,
+  nationalCurrency: true,
+  passwordResetKey: true,
+  passwordResetExpiry: true,
+  active: true
+};
+
+let allowedAdminAccountReadFields = {
+  username: true,
+  depositWalletAddress: true,
+  depositWalletPassphrase: true,
+  depositWalletPrivateKey: true,
+  depositWalletPublicKey: true,
+  stripeCustomerId: true,
+  stripePaymentSetup: true,
+  nationalCurrency: true,
+  passwordResetKey: true,
+  passwordResetExpiry: true,
+  active: true,
+  admin: true,
+  createdDate: true
+};
+
+function accountAccessController(req) {
+  let query = req.query || {};
+  let isOwnAccount = req.authToken && req.authToken.accountId === query.id;
+  let isAdmin = req.authToken && req.authToken.admin;
+  let isView = !!query.view;
+
+  if (isOwnAccount) {
+    if (req.action === 'read' || req.action === 'subscribe') {
+      if (allowedAccountReadFields[query.field]) {
+        return;
+      }
+    }
+    if (req.action === 'update') {
+      if (allowedAccountUpdateFields[query.field]) {
+        return;
+      }
+    }
+  }
+  if (isAdmin) {
+    if (req.action === 'read' || req.action === 'subscribe') {
+      if (isView || allowedAdminAccountReadFields[query.field]) {
+        return;
+      }
+    }
+    if (req.action === 'update') {
+      if (allowedAdminAccountUpdateFields[query.field]) {
+        return;
+      }
+    }
+  }
+
+  let error = new Error('Not allowed to perform CRUD operation');
+  error.name = 'ForbiddenCRUDError';
+  error.isClientError = true;
+  throw error;
+}
+
+function privateResourceAccessController(req) {
+  let query = req.query || {};
+  let isLoggedIn = req.authToken;
+  let isAdmin = req.authToken && req.authToken.admin;
+  let viewParams = query.viewParams || {};
+  let isOwnResource = req.authToken && (
+    (req.resource && req.authToken.accountId === req.resource.accountId) ||
+    (req.authToken.accountId === viewParams.accountId)
+  );
+  
+  if (isOwnResource) {
+    if (req.action === 'read' || req.action === 'subscribe') {
+      return;
+    }
+  }
+  if (isAdmin) {
+    if (req.action === 'read' || req.action === 'subscribe') {
+      return;
+    }
+    if (req.action === 'update') {
+      if (query.type === 'Withdrawal' && query.field === 'canceled') {
+        return;
+      }
+    }
+  }
+
+  let error = new Error('Not allowed to perform CRUD operation');
+  error.name = 'ForbiddenCRUDError';
+  error.isClientError = true;
+  throw error;
+}
+
 function getSchema(options) {
   return {
     Account: {
@@ -24,7 +138,7 @@ function getSchema(options) {
       },
       indexes: ['username', 'depositWalletAddress'],
       access: {
-        pre: accountAccessPrefilter
+        pre: accountAccessController
       }
     },
     Transaction: {
@@ -63,7 +177,7 @@ function getSchema(options) {
         }
       ],
       access: {
-        pre: accountTransactionsPrefilter
+        post: privateResourceAccessController
       },
       views: {
         lastSettledTransactions: {
@@ -136,7 +250,7 @@ function getSchema(options) {
         }
       ],
       access: {
-        pre: accountTransactionsPrefilter // TODO 2: Check that filters are correct.
+        post: privateResourceAccessController
       },
       relations: {
         Transaction: {
@@ -211,7 +325,7 @@ function getSchema(options) {
         }
       ],
       access: {
-        pre: accountTransactionsPrefilter // TODO 2: Check that filters are correct.
+        post: privateResourceAccessController
       },
       views: {
         accountWithdrawalsPendingView: {
@@ -245,21 +359,6 @@ function getSchema(options) {
       }
     }
   };
-}
-
-async function accountAccessPrefilter(req) {
-  if (req.action == 'create') {
-    return;
-  }
-  if (!req.authToken || !req.query || !req.authToken.accountId || req.authToken.accountId != req.query.id) {
-    throw new Error('A user can only access and modify their own account');
-  }
-  // TODO 2: Restrict the fields that a user can modify on his own account.
-}
-
-async function accountTransactionsPrefilter(req) {
-  return;
-  // TODO 2: Restrict the fields that a user can only see transactions that are associated with their own account.
 }
 
 module.exports = getSchema;

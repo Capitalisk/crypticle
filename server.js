@@ -84,28 +84,12 @@ const envConfig = config[ENVIRONMENT];
   let agServer = asyngularServer.attach(httpServer, agOptions);
 
   let crudOptions = {
-    blockPreByDefault: true,
-    blockPostByDefault: false,
     defaultPageSize: 10,
     schema: dataSchema,
     thinkyOptions: {
       host: '127.0.0.1',
       db: DB_NAME,
       port: 28015
-    },
-    middleware: {
-      invoke: async function (action) {
-        if (!action.data) {
-          return;
-        }
-        if (action.data.type === 'Account') {
-          if (action.procedure === 'create') {
-            action.data.value = await accountService.sanitizeSignupCredentials(action.data.value);
-            return;
-          }
-          return;
-        }
-      }
     }
   };
 
@@ -163,22 +147,27 @@ const envConfig = config[ENVIRONMENT];
     res.status(200).send('OK');
   });
 
-  function validateRequestSchema(request) {
-    let schema = requestSchema[request.procedure];
+  function validateRequestDataSchema(data, procedure) {
+    let schema = requestSchema[procedure];
     if (!schema) {
-      let error = new Error(`Could not find a schema for the ${request.procedure} procedure.`);
+      let error = new Error(`Could not find a schema for the ${procedure} procedure.`);
       error.name = 'NoMatchingRequestSchemaError';
       error.isClientError = true;
       throw error;
     }
-    let validationResult = requestValidator.validate(request.data, schema);
+    let validationResult = requestValidator.validate(data, schema);
     if (!validationResult.valid) {
-      let error = new Error(`Schema validation for the ${request.procedure} procedure failed.`);
+      let errorsString = validationResult.errors.map(error => error.stack).join('. ');
+      let error = new Error(`Input validation failed. ${errorsString}.`);
       error.name = 'RequestSchemaValidationError';
       error.errors = validationResult.errors;
       error.isClientError = true;
       throw error;
     }
+  }
+
+  function validateRequestSchema(request) {
+    validateRequestDataSchema(request.data, request.procedure);
   }
 
   // HTTP request handling loop.

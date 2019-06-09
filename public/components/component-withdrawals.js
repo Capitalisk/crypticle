@@ -103,7 +103,7 @@ function getComponent(options) {
                 </tr>
               </template>
               <tr v-if="withdrawals.length <= 0">
-                <td class="table-empty-row withdrawals-table-empty-row" colspan="5">No {{withdrawalType}} withdrawals</td>
+                <td class="table-empty-row withdrawals-table-empty-row" colspan="10">No {{withdrawalType}} withdrawals</td>
               </tr>
             </tbody>
           </table>

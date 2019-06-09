@@ -98,7 +98,7 @@ function getComponent(options) {
                 </tr>
               </template>
               <tr v-if="deposits.length <= 0">
-                <td class="table-empty-row deposit-table-empty-row" colspan="5">No {{depositType}} deposits</td>
+                <td class="table-empty-row deposit-table-empty-row" colspan="10">No {{depositType}} deposits</td>
               </tr>
             </tbody>
           </table>

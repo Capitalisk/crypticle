@@ -209,7 +209,7 @@ function getPageComponent(pageOptions) {
     })();
           </code></pre>
           <p>
-            Note that it's possible to subscribe to a channel for any resource field defined in schema.js provided that the current authenticated user has the required access rights.
+            Note that it's possible to subscribe to a channel for any resource field defined in schema-data.js provided that the current authenticated user has the required access rights.
           </p>
 
           <div class="spacer"></div>
@@ -237,7 +237,7 @@ function getPageComponent(pageOptions) {
     })();
           </code></pre>
           <p>
-            Note that it's possible to subscribe to a channel for any view defined in schema.js provided that the current authenticated user has the required access rights.
+            Note that it's possible to subscribe to a channel for any view defined in schema-data.js provided that the current authenticated user has the required access rights.
           </p>
         </div>
       </div>

@@ -1,12 +1,12 @@
 let usernameSchema = {
   type: 'string',
-  minLength: 3,
-  maxLength: 30
+  minLength: 0,
+  maxLength: 200
 };
 let passwordSchema = {
   type: 'string',
-  minLength: 7,
-  maxLength: 50
+  minLength: 0,
+  maxLength: 200
 };
 let uuidSchema = {
   type: 'string',
@@ -23,7 +23,7 @@ let walletAddressSchema = {
   maxLength: 100
 };
 let customDataSchema = {
-  type: 'string',
+  type: ['string', 'null'],
   maxLength: 200
 };
 
