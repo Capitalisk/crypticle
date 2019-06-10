@@ -27,6 +27,7 @@ function getComponent(options) {
       return {
         mainInfo,
         account: this.accountModel.value,
+        isImpersonating: socket.authToken && !!socket.authToken.impersonator,
         lastSettledTransactions: this.lastSettledTransactionsCollection.value,
         lastSettledTransactionsMeta: this.lastSettledTransactionsCollection.meta
       };
@@ -57,6 +58,9 @@ function getComponent(options) {
           <tbody>
             <tr v-if="account.admin" class="table-row-success">
               <td colspan="2">This account has admin privileges.</td>
+            </tr>
+            <tr v-if="isImpersonating" class="table-row-success">
+              <td colspan="2">This account is being impersonated.</td>
             </tr>
             <tr>
               <td><b>Account ID</b></td>

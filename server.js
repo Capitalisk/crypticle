@@ -233,7 +233,8 @@ const envConfig = config[ENVIRONMENT];
               request.error(error);
             } else {
               let clientError = new Error('Failed to signup.');
-              clientError.name = 'FailedToSignupError';
+              clientError.name = 'SignupError';
+              clientError.isClientError = true;
               request.error(clientError);
             }
             console.error(error);
@@ -261,7 +262,8 @@ const envConfig = config[ENVIRONMENT];
               request.error(error);
             } else {
               let clientError = new Error('Failed to login.');
-              clientError.name = 'FailedToLoginError';
+              clientError.name = 'LoginError';
+              clientError.isClientError = true;
               request.error(clientError);
             }
             console.error(error);
@@ -315,9 +317,10 @@ const envConfig = config[ENVIRONMENT];
             if (error.isClientError) {
               request.error(error);
             } else {
-              request.error(
-                new Error('Failed to execute withdrawal due to a server error')
-              );
+              let clientError = new Error('Failed to execute withdrawal due to a server error');
+              clientError.name = 'WithdrawError';
+              clientError.isClientError = true;
+              request.error(clientError);
             }
             console.error(error);
             continue;
@@ -351,9 +354,10 @@ const envConfig = config[ENVIRONMENT];
             if (error.isClientError) {
               request.error(error);
             } else {
-              request.error(
-                new Error('Failed to execute transfer due to a server error')
-              );
+              let clientError = new Error('Failed to execute transfer due to a server error');
+              clientError.name = 'TransferError';
+              clientError.isClientError = true;
+              request.error(clientError);
             }
             console.error(error);
             continue;
@@ -380,14 +384,64 @@ const envConfig = config[ENVIRONMENT];
             if (error.isClientError) {
               request.error(error);
             } else {
-              request.error(
-                new Error('Failed to get account balance due to a server error')
-              );
+              let clientError = new Error('Failed to get account balance due to a server error');
+              clientError.name = 'GetBalanceError';
+              clientError.isClientError = true;
+              request.error(clientError);
             }
             console.error(error);
             continue;
           }
           request.end(balance);
+        }
+      })();
+
+      (async () => {
+        for await (let request of socket.procedure('adminLogin')) {
+          try {
+            verifyAdminUserAuth(request, socket);
+            validateRequestSchema(request);
+          } catch (error) {
+            request.error(error);
+            console.error(error);
+            continue;
+          }
+
+          let accountData;
+          try {
+            accountData = await accountService.verifyLoginCredentialsUsername(request.data);
+          } catch (error) {
+            if (error.isClientError) {
+              request.error(error);
+            } else {
+              let clientError = new Error(`Failed to login as user ${request.data.username}.`);
+              clientError.name = 'AdminLoginError';
+              clientError.isClientError = true;
+              request.error(clientError);
+            }
+            console.error(error);
+            continue;
+          }
+          if (accountData.admin === true) {
+            let clientError = new Error(
+              `Failed to login as user ${
+                request.data.username
+              } because admin accounts cannot be impersonated.`
+            );
+            clientError.name = 'AdminLoginError';
+            clientError.isClientError = true;
+            request.error(clientError);
+            console.error(error);
+            continue;
+          }
+          let token = {
+            username: accountData.username,
+            accountId: accountData.id,
+            admin: true,
+            impersonator: socket.authToken.impersonator || socket.authToken.accountId
+          };
+          socket.setAuthToken(token, {expiresIn: TOKEN_EXPIRY_SECONDS});
+          request.end();
         }
       })();
 
@@ -413,9 +467,10 @@ const envConfig = config[ENVIRONMENT];
             if (error.isClientError) {
               request.error(error);
             } else {
-              request.error(
-                new Error('Failed to execute withdrawal due to a server error')
-              );
+              let clientError = new Error('Failed to execute withdrawal due to a server error');
+              clientError.name = 'AdminWithdrawError';
+              clientError.isClientError = true;
+              request.error(clientError);
             }
             console.error(error);
             continue;
@@ -449,9 +504,10 @@ const envConfig = config[ENVIRONMENT];
             if (error.isClientError) {
               request.error(error);
             } else {
-              request.error(
-                new Error('Failed to execute transfer due to a server error')
-              );
+              let clientError = new Error('Failed to execute transfer due to a server error');
+              clientError.name = 'AdminTransferError';
+              clientError.isClientError = true;
+              request.error(clientError);
             }
             console.error(error);
             continue;
@@ -479,9 +535,10 @@ const envConfig = config[ENVIRONMENT];
             if (error.isClientError) {
               request.error(error);
             } else {
-              request.error(
-                new Error('Failed to get account balance due to a server error')
-              );
+              let clientError = new Error('Failed to get account balance due to a server error');
+              clientError.name = 'AdminGetBalanceError';
+              clientError.isClientError = true;
+              request.error(clientError);
             }
 
             console.error(error);

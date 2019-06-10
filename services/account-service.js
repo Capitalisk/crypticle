@@ -426,7 +426,7 @@ class AccountService extends AsyncStreamEmitter {
     return credentials;
   }
 
-  async verifyLoginCredentials(credentials) {
+  async verifyLoginCredentialsUsername(credentials) {
     if (!credentials || typeof credentials.username !== 'string') {
       let err = new Error('Username was in an invalid format');
       err.name = 'InvalidCredentialsError';
@@ -440,13 +440,16 @@ class AccountService extends AsyncStreamEmitter {
     .run();
 
     if (!results || !results[0]) {
-      let err = new Error('Invalid username or password.');
+      let err = new Error('Invalid username.');
       err.name = 'InvalidCredentialsError';
       err.isClientError = true;
       throw err;
     }
+    return results[0];
+  }
 
-    let accountData = results[0];
+  async verifyLoginCredentials(credentials) {
+    let accountData = await this.verifyLoginCredentialsUsername(credentials);
 
     if (accountData.active === false) {
       let accountInactiveError = new Error('Your account is currently disabled.');

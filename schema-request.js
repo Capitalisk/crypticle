@@ -28,6 +28,7 @@ let customDataSchema = {
 };
 
 let requestSchema = {
+  getMainInfo: {},
   signup: {
     type: 'object',
     properties: {
@@ -46,6 +47,14 @@ let requestSchema = {
     },
     required: ['username', 'password']
   },
+  withdraw: {
+    type: 'object',
+    properties: {
+      amount: amountSchema,
+      toWalletAddress: walletAddressSchema,
+    },
+    required: ['amount', 'toWalletAddress']
+  },
   transfer: {
     type: 'object',
     properties: {
@@ -58,14 +67,21 @@ let requestSchema = {
     required: ['amount', 'toAccountId']
   },
   getBalance: {},
-  getMainInfo: {},
-  withdraw: {
+  adminLogin: {
+    type: 'object',
+    properties: {
+      username: usernameSchema
+    },
+    required: ['username']
+  },
+  adminWithdraw: {
     type: 'object',
     properties: {
       amount: amountSchema,
+      fromAccountId: uuidSchema,
       toWalletAddress: walletAddressSchema,
     },
-    required: ['amount', 'toWalletAddress']
+    required: ['amount', 'fromAccountId', 'toWalletAddress']
   },
   adminTransfer: {
     type: 'object',
@@ -85,15 +101,6 @@ let requestSchema = {
       accountId: uuidSchema
     },
     required: ['accountId']
-  },
-  adminWithdraw: {
-    type: 'object',
-    properties: {
-      amount: amountSchema,
-      fromAccountId: uuidSchema,
-      toWalletAddress: walletAddressSchema,
-    },
-    required: ['amount', 'fromAccountId', 'toWalletAddress']
   }
 };
 

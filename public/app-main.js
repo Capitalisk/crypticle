@@ -1,5 +1,6 @@
 import getHomePageComponent from '/pages/page-home.js';
 import getLoginPageComponent from '/pages/page-login.js';
+import getLoginImpersonatePageComponent from '/pages/page-login-impersonate.js';
 import getSignupPageComponent from '/pages/page-signup.js';
 import getDashboardPageComponent from '/pages/page-dashboard.js';
 
@@ -34,6 +35,7 @@ let pageOptions = {
 let PageHome = getHomePageComponent(pageOptions);
 let PageDashboard = getDashboardPageComponent(pageOptions);
 let PageLogin = getLoginPageComponent(pageOptions);
+let PageLoginImpersonate = getLoginImpersonatePageComponent(pageOptions);
 let PageSignup = getSignupPageComponent(pageOptions);
 
 function isSocketAuthenticated() {
@@ -75,6 +77,7 @@ let routes = [
   {path: '/', component: PageHome, props: true},
   {path: '/signup', component: PageSignup, props: (route) => ({kind: route.query.kind})},
   {path: '/login', component: PageLogin, props: (route) => ({redirect: route.query.redirect})},
+  {path: '/login/impersonate', component: PageLoginImpersonate, props: (route) => ({redirect: route.query.redirect})},
   {
     path: '/console',
     component: Console,
@@ -94,15 +97,30 @@ new Vue({
   router,
   data: function () {
     return {
-      isAuthenticated: false
+      isAuthenticated: false,
+      isAdmin: false
     };
   },
+  computed: {
+    loginPath: function () {
+      return `#/login?redirect=${encodeURIComponent('#' + this.$route.path)}`;
+    },
+    impersonatePath: function () {
+      return `#/login/impersonate?redirect=${encodeURIComponent('#' + this.$route.path)}`;
+    }
+  },
+
   created: function () {
     this.isAuthenticated = isSocketAuthenticated();
 
     (async () => {
       for await (let event of socket.listener('authStateChange')) {
         this.isAuthenticated = isSocketAuthenticated();
+        if (socket.authToken && socket.authToken.admin) {
+          this.isAdmin = true;
+        } else {
+          this.isAdmin = false;
+        }
       }
     })();
 
@@ -136,24 +154,21 @@ new Vue({
             <a href="#/">Crypticle</a>
           </h2>
         </div>
-        <div v-if="isAuthenticated" class="navbar-end">
+        <div class="navbar-end">
           <div class="navbar-item">
             <div class="buttons">
-            <a v-if="location.hash !== '#/console'" class="button is-link" href="#/console">Console</a>
-              <a class="button is-primary" href="#/signup">Signup</a>
-              <input type="button" class="button is-primary" value="Logout" @click="logout">
+              <a v-if="isAuthenticated && location.hash !== '#/console'" class="button is-link" href="#/console">Console</a>
+              <a v-if="isAuthenticated" class="button is-primary" href="#/signup">Signup</a>
+              <input v-if="isAuthenticated" type="button" class="button is-primary" value="Logout" @click="logout">
+
+              <a v-if="!isAuthenticated && location.hash !== '#/console'" class="button is-link" href="#/console">Console</a>
+              <a v-if="!isAuthenticated" class="button is-primary" href="#/signup">Signup</a>
+              <a v-if="!isAuthenticated" class="button is-primary" v-bind:href="loginPath">Login</a>
+              <a v-if="isAdmin" class="button is-primary" v-bind:href="impersonatePath">Impersonate</a>
             </div>
           </div>
         </div>
-        <div v-if="!isAuthenticated" class="navbar-end">
-          <div class="navbar-item">
-            <div class="buttons">
-            <a v-if="location.hash !== '#/console'" class="button is-link" href="#/console">Console</a>
-            <a class="button is-primary" href="#/signup">Signup</a>
-              <a class="button is-primary" href="#/login?redirect=${encodeURIComponent('#/')}">Login</a>
-            </div>
-          </div>
-        </div>
+        <div>
       </nav>
       <div class="spacer"></div>
       <router-view></router-view>
