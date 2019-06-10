@@ -431,7 +431,7 @@ const envConfig = config[ENVIRONMENT];
             clientError.name = 'AdminLoginError';
             clientError.isClientError = true;
             request.error(clientError);
-            console.error(error);
+            console.error(clientError);
             continue;
           }
           let token = {
