@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const util = require('util');
 const uuid = require('uuid');
-const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
 const {getShardKey, getShardRange} = require('../utils/sharding');
 const AsyncStreamEmitter = require('async-stream-emitter');
 const WritableConsumableStream = require('writable-consumable-stream');
@@ -12,15 +12,7 @@ const writeFile = util.promisify(fs.writeFile);
 
 const STATE_FILE_PATH = path.resolve(__dirname, '..', 'state.json');
 
-const SALT_SIZE = 32;
 const MAX_WALLET_CREATE_ATTEMPTS = 10;
-
-const MIN_USERNAME_LENGTH = 3;
-const MAX_USERNAME_LENGTH = 30;
-
-const MIN_PASSWORD_LENGTH = 7;
-const MAX_PASSWORD_LENGTH = 50;
-
 const HIGH_BACKPRESSURE_THRESHOLD = 10;
 
 class AccountService extends AsyncStreamEmitter {
@@ -37,6 +29,7 @@ class AccountService extends AsyncStreamEmitter {
     this.maxConcurrentWithdrawalsPerAccount = options.maxConcurrentWithdrawalsPerAccount;
     this.blockchainWithdrawalMaxAttempts = options.blockchainWithdrawalMaxAttempts;
     this.secretSignupKey = options.secretSignupKey;
+    this.bcryptPasswordRounds = options.bcryptPasswordRounds;
 
     this.mainWalletAddress = options.mainInfo.mainWalletAddress;
     this.requiredDepositBlockConfirmations = options.mainInfo.requiredDepositBlockConfirmations;
@@ -275,10 +268,16 @@ class AccountService extends AsyncStreamEmitter {
     );
   }
 
-  hashPassword(password, salt) {
-    let hasher = crypto.createHash('sha256');
-    hasher.update(password + salt);
-    return hasher.digest('hex');
+  async generateSalt(rounds) {
+    return bcrypt.genSalt(rounds);
+  }
+
+  async hashPassword(password, salt) {
+    return bcrypt.hash(password, salt);
+  }
+
+  async comparePasswordWithHash(password, hash) {
+    return bcrypt.compare(password, hash);
   }
 
   async sanitizeSignupCredentials(credentials) {
@@ -299,57 +298,14 @@ class AccountService extends AsyncStreamEmitter {
       error.isClientError = true;
       throw error;
     }
-    if (
-      typeof credentials.username !== 'string' ||
-      credentials.username.length < MIN_USERNAME_LENGTH ||
-      credentials.username.length > MAX_USERNAME_LENGTH
-    ) {
-      let error = new Error(
-        `The provided username was invalid. It must be between ${
-          MIN_USERNAME_LENGTH
-        } and ${
-          MAX_USERNAME_LENGTH
-        } characters in length.`
-      );
-      error.name = 'InvalidUsernameError';
-      error.isClientError = true;
-      throw error;
-    }
+
     credentials.username = credentials.username.trim();
-
-    if (
-      typeof credentials.password !== 'string' ||
-      credentials.password.length < MIN_PASSWORD_LENGTH ||
-      credentials.password.length > MAX_PASSWORD_LENGTH
-    ) {
-      let error = new Error(
-        `A password must be between ${
-          MIN_PASSWORD_LENGTH
-        } and ${
-          MAX_PASSWORD_LENGTH
-        } characters in length.`
-      );
-      error.name = 'InvalidPasswordError';
-      error.isClientError = true;
-      throw error;
-    }
-
-    let randomBuffer = await new Promise((resolve, reject) => {
-      crypto.randomBytes(SALT_SIZE, (err, randomBytesBuffer) => {
-        if (err) {
-          reject(err);
-          return;
-        }
-        resolve(randomBytesBuffer);
-      });
-    });
-
     credentials.active = true;
 
-    // Add random password salt.
-    credentials.passwordSalt = randomBuffer.toString('hex');
-    // Only store the salted hash of the password.
-    credentials.password = this.hashPassword(credentials.password, credentials.passwordSalt);
+    // Add password salt.
+    let passwordSalt = await this.generateSalt(this.bcryptPasswordRounds);
+    // Only store the hash of the password.
+    credentials.password = await this.hashPassword(credentials.password, passwordSalt);
     credentials.createdDate = this.thinky.r.now();
 
     let isUsernameAvailable = false;
@@ -458,11 +414,8 @@ class AccountService extends AsyncStreamEmitter {
       throw accountInactiveError;
     }
 
-    let hasher = crypto.createHash('sha256');
-    hasher.update(credentials.password + accountData.passwordSalt);
-    let hashedPassword = hasher.digest('hex');
-
-    if (accountData.password !== hashedPassword) {
+    let passwordMatches = await this.comparePasswordWithHash(credentials.password, accountData.password);
+    if (!passwordMatches) {
       let err = new Error('Wrong password.');
       err.name = 'InvalidCredentialsError';
       err.isClientError = true;

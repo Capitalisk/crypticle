@@ -1,12 +1,12 @@
 let usernameSchema = {
   type: 'string',
-  minLength: 0,
-  maxLength: 200
+  minLength: 3,
+  maxLength: 30
 };
 let passwordSchema = {
   type: 'string',
-  minLength: 0,
-  maxLength: 200
+  minLength: 7,
+  maxLength: 50
 };
 let uuidSchema = {
   type: 'string',

@@ -147,27 +147,32 @@ const envConfig = config[ENVIRONMENT];
     res.status(200).send('OK');
   });
 
-  function validateRequestDataSchema(data, procedure) {
-    let schema = requestSchema[procedure];
+  let fieldMap = {
+    'instance.username': 'Username',
+    'instance.password': 'Password'
+  };
+
+  function generateMessageFromSchemaError(error) {
+    return `${fieldMap[error.property] || error.property} ${error.message}`;
+  }
+
+  function validateRequestSchema(request) {
+    let schema = requestSchema[request.procedure];
     if (!schema) {
-      let error = new Error(`Could not find a schema for the ${procedure} procedure.`);
+      let error = new Error(`Could not find a schema for the ${request.procedure} procedure.`);
       error.name = 'NoMatchingRequestSchemaError';
       error.isClientError = true;
       throw error;
     }
-    let validationResult = requestValidator.validate(data, schema);
+    let validationResult = requestValidator.validate(request.data, schema);
     if (!validationResult.valid) {
-      let errorsString = validationResult.errors.map(error => error.stack).join('. ');
-      let error = new Error(`Input validation failed. ${errorsString}.`);
+      let errorsMessage = validationResult.errors.map(error => generateMessageFromSchemaError(error)).join('. ');
+      let error = new Error(`${errorsMessage}.`);
       error.name = 'RequestSchemaValidationError';
       error.errors = validationResult.errors;
       error.isClientError = true;
       throw error;
     }
-  }
-
-  function validateRequestSchema(request) {
-    validateRequestDataSchema(request.data, request.procedure);
   }
 
   function verifyUserAuth(request, socket) {

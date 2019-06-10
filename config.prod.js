@@ -14,7 +14,8 @@ module.exports = {
       blockchainNodeAddress: 'https://wallet.rise.vision',
       blockPollInterval: 5000,
       blockFetchLimit: 100,
-      blockchainWithdrawalMaxAttempts: 20
+      blockchainWithdrawalMaxAttempts: 20,
+      bcryptPasswordRounds: 10
     },
     fiat: {
       name: 'stripe',
