@@ -95,7 +95,7 @@ function getComponent(options) {
                 <tr v-bind:class="{'table-row-failure': transaction.canceled}">
                   <td class="table-cell-id table-first-column">{{transaction.id}}</td>
                   <td>{{transaction.counterpartyAccountId}}</td>
-                  <td>{{transaction.data}}</td>
+                  <td class="table-cell-data">{{transaction.data}}</td>
                   <td v-if="transactionType === 'settled'" class="table-cell-status">{{getStatus(transaction.canceled)}}</td>
                   <td class="table-cell-amount">{{toBlockchainUnits(transaction.amount, transaction.recordType)}}<span v-if="mainInfo.cryptocurrency"> {{mainInfo.cryptocurrency.symbol}}</span></td>
                   <td class="table-cell-date">{{toSimpleDate(transaction.createdDate)}}</td>

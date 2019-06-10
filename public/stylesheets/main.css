@@ -10,6 +10,13 @@
   text-align: right;
 }
 
+.table .table-cell-data {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  max-width: 15vw;
+  overflow: hidden;
+}
+
 .spacer {
   height: 24px;
   width: 100%;
