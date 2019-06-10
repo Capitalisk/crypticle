@@ -135,24 +135,6 @@ function getPageComponent(pageOptions) {
 
           <h5 class="title is-5">Transfer</h5>
           <pre class="code-snippet"><code>
-    socket.invoke('transfer', {
-      amount: '1000000000',
-      toAccountId: '18b50e59-f3a1-4b57-8f0b-7daeba7259ad',
-      data: 'Notes...'
-    })
-          </code></pre>
-          <ul class="list">
-            <li class="list-item"><code>amount</code> is the amount of funds to send to the specified Crypticle account - It is expressed in the smallest possible cryptocurrency unit.</li>
-            <li class="list-item"><code>toAccountId</code> is the ID of the Crypticle account to send the funds to.</li>
-            <li class="list-item"><code>data</code> is a custom string to add to both the debit and credit transactions which will be created as a result of the transfer.</li>
-            <li class="list-item"><code>debitId</code> is an optional ID (string in UUID format) to use for the underlying debit transaction. If not provided, it will be automatically generated on the backend.</li>
-            <li class="list-item"><code>creditId</code> is an optional ID (string in UUID format) to use for the underlying credit transaction. If not provided, it will be automatically generated on the backend.</li>
-          </ul>
-
-          <div class="spacer"></div>
-
-          <h5 class="title is-5">Transfer</h5>
-          <pre class="code-snippet"><code>
     socket.invoke('adminTransfer', {
       amount: '20000000',
       fromAccountId: '213288af-9239-494d-844d-d064ced6f9ea',
