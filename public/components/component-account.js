@@ -10,26 +10,12 @@ function getComponent(options) {
         socket,
         type: 'Account',
         id: socket.authToken && socket.authToken.accountId,
-        fields: ['username', 'depositWalletAddress', 'admin']
-      });
-      this.lastSettledTransactionsCollection = new AGCollection({
-        socket,
-        type: 'Transaction',
-        view: 'lastSettledTransactions',
-        viewParams: {
-          accountId: socket.authToken && socket.authToken.accountId
-        },
-        fields: ['balance'],
-        pageOffset: 0,
-        pageSize: 1,
-        getCount: true
+        fields: ['username', 'balance', 'depositWalletAddress', 'admin']
       });
       return {
         mainInfo,
         account: this.accountModel.value,
-        isImpersonating: socket.authToken && !!socket.authToken.impersonator,
-        lastSettledTransactions: this.lastSettledTransactionsCollection.value,
-        lastSettledTransactionsMeta: this.lastSettledTransactionsCollection.meta
+        isImpersonating: socket.authToken && !!socket.authToken.impersonator
       };
     },
     methods: {
@@ -42,11 +28,11 @@ function getComponent(options) {
       }
     },
     computed: {
-      isBalanceReady: function () {
-        return this.lastSettledTransactionsMeta.count != null && (
-          this.lastSettledTransactionsMeta.count === 0 ||
-          (this.lastSettledTransactions.length > 0 && this.lastSettledTransactions[0].balance != null)
-        );
+      accountBalance: function () {
+        if (this.account.username == null) {
+          return 'Loading...';
+        }
+        return `${this.toBlockchainUnits(this.account.balance)} ${this.mainInfo.cryptocurrency.symbol}`;
       }
     },
     template: `
@@ -72,21 +58,7 @@ function getComponent(options) {
             </tr>
             <tr>
               <td><b>Balance</b></td>
-              <template v-if="!isBalanceReady">
-                <td>
-                  <span>Loading...</span>
-                </td>
-              </template>
-              <template v-if="isBalanceReady">
-                <td v-if="!lastSettledTransactions.length">
-                  <span>0</span>
-                  <span v-if="mainInfo.cryptocurrency">{{mainInfo.cryptocurrency.symbol}}</span>
-                </td>
-                <td v-for="txn of lastSettledTransactions">
-                  <span v-for="txn of lastSettledTransactions">{{toBlockchainUnits(txn.balance)}}</span>
-                  <span v-if="mainInfo.cryptocurrency">{{mainInfo.cryptocurrency.symbol}}</span>
-                </td>
-              </template>
+              <td>{{accountBalance}}</td>
             </tr>
             <tr>
               <td>
