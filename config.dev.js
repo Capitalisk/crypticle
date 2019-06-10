@@ -5,7 +5,7 @@ module.exports = {
   services: {
     account: {
       transactionSettlementInterval: 5000,
-      withdrawalProcessingInterval: 15000,
+      withdrawalProcessingInterval: 20000,
       maxTransactionSettlementsPerAccount: 10,
       maxConcurrentWithdrawalsPerAccount: 5,
       blockchainNodeWalletPassphrase: 'drastic spot aerobic web wave tourist library first scout fatal inherit arrange',
