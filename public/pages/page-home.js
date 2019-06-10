@@ -96,7 +96,7 @@ function getPageComponent(pageOptions) {
 
           <div class="spacer"></div>
 
-          <h5 class="title is-5">Withdrawal</h5>
+          <h5 class="title is-5">Withdraw</h5>
           <pre class="code-snippet"><code>
     socket.invoke('withdraw', {
       amount: '1100000000',
@@ -168,7 +168,7 @@ function getPageComponent(pageOptions) {
 
           <div class="spacer"></div>
 
-          <h5 class="title is-5">Withdrawal</h5>
+          <h5 class="title is-5">Withdraw</h5>
           <pre class="code-snippet"><code>
     socket.invoke('adminWithdraw', {
       amount: '234000000',
