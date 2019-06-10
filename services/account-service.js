@@ -35,6 +35,7 @@ class AccountService extends AsyncStreamEmitter {
     this.requiredDepositBlockConfirmations = options.mainInfo.requiredDepositBlockConfirmations;
     this.requiredWithdrawalBlockConfirmations = options.mainInfo.requiredWithdrawalBlockConfirmations;
     this.alwaysRequireSecretSignupKey = options.mainInfo.alwaysRequireSecretSignupKey;
+    this.enableAdminAccountSignup = options.mainInfo.enableAdminAccountSignup;
     this.blockPollInterval = options.blockPollInterval;
     this.blockFetchLimit = options.blockFetchLimit;
     this.blockchainSync = options.blockchainSync;
@@ -366,6 +367,14 @@ class AccountService extends AsyncStreamEmitter {
     }
 
     if (credentials.admin) {
+      if (!this.enableAdminAccountSignup) {
+        let accountCreateError = new Error(
+          'Failed to create admin account because this feature has been disabled.'
+        );
+        accountCreateError.name = 'AccountCreateError';
+        accountCreateError.isClientError = true;
+        throw accountCreateError;
+      }
       if (credentials.secretSignupKey !== this.secretSignupKey) {
         let accountCreateError = new Error(
           'Failed to create admin account because the specified secret signup key was incorrect.'

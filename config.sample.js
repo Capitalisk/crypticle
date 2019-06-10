@@ -33,6 +33,7 @@ module.exports = {
     requiredWithdrawalBlockConfirmations: 102,
     paginationShowTotalCounts: false,
     maxRecordDisplayAge: 2592000000,
-    alwaysRequireSecretSignupKey: false
+    alwaysRequireSecretSignupKey: false,
+    enableAdminAccountSignup: true
   }
 };

@@ -32,7 +32,8 @@ module.exports = {
     requiredDepositBlockConfirmations: 3,
     requiredWithdrawalBlockConfirmations: 3,
     paginationShowTotalCounts: false,
-    alwaysRequireSecretSignupKey: false,
     maxRecordDisplayAge: 2592000000,
+    alwaysRequireSecretSignupKey: false,
+    enableAdminAccountSignup: true
   }
 };

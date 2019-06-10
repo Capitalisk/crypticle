@@ -27,7 +27,7 @@ function getPageComponent(pageOptions) {
         let details = {
           username: this.username,
           password: this.password,
-          admin: false,
+          admin: true,
           secretSignupKey: this.secretSignupKey
         };
         try {
@@ -46,7 +46,7 @@ function getPageComponent(pageOptions) {
     },
     template: `
       <div class="page-container container signup-container">
-        <h2 class="title is-2">Sign up user account</h2>
+        <h2 class="title is-2">Sign up admin account</h2>
         <div v-if="error" class="has-text-danger field">
           <span>{{error}}</span>
         </div>
@@ -66,7 +66,7 @@ function getPageComponent(pageOptions) {
           </label>
           <input id="signup-form-password" type="password" v-model="password" class="input" @keydown.enter="signup">
         </div>
-        <div v-if="mainInfo.alwaysRequireSecretSignupKey" class="field">
+        <div class="field">
           <label class="label" for="signup-form-secret-signup-key">
             Secret signup key
           </label>

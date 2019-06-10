@@ -10,7 +10,7 @@ function getComponent(options) {
         socket,
         type: 'Account',
         id: socket.authToken && socket.authToken.accountId,
-        fields: ['depositWalletAddress', 'admin']
+        fields: ['username', 'depositWalletAddress', 'admin']
       });
       this.lastSettledTransactionsCollection = new AGCollection({
         socket,
@@ -61,6 +61,10 @@ function getComponent(options) {
             </tr>
             <tr v-if="isImpersonating" class="table-row-success">
               <td colspan="2">This account is being impersonated.</td>
+            </tr>
+            <tr>
+              <td><b>Username</b></td>
+              <td>{{account.username}}</td>
             </tr>
             <tr>
               <td><b>Account ID</b></td>

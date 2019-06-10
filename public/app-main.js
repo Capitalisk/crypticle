@@ -1,7 +1,8 @@
 import getHomePageComponent from '/pages/page-home.js';
 import getLoginPageComponent from '/pages/page-login.js';
-import getLoginImpersonatePageComponent from '/pages/page-login-impersonate.js';
+import getLoginImpersonatePageComponent from '/pages/page-impersonate.js';
 import getSignupPageComponent from '/pages/page-signup.js';
+import getSignupAdminPageComponent from '/pages/page-signup-admin.js';
 import getDashboardPageComponent from '/pages/page-dashboard.js';
 
 let socket = window.socket = asyngularClient.create({
@@ -18,7 +19,8 @@ let pageOptions = {
     requiredWithdrawalBlockConfirmations: null,
     paginationShowTotalCounts: false,
     maxRecordDisplayAge: null,
-    alwaysRequireSecretSignupKey: false
+    alwaysRequireSecretSignupKey: false,
+    enableAdminAccountSignup: false
   }
 };
 
@@ -37,6 +39,7 @@ let PageDashboard = getDashboardPageComponent(pageOptions);
 let PageLogin = getLoginPageComponent(pageOptions);
 let PageLoginImpersonate = getLoginImpersonatePageComponent(pageOptions);
 let PageSignup = getSignupPageComponent(pageOptions);
+let PageSignupAdmin = getSignupAdminPageComponent(pageOptions);
 
 function isSocketAuthenticated() {
   return socket.authState === 'authenticated';
@@ -75,7 +78,8 @@ let Console = {
 
 let routes = [
   {path: '/', component: PageHome, props: true},
-  {path: '/signup', component: PageSignup, props: (route) => ({kind: route.query.kind})},
+  {path: '/signup', component: PageSignup, props: true},
+  {path: '/signup/admin', component: PageSignupAdmin, props: true},
   {path: '/login', component: PageLogin, props: (route) => ({redirect: route.query.redirect})},
   {path: '/impersonate', component: PageLoginImpersonate, props: (route) => ({redirect: route.query.redirect})},
   {
@@ -97,6 +101,7 @@ new Vue({
   router,
   data: function () {
     return {
+      mainInfo: pageOptions.mainInfo,
       isAuthenticated: false,
       isAdmin: false
     };
@@ -160,14 +165,12 @@ new Vue({
         <div class="navbar-end">
           <div class="navbar-item">
             <div class="buttons">
-              <a v-if="isAuthenticated" class="button is-link" href="#/console" v-bind:disabled="isOnPage('/console')">Console</a>
+              <a class="button is-link" href="#/console" v-bind:disabled="isOnPage('/console')">Console</a>
               <a v-if="isAdmin" class="button is-primary" v-bind:href="impersonatePath" v-bind:disabled="isOnPage('/impersonate')">Impersonate</a>
-              <a v-if="isAuthenticated" class="button is-primary" href="#/signup" v-bind:disabled="isOnPage('/signup')">Signup</a>
-              <input v-if="isAuthenticated" type="button" class="button is-primary" value="Logout" @click="logout">
-
-              <a v-if="!isAuthenticated" class="button is-link" href="#/console" v-bind:disabled="isOnPage('/console')">Console</a>
-              <a v-if="!isAuthenticated" class="button is-primary" href="#/signup" v-bind:disabled="isOnPage('/signup')">Signup</a>
+              <a v-if="mainInfo.enableAdminAccountSignup" class="button is-primary" href="#/signup/admin" v-bind:disabled="isOnPage('/signup/admin')">Signup admin</a>
+              <a class="button is-primary" href="#/signup" v-bind:disabled="isOnPage('/signup')">Signup</a>
               <a v-if="!isAuthenticated" class="button is-primary" v-bind:href="loginPath" v-bind:disabled="isOnPage('/login')">Login</a>
+              <input v-if="isAuthenticated" type="button" class="button is-primary" value="Logout" @click="logout">
             </div>
           </div>
         </div>
