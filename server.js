@@ -397,7 +397,7 @@ const envConfig = config[ENVIRONMENT];
       })();
 
       (async () => {
-        for await (let request of socket.procedure('adminLogin')) {
+        for await (let request of socket.procedure('adminImpersonate')) {
           try {
             verifyAdminUserAuth(request, socket);
             validateRequestSchema(request);

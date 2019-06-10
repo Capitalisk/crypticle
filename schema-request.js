@@ -67,7 +67,7 @@ let requestSchema = {
     required: ['amount', 'toAccountId']
   },
   getBalance: {},
-  adminLogin: {
+  adminImpersonate: {
     type: 'object',
     properties: {
       username: usernameSchema

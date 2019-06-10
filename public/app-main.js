@@ -77,7 +77,7 @@ let routes = [
   {path: '/', component: PageHome, props: true},
   {path: '/signup', component: PageSignup, props: (route) => ({kind: route.query.kind})},
   {path: '/login', component: PageLogin, props: (route) => ({redirect: route.query.redirect})},
-  {path: '/login/impersonate', component: PageLoginImpersonate, props: (route) => ({redirect: route.query.redirect})},
+  {path: '/impersonate', component: PageLoginImpersonate, props: (route) => ({redirect: route.query.redirect})},
   {
     path: '/console',
     component: Console,
@@ -102,11 +102,11 @@ new Vue({
     };
   },
   computed: {
-    loginPath: function () {
+    loginPath: function (arg) {
       return `#/login?redirect=${encodeURIComponent('#' + this.$route.path)}`;
     },
     impersonatePath: function () {
-      return `#/login/impersonate?redirect=${encodeURIComponent('#' + this.$route.path)}`;
+      return `#/impersonate?redirect=${encodeURIComponent('#' + this.$route.path)}`;
     }
   },
 
@@ -144,6 +144,9 @@ new Vue({
   methods: {
     logout: function () {
       socket.deauthenticate();
+    },
+    isOnPage: function (pagePath) {
+      return this.$route.path === pagePath;
     }
   },
   template: `
@@ -157,14 +160,14 @@ new Vue({
         <div class="navbar-end">
           <div class="navbar-item">
             <div class="buttons">
-              <a v-if="isAuthenticated && location.hash !== '#/console'" class="button is-link" href="#/console">Console</a>
-              <a v-if="isAdmin" class="button is-primary" v-bind:href="impersonatePath">Impersonate</a>
-              <a v-if="isAuthenticated" class="button is-primary" href="#/signup">Signup</a>
+              <a v-if="isAuthenticated" class="button is-link" href="#/console" v-bind:disabled="isOnPage('/console')">Console</a>
+              <a v-if="isAdmin" class="button is-primary" v-bind:href="impersonatePath" v-bind:disabled="isOnPage('/impersonate')">Impersonate</a>
+              <a v-if="isAuthenticated" class="button is-primary" href="#/signup" v-bind:disabled="isOnPage('/signup')">Signup</a>
               <input v-if="isAuthenticated" type="button" class="button is-primary" value="Logout" @click="logout">
 
-              <a v-if="!isAuthenticated && location.hash !== '#/console'" class="button is-link" href="#/console">Console</a>
-              <a v-if="!isAuthenticated" class="button is-primary" href="#/signup">Signup</a>
-              <a v-if="!isAuthenticated" class="button is-primary" v-bind:href="loginPath">Login</a>
+              <a v-if="!isAuthenticated" class="button is-link" href="#/console" v-bind:disabled="isOnPage('/console')">Console</a>
+              <a v-if="!isAuthenticated" class="button is-primary" href="#/signup" v-bind:disabled="isOnPage('/signup')">Signup</a>
+              <a v-if="!isAuthenticated" class="button is-primary" v-bind:href="loginPath" v-bind:disabled="isOnPage('/login')">Login</a>
             </div>
           </div>
         </div>

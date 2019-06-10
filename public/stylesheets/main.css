@@ -79,3 +79,7 @@
 .code-snippet {
   padding: 0;
 }
+
+a[disabled="disabled"] {
+  pointer-events: none;
+}

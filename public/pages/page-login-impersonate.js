@@ -21,7 +21,7 @@ function getPageComponent(pageOptions) {
           username: this.username
         };
         try {
-          await socket.invoke('adminLogin', details);
+          await socket.invoke('adminImpersonate', details);
         } catch (error) {
           this.error = `Failed to login. ${error.message}`;
           return;
