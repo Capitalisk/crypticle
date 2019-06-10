@@ -158,13 +158,13 @@ new Vue({
           <div class="navbar-item">
             <div class="buttons">
               <a v-if="isAuthenticated && location.hash !== '#/console'" class="button is-link" href="#/console">Console</a>
+              <a v-if="isAdmin" class="button is-primary" v-bind:href="impersonatePath">Impersonate</a>
               <a v-if="isAuthenticated" class="button is-primary" href="#/signup">Signup</a>
               <input v-if="isAuthenticated" type="button" class="button is-primary" value="Logout" @click="logout">
 
               <a v-if="!isAuthenticated && location.hash !== '#/console'" class="button is-link" href="#/console">Console</a>
               <a v-if="!isAuthenticated" class="button is-primary" href="#/signup">Signup</a>
               <a v-if="!isAuthenticated" class="button is-primary" v-bind:href="loginPath">Login</a>
-              <a v-if="isAdmin" class="button is-primary" v-bind:href="impersonatePath">Impersonate</a>
             </div>
           </div>
         </div>

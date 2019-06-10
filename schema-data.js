@@ -93,7 +93,7 @@ function privateResourceAccessController(req) {
     (req.resource && req.authToken.accountId === req.resource.accountId) ||
     (req.authToken.accountId === viewParams.accountId)
   );
-  
+
   if (isOwnResource) {
     if (req.action === 'read' || req.action === 'subscribe') {
       return;

@@ -273,7 +273,7 @@ const envConfig = config[ENVIRONMENT];
             username: accountData.username,
             accountId: accountData.id
           };
-          if (accountData.admin === true) {
+          if (accountData.admin) {
             token.admin = true;
           }
           socket.setAuthToken(token, {expiresIn: TOKEN_EXPIRY_SECONDS});
@@ -422,11 +422,13 @@ const envConfig = config[ENVIRONMENT];
             console.error(error);
             continue;
           }
-          if (accountData.admin === true) {
+          let realAccountId = socket.authToken.impersonator || socket.authToken.accountId;
+          let isOwnAdminAccount = accountData.id === realAccountId;
+          if (accountData.admin && !isOwnAdminAccount) {
             let clientError = new Error(
               `Failed to login as user ${
                 request.data.username
-              } because admin accounts cannot be impersonated.`
+              } because other admin accounts cannot be impersonated.`
             );
             clientError.name = 'AdminLoginError';
             clientError.isClientError = true;
@@ -437,9 +439,11 @@ const envConfig = config[ENVIRONMENT];
           let token = {
             username: accountData.username,
             accountId: accountData.id,
-            admin: true,
-            impersonator: socket.authToken.impersonator || socket.authToken.accountId
+            admin: true
           };
+          if (!isOwnAdminAccount) {
+            token.impersonator = realAccountId;
+          }
           socket.setAuthToken(token, {expiresIn: TOKEN_EXPIRY_SECONDS});
           request.end();
         }
