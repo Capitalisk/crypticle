@@ -140,34 +140,62 @@ class AccountService extends AsyncStreamEmitter {
     // Only fetch transactions from accounts which are within the
     // shard range as the current worker.
     let shardRange = getShardRange(this.shardInfo.shardIndex, this.shardInfo.shardCount);
-    let txns = await this.thinky.r.table('Transaction')
+    let unsettledTxnList = await this.thinky.r.table('Transaction')
     .between(shardRange.start, shardRange.end, {index: 'settlementShardKey'})
     .orderBy(this.thinky.r.asc('createdDate'))
     .run();
 
-    if (!txns.length) {
+    if (!unsettledTxnList.length) {
       return {};
     }
 
     let accountLedger = {};
-    txns.forEach((txn) => {
+
+    unsettledTxnList.forEach((txn) => {
       if (!accountLedger[txn.accountId]) {
         accountLedger[txn.accountId] = {
           balance: 0n,
           lastSettledTransaction: null,
-          unsettledTransactions: [],
+          settledTransactions: [],
+          unsettledTransactions: []
         };
       }
       let account = accountLedger[txn.accountId];
+
       if (txn.settled) {
-        account.lastSettledTransaction = txn;
-        account.balance = BigInt(txn.balance);
+        account.settledTransactions.push(txn);
       } else if (
         maxTransactionSettlementsPerAccount == null ||
         account.unsettledTransactions.length < maxTransactionSettlementsPerAccount
       ) {
         account.unsettledTransactions.push(txn);
       }
+    });
+
+    let lastTxnList = await Promise.all(
+      Object.keys(accountLedger).map(async (accountId) => {
+        try {
+          return await this.thinky.r.table('Transaction')
+          .between(
+            [accountId, this.thinky.r.minval],
+            [accountId, this.thinky.r.maxval],
+            {index: 'accountIdSettledDate'}
+          )
+          .orderBy({index: this.thinky.r.desc('accountIdSettledDate')})
+          .nth(0)
+          .run();
+        } catch (error) {
+          return null;
+        }
+      })
+    );
+
+    lastTxnList
+    .filter(lastTxn => lastTxn != null)
+    .forEach((lastTxn) => {
+      let account = accountLedger[lastTxn.accountId];
+      account.lastSettledTransaction = lastTxn;
+      account.balance = BigInt(lastTxn.balance);
     });
 
     return accountLedger;
@@ -218,6 +246,7 @@ class AccountService extends AsyncStreamEmitter {
           txn.balance = account.balance.toString();
           txn.settled = true;
           txn.settledDate = this.thinky.r.now();
+          txn.settlementShardKey = null;
 
           let {id, ...txnData} = txn;
           await this.crud.update({
@@ -226,7 +255,13 @@ class AccountService extends AsyncStreamEmitter {
             value: txnData
           });
         }
-        account.isFullyProcessed = true;
+
+        await this.crud.update({
+          type: 'Account',
+          id: accountId,
+          field: 'balance',
+          value: account.balance.toString()
+        });
       })
       .map((promise) => {
         return promise.catch((error) => {
@@ -238,21 +273,8 @@ class AccountService extends AsyncStreamEmitter {
     await Promise.all(
       unsettledAccoundIds.map(async (accountId) => {
         let account = accountLedger[accountId];
-        if (!account.isFullyProcessed) {
-          return;
-        }
-        let txnsToRemoveShardKey = [];
-        if (account.lastSettledTransaction) {
-          txnsToRemoveShardKey.push(account.lastSettledTransaction);
-        }
-        // Remove the settlement shard key from all settled transactions except for the last one.
-        txnsToRemoveShardKey = txnsToRemoveShardKey
-        .concat(account.unsettledTransactions)
-        .filter(txn => txn.settled);
-        txnsToRemoveShardKey = txnsToRemoveShardKey.slice(0, txnsToRemoveShardKey.length - 1);
-
         await Promise.all(
-          txnsToRemoveShardKey.map(async (txn) => {
+          account.settledTransactions.map(async (txn) => {
             await this.crud.delete({
               type: 'Transaction',
               id: txn.id,

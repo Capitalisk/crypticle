@@ -8,6 +8,7 @@ let allowedAccountReadFields = {
   nationalCurrency: true,
   active: true,
   admin: true,
+  balance: true,
   createdDate: true
 };
 
@@ -43,6 +44,7 @@ let allowedAdminAccountReadFields = {
   passwordResetExpiry: true,
   active: true,
   admin: true,
+  balance: true,
   createdDate: true
 };
 
@@ -132,6 +134,7 @@ function getSchema(options) {
         passwordResetExpiry: type.date().optional(),
         active: type.boolean().default(true),
         admin: type.boolean().default(false),
+        balance: type.string().default('0'),
         createdDate: type.date()
       },
       indexes: ['username', 'depositWalletAddress'],
