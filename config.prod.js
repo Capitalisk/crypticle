@@ -2,6 +2,7 @@ module.exports = {
   origin: 'https://crypticle.io',
   adminEmailAddress: 'Crypticle <grosjona@yahoo.com.au>',
   secretSignupKey: '313e7cc1-ad75-4030-a927-6a09f39c1603',
+  databaseName: 'crypticle_rise',
   services: {
     account: {
       transactionSettlementInterval: 5000,

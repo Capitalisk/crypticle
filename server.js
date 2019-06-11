@@ -44,10 +44,10 @@ const AGC_STATE_SERVER_RECONNECT_RANDOMNESS = Number(process.env.AGC_STATE_SERVE
 const AGC_PUB_SUB_BATCH_DURATION = Number(process.env.AGC_PUB_SUB_BATCH_DURATION) || null;
 const AGC_BROKER_RETRY_DELAY = Number(process.env.AGC_BROKER_RETRY_DELAY) || null;
 
-const DB_NAME = process.env.DB_NAME || 'crypticle';
 const TOKEN_EXPIRY_SECONDS = 60 * 60;
 
 const envConfig = config[ENVIRONMENT];
+const databaseName = envConfig.databaseName || 'crypticle';
 
 (async () => {
   let {blockchainNodeWalletPassphrase} = envConfig.services.account;
@@ -64,7 +64,7 @@ const envConfig = config[ENVIRONMENT];
   }
 
   const dataSchema = getDataSchema({
-    dbName: DB_NAME,
+    dbName: databaseName,
     maxRecordDisplayAge: envConfig.mainInfo.maxRecordDisplayAge
   });
 
@@ -88,7 +88,7 @@ const envConfig = config[ENVIRONMENT];
     schema: dataSchema,
     thinkyOptions: {
       host: '127.0.0.1',
-      db: DB_NAME,
+      db: databaseName,
       port: 28015
     }
   };
