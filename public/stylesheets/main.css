@@ -2,6 +2,21 @@
   padding: 20px;
 }
 
+.navbar-crypticle-logo {
+  width: 30px;
+  height: 30px;
+}
+
+.navbar-logo-area {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.navbar-crypticle-title {
+  color: #3EBB90;
+}
+
 .table .table-cell-amount {
   text-align: right;
 }

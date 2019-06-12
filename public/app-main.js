@@ -158,9 +158,12 @@ new Vue({
     <div class="app-wrapper container is-fullhd">
       <nav class="navbar" role="navigation" aria-label="main navigation">
         <div class="navbar-brand">
-          <h2 class="navbar-item title is-2">
-            <a href="#/">Crypticle</a>
-          </h2>
+          <a href="#/">
+            <div class="navbar-logo-area">
+              <img class="navbar-crypticle-logo" src="img/crypticle-logo-small.png" alt="Crypticle logo" />
+              <h3 class="navbar-crypticle-title navbar-item title is-3">Crypticle</h3>
+            </div>
+          </a>
         </div>
         <div class="navbar-end">
           <div class="navbar-item">
