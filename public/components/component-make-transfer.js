@@ -52,7 +52,6 @@ function getComponent(options) {
             data: this.data
           });
         } catch (error) {
-          this.clearForm();
           this.error = error.message;
           return;
         }

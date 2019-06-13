@@ -275,7 +275,6 @@ class AccountService extends AsyncStreamEmitter {
           txn.balance = account.balance.toString();
           txn.settled = true;
           txn.settledDate = this.thinky.r.now();
-          txn.settlementShardKey = null;
 
           let {id, ...txnData} = txn;
           await this.crud.update({
@@ -291,6 +290,8 @@ class AccountService extends AsyncStreamEmitter {
           field: 'balance',
           value: account.balance.toString()
         });
+
+        account.isFullyProcessed = true;
       })
       .map((promise) => {
         return promise.catch((error) => {
@@ -302,15 +303,17 @@ class AccountService extends AsyncStreamEmitter {
     await Promise.all(
       unsettledAccoundIds.map(async (accountId) => {
         let account = accountLedger[accountId];
-        await Promise.all(
-          account.settledTransactions.map(async (txn) => {
-            await this.crud.delete({
-              type: 'Transaction',
-              id: txn.id,
-              field: 'settlementShardKey'
-            });
-          })
-        );
+        if (account.isFullyProcessed) {
+          await Promise.all(
+            account.settledTransactions.map(async (txn) => {
+              await this.crud.delete({
+                type: 'Transaction',
+                id: txn.id,
+                field: 'settlementShardKey'
+              });
+            })
+          );
+        }
       })
       .map((promise) => {
         return promise.catch((error) => {
@@ -597,8 +600,7 @@ class AccountService extends AsyncStreamEmitter {
             value: {
               canceled: true,
               settled: true,
-              settledDate: this.thinky.r.now(),
-              settlementShardKey: null
+              settledDate: this.thinky.r.now()
             }
           });
           await this.crud.delete({
@@ -649,8 +651,7 @@ class AccountService extends AsyncStreamEmitter {
           id: deposit.id,
           value: {
             settled: true,
-            settledDate: this.thinky.r.now(),
-            settlementShardKey: null
+            settledDate: this.thinky.r.now()
           }
         });
         await this.crud.delete({
@@ -991,8 +992,7 @@ class AccountService extends AsyncStreamEmitter {
               value: {
                 canceled: true,
                 settled: true,
-                settledDate: this.thinky.r.now(),
-                settlementShardKey: null
+                settledDate: this.thinky.r.now()
               }
             });
             await this.crud.delete({
@@ -1019,8 +1019,7 @@ class AccountService extends AsyncStreamEmitter {
               value: {
                 canceled: true,
                 settled: true,
-                settledDate: this.thinky.r.now(),
-                settlementShardKey: null
+                settledDate: this.thinky.r.now()
               }
             });
             await this.crud.delete({
@@ -1041,8 +1040,7 @@ class AccountService extends AsyncStreamEmitter {
                 value: {
                   height: blockchainTxn.height,
                   settled: true,
-                  settledDate: this.thinky.r.now(),
-                  settlementShardKey: null
+                  settledDate: this.thinky.r.now()
                 }
               });
               await this.crud.delete({
@@ -1069,8 +1067,7 @@ class AccountService extends AsyncStreamEmitter {
               value: {
                 canceled: true,
                 settled: true,
-                settledDate: this.thinky.r.now(),
-                settlementShardKey: null
+                settledDate: this.thinky.r.now()
               }
             });
             await this.crud.delete({

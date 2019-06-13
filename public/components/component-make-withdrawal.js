@@ -49,7 +49,6 @@ function getComponent(options) {
             toWalletAddress: walletAddress
           });
         } catch (error) {
-          this.clearForm();
           this.error = error.message;
           return;
         }
