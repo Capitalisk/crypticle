@@ -11,20 +11,18 @@ function getComponent(options) {
         amount: null,
         data: null,
         error: null,
-        success: null,
         isTransferModalActive: false
       };
     },
     methods: {
-      openTransferModal: function () {
+      openModal: function () {
         this.isTransferModalActive = true;
       },
-      closeTransferModal: function () {
+      closeModal: function () {
         this.isTransferModalActive = false;
       },
       clearForm: function () {
         this.error = null;
-        this.success = null;
         this.accountId = null;
         this.amount = null;
         this.data = null;
@@ -51,32 +49,27 @@ function getComponent(options) {
           });
         } catch (error) {
           this.clearForm();
-          this.success = null;
           this.error = error.message;
           return;
         }
         this.clearForm();
-        this.error = null;
-        this.success = 'Transfer was sent successfully.';
+        this.closeModal();
       }
     },
     template: `
       <div class="component-container container is-fullhd">
-        <input type="button" class="button is-primary" value="Make transfer" @click="openTransferModal" />
+        <input type="button" class="button is-primary" value="Make transfer" @click="openModal" />
 
         <div v-bind:class="{'modal': true, 'is-active': isTransferModalActive}">
           <div class="modal-background"></div>
           <div class="modal-card">
             <header class="modal-card-head">
               <span class="modal-card-title">Make a transfer</span>
-              <button class="delete" aria-label="close" @click="closeTransferModal"></button>
+              <button class="delete" aria-label="close" @click="closeModal"></button>
             </header>
             <section class="modal-card-body">
               <div v-if="error" class="has-text-danger field">
                 <span>{{error}}</span>
-              </div>
-              <div v-if="success" class="has-text-success field">
-                <span>{{success}}</span>
               </div>
               <div class="field">
                 <label class="label" for="make-transfer-account-id">
@@ -99,7 +92,7 @@ function getComponent(options) {
             </section>
             <footer class="modal-card-foot">
               <button class="button is-link" @click="sendTransfer">Send transfer</button>
-              <button class="button" @click="closeTransferModal">Cancel</button>
+              <button class="button" @click="closeModal">Cancel</button>
             </footer>
           </div>
         </div>

@@ -214,7 +214,12 @@ class AccountService extends AsyncStreamEmitter {
           let txn = account.unsettledTransactions[i];
 
           if (txn.type === 'withdrawal') {
-            let newBalance = account.balance - BigInt(txn.amount);
+            let newBalance;
+            try {
+              newBalance = account.balance - BigInt(txn.amount);
+            } catch (error) {
+              this.emit('error', {error});
+            }
             if (newBalance >= 0n) {
               account.balance = newBalance;
             } else {
@@ -222,7 +227,12 @@ class AccountService extends AsyncStreamEmitter {
             }
           } else if (txn.type === 'transfer') {
             if (txn.recordType === 'debit') {
-              let newBalance = account.balance - BigInt(txn.amount);
+              let newBalance;
+              try {
+                newBalance = account.balance - BigInt(txn.amount);
+              } catch (error) {
+                this.emit('error', {error});
+              }
               if (newBalance >= 0n) {
                 account.balance = newBalance;
                 // If the transaction is a valid tranfer between two accounts.
@@ -237,10 +247,20 @@ class AccountService extends AsyncStreamEmitter {
                 txn.canceled = true;
               }
             } else {
-              account.balance += BigInt(txn.amount);
+              try {
+                account.balance += BigInt(txn.amount);
+              } catch (error) {
+                this.emit('error', {error});
+                txn.canceled = true;
+              }
             }
           } else if (txn.type === 'deposit') {
-            account.balance += BigInt(txn.amount);
+            try {
+              account.balance += BigInt(txn.amount);
+            } catch (error) {
+              this.emit('error', {error});
+              txn.canceled = true;
+            }
           }
 
           txn.balance = account.balance.toString();

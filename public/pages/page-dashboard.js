@@ -63,10 +63,6 @@ function getPageComponent(pageOptions) {
 
         <hr class="hr hr-big-spacing" />
 
-        <div class="spacer"></div>
-
-        <component-make-transfer></component-make-transfer>
-
         <component-settled-transfers></component-settled-transfers>
         <div class="spacer"></div>
         <component-pending-transfers></component-pending-transfers>
