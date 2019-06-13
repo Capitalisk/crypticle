@@ -2,6 +2,11 @@
   padding: 20px;
 }
 
+.modal-content {
+  width: 500px;
+  height: 400px;
+}
+
 .navbar-crypticle-logo {
   width: 30px;
   height: 30px;

@@ -1,6 +1,7 @@
 import getDepositsComponent from '/components/component-deposits.js';
 import getWithdrawalsComponent from '/components/component-withdrawals.js';
 import getTransfersComponent from '/components/component-transfers.js';
+import getMakeTransferComponent from '/components/component-make-transfer.js';
 import getAccountComponent from '/components/component-account.js';
 
 function getPageComponent(pageOptions) {
@@ -41,6 +42,10 @@ function getPageComponent(pageOptions) {
         socket,
         mainInfo,
         type: 'pending'
+      }),
+      'component-make-transfer': getMakeTransferComponent({
+        socket,
+        mainInfo
       })
     },
     data: function () {
@@ -49,7 +54,7 @@ function getPageComponent(pageOptions) {
       };
     },
     template: `
-      <div class="page-container container is-fullhd">
+      <div class="page-container container is-fullhd content">
         <h3 class="title is-3">Dashboard</h3>
 
         <div class="spacer"></div>
@@ -58,9 +63,17 @@ function getPageComponent(pageOptions) {
 
         <hr class="hr hr-big-spacing" />
 
+        <div class="spacer"></div>
+
+        <component-make-transfer></component-make-transfer>
+
         <component-settled-transfers></component-settled-transfers>
         <div class="spacer"></div>
         <component-pending-transfers></component-pending-transfers>
+
+        <div class="spacer"></div>
+
+        <component-make-transfer></component-make-transfer>
 
         <hr class="hr hr-big-spacing" />
 

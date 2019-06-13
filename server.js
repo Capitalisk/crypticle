@@ -147,13 +147,12 @@ const databaseName = envConfig.databaseName || 'crypticle';
     res.status(200).send('OK');
   });
 
-  let fieldMap = {
-    'instance.username': 'Username',
-    'instance.password': 'Password'
-  };
+  function capitalize(message) {
+    return message.charAt(0).toUpperCase() + message.slice(1);
+  }
 
   function generateMessageFromSchemaError(error) {
-    return `${fieldMap[error.property] || error.property} ${error.message}`;
+    return `${capitalize(error.property.split('.')[1] || '')} ${error.message}`;
   }
 
   function validateRequestSchema(request) {
