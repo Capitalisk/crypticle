@@ -43,9 +43,6 @@ function getComponent(options) {
       capitalize: function (message) {
         return message.charAt(0).toUpperCase() + message.slice(1)
       },
-      getStatus: function (canceled) {
-        return canceled ? 'canceled' : 'processed';
-      },
       goToPrevPage: function () {
         this.depositCollection.fetchPreviousPage();
       },
@@ -83,7 +80,6 @@ function getComponent(options) {
                 <th>Deposit ID</th>
                 <th>Amount</th>
                 <th v-if="depositType === 'settled'">Height</th>
-                <th v-if="depositType === 'settled'">Status</th>
                 <th>Date</th>
               </tr>
             </thead>
@@ -93,7 +89,6 @@ function getComponent(options) {
                   <td class="table-cell-id table-first-column">{{dep.id}}</td>
                   <td class="table-cell-amount">{{toBlockchainUnits(dep.amount)}}<span v-if="mainInfo.cryptocurrency"> {{mainInfo.cryptocurrency.symbol}}</span></td>
                   <td v-if="depositType === 'settled'" class="table-cell-height">{{dep.height}}</td>
-                  <td v-if="depositType === 'settled'" class="table-cell-status">{{getStatus(dep.canceled)}}</td>
                   <td class="table-cell-date">{{toSimpleDate(dep.createdDate)}}</td>
                 </tr>
               </template>

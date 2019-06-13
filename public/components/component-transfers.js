@@ -45,9 +45,6 @@ function getComponent(options) {
       capitalize: function (message) {
         return message.charAt(0).toUpperCase() + message.slice(1)
       },
-      getStatus: function (canceled) {
-        return canceled ? 'canceled' : 'processed';
-      },
       goToPrevPage: function () {
         this.transactionCollection.fetchPreviousPage();
       },
@@ -85,7 +82,6 @@ function getComponent(options) {
                 <th>Transaction ID</th>
                 <th>Counterparty account ID</th>
                 <th>Data</th>
-                <th v-if="transactionType === 'settled'">Status</th>
                 <th>Amount</th>
                 <th>Date</th>
               </tr>
@@ -96,7 +92,6 @@ function getComponent(options) {
                   <td class="table-cell-id table-first-column">{{transaction.id}}</td>
                   <td>{{transaction.counterpartyAccountId}}</td>
                   <td class="table-cell-data">{{transaction.data}}</td>
-                  <td v-if="transactionType === 'settled'" class="table-cell-status">{{getStatus(transaction.canceled)}}</td>
                   <td class="table-cell-amount">{{toBlockchainUnits(transaction.amount, transaction.recordType)}}<span v-if="mainInfo.cryptocurrency"> {{mainInfo.cryptocurrency.symbol}}</span></td>
                   <td class="table-cell-date">{{toSimpleDate(transaction.createdDate)}}</td>
                 </tr>

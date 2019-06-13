@@ -44,9 +44,6 @@ function getComponent(options) {
       capitalize: function (message) {
         return message.charAt(0).toUpperCase() + message.slice(1)
       },
-      getStatus: function (canceled) {
-        return canceled ? 'canceled' : 'processed';
-      },
       goToPrevPage: function () {
         this.withdrawalCollection.fetchPreviousPage();
       },
@@ -86,7 +83,6 @@ function getComponent(options) {
                 <th v-if="withdrawalType === 'settled'">Height</th>
                 <th>To wallet address</th>
                 <th v-if="withdrawalType === 'pending'">Attempts</th>
-                <th v-if="withdrawalType === 'settled'">Status</th>
                 <th>Date</th>
               </tr>
             </thead>
@@ -98,7 +94,6 @@ function getComponent(options) {
                   <td v-if="withdrawalType === 'settled'" class="table-cell-height">{{wit.height}}</td>
                   <td>{{wit.toWalletAddress}}</td>
                   <td v-if="withdrawalType === 'pending'">{{wit.attemptCount}}</td>
-                  <td v-if="withdrawalType === 'settled'" class="table-cell-status">{{getStatus(wit.canceled)}}</td>
                   <td class="table-cell-date">{{toSimpleDate(wit.createdDate)}}</td>
                 </tr>
               </template>

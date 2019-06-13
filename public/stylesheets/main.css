@@ -28,7 +28,7 @@
 .table .table-cell-data {
   white-space: nowrap;
   text-overflow: ellipsis;
-  max-width: 220px;
+  max-width: 300px;
   overflow: hidden;
 }
 
