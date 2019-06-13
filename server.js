@@ -147,12 +147,8 @@ const databaseName = envConfig.databaseName || 'crypticle';
     res.status(200).send('OK');
   });
 
-  function capitalize(message) {
-    return message.charAt(0).toUpperCase() + message.slice(1);
-  }
-
   function generateMessageFromSchemaError(error) {
-    return `${capitalize(error.property.split('.')[1] || '')} ${error.message}`;
+    return `The ${error.property.split('.')[1]} field ${error.message}`;
   }
 
   function validateRequestSchema(request) {
