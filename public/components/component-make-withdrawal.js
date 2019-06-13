@@ -7,9 +7,8 @@ function getComponent(options) {
     data: function () {
       return {
         mainInfo,
-        accountId: null,
+        walletAddress: null,
         amount: null,
-        data: null,
         error: null,
         isModalActive: false
       };
@@ -23,33 +22,31 @@ function getComponent(options) {
       },
       clearForm: function () {
         this.error = null;
-        this.accountId = null;
+        this.walletAddress = null;
         this.amount = null;
-        this.data = null;
       },
-      sendTransfer: async function () {
-        if (!this.accountId) {
-          this.error = 'Could not execute the transfer. The account ID was not provided.';
+      sendWithdrawal: async function () {
+        if (!this.walletAddress) {
+          this.error = 'Could not execute the withdrawal. The wallet address was not provided.';
           return;
         }
         if (!this.amount || this.amount < 0) {
-          this.error = 'Could not execute the transfer. The amount was not provided or was invalid.';
+          this.error = 'Could not execute the withdrawal. The amount was not provided or was invalid.';
           return;
         }
         if (mainInfo.cryptocurrency.unit == null) {
-          this.error = 'Could not execute the transfer. The cryptocurrency unit value could not be determined.';
+          this.error = 'Could not execute the withdrawal. The cryptocurrency unit value could not be determined.';
           return;
         }
-        let accountId = this.accountId.trim();
+        let walletAddress = this.walletAddress.trim();
         let unitAmount = parseFloat(this.amount);
         let totalAmount = Math.round(unitAmount * parseInt(mainInfo.cryptocurrency.unit));
         let totalAmountString = totalAmount.toString();
 
         try {
-          await socket.invoke('transfer', {
+          await socket.invoke('withdraw', {
             amount: totalAmountString,
-            toAccountId: accountId,
-            data: this.data
+            toWalletAddress: walletAddress
           });
         } catch (error) {
           this.clearForm();
@@ -62,13 +59,13 @@ function getComponent(options) {
     },
     template: `
       <div class="component-container container is-fullhd">
-        <input type="button" class="button is-primary" value="Make a transfer" @click="openModal" />
+        <input type="button" class="button is-primary" value="Make a withdrawal" @click="openModal" />
 
         <div v-bind:class="{'modal': true, 'is-active': isModalActive}">
           <div class="modal-background"></div>
           <div class="modal-card">
             <header class="modal-card-head">
-              <span class="modal-card-title">Make a transfer</span>
+              <span class="modal-card-title">Make a withdrawal</span>
               <button class="delete" aria-label="close" @click="closeModal"></button>
             </header>
             <section class="modal-card-body">
@@ -76,26 +73,20 @@ function getComponent(options) {
                 <span>{{error}}</span>
               </div>
               <div class="field">
-                <label class="label" for="make-transfer-account-id">
-                  To account ID
+                <label class="label" for="make-withdrawal-wallet-address">
+                  To wallet address
                 </label>
-                <input id="make-transfer-account-id" type="text" v-model="accountId" class="input" @keydown.enter="sendTransfer">
+                <input id="make-withdrawal-wallet-address" type="text" v-model="walletAddress" class="input" @keydown.enter="sendWithdrawal">
               </div>
               <div class="field">
-                <label class="label" for="make-transfer-amount">
+                <label class="label" for="make-withdrawal-amount">
                   Amount ({{mainInfo.cryptocurrency.symbol}})
                 </label>
-                <input id="make-transfer-amount" type="text" v-model="amount" class="input" @keydown.enter="sendTransfer">
-              </div>
-              <div class="field">
-                <label class="label" for="make-transfer-data">
-                  Data
-                </label>
-                <input id="make-transfer-data" type="text" v-model="data" class="input" @keydown.enter="sendTransfer">
+                <input id="make-withdrawal-amount" type="text" v-model="amount" class="input" @keydown.enter="sendWithdrawal">
               </div>
             </section>
             <footer class="modal-card-foot">
-              <button class="button is-link" @click="sendTransfer">Send transfer</button>
+              <button class="button is-link" @click="sendWithdrawal">Send withdrawal</button>
               <button class="button" @click="closeModal">Cancel</button>
             </footer>
           </div>

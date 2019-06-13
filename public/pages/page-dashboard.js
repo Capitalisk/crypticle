@@ -1,8 +1,9 @@
-import getDepositsComponent from '/components/component-deposits.js';
-import getWithdrawalsComponent from '/components/component-withdrawals.js';
-import getTransfersComponent from '/components/component-transfers.js';
-import getMakeTransferComponent from '/components/component-make-transfer.js';
 import getAccountComponent from '/components/component-account.js';
+import getTransfersComponent from '/components/component-transfers.js';
+import getWithdrawalsComponent from '/components/component-withdrawals.js';
+import getDepositsComponent from '/components/component-deposits.js';
+import getMakeTransferComponent from '/components/component-make-transfer.js';
+import getMakeWithdrawalComponent from '/components/component-make-withdrawal.js';
 
 function getPageComponent(pageOptions) {
   let {socket, mainInfo} = pageOptions;
@@ -46,6 +47,10 @@ function getPageComponent(pageOptions) {
       'component-make-transfer': getMakeTransferComponent({
         socket,
         mainInfo
+      }),
+      'component-make-withdrawal': getMakeWithdrawalComponent({
+        socket,
+        mainInfo
       })
     },
     data: function () {
@@ -82,6 +87,12 @@ function getPageComponent(pageOptions) {
         <component-settled-withdrawals></component-settled-withdrawals>
         <div class="spacer"></div>
         <component-pending-withdrawals></component-pending-withdrawals>
+
+        <div class="spacer"></div>
+
+        <component-make-withdrawal></component-make-withdrawal>
+        
+        <div class="spacer"></div>
       </div>
     `
   };

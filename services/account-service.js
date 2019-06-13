@@ -234,13 +234,22 @@ class AccountService extends AsyncStreamEmitter {
                 this.emit('error', {error});
               }
               if (newBalance >= 0n) {
-                account.balance = newBalance;
-                // If the transaction is a valid tranfer between two accounts.
-                if (txn.counterpartyAccountId != null) {
-                  let transferCreditTxn = await this.thinky.r.table('Transaction')
-                  .get(txn.counterpartyTransactionId).run();
-                  if (transferCreditTxn == null) {
-                    await this.execTransferCreditFromDebit(txn);
+                // If the transaction is not a valid tranfer between two accounts.
+                if (txn.counterpartyAccountId == null) {
+                  txn.canceled = true;
+                } else {
+                  let counterpartyAccount = await this.thinky.r.table('Account')
+                  .get(txn.counterpartyAccountId).run();
+                  // If the counterparty account does not exist.
+                  if (counterpartyAccount == null) {
+                    txn.canceled = true;
+                  } else {
+                    account.balance = newBalance;
+                    let transferCreditTxn = await this.thinky.r.table('Transaction')
+                    .get(txn.counterpartyTransactionId).run();
+                    if (transferCreditTxn == null) {
+                      await this.execTransferCreditFromDebit(txn);
+                    }
                   }
                 }
               } else {
@@ -588,7 +597,8 @@ class AccountService extends AsyncStreamEmitter {
             value: {
               canceled: true,
               settled: true,
-              settledDate: this.thinky.r.now()
+              settledDate: this.thinky.r.now(),
+              settlementShardKey: null
             }
           });
           await this.crud.delete({
@@ -639,7 +649,8 @@ class AccountService extends AsyncStreamEmitter {
           id: deposit.id,
           value: {
             settled: true,
-            settledDate: this.thinky.r.now()
+            settledDate: this.thinky.r.now(),
+            settlementShardKey: null
           }
         });
         await this.crud.delete({
@@ -898,6 +909,8 @@ class AccountService extends AsyncStreamEmitter {
         }`
       );
     }
+    let totalAmount = BigInt(withdrawal.amount) + BigInt(fees);
+
     let height;
     if (this.lastBlockHeight == null) {
       height = await this.blockchainAdapter.fetchHeight();
@@ -922,7 +935,6 @@ class AccountService extends AsyncStreamEmitter {
       }
     });
 
-    let totalAmount = BigInt(withdrawal.amount) + BigInt(fees);
     try {
       await this.execTransaction({
         id: transactionId,
@@ -954,6 +966,10 @@ class AccountService extends AsyncStreamEmitter {
         try {
           transaction = await this.thinky.r.table('Transaction').get(withdrawal.transactionId).run();
         } catch (error) {
+          this.emit('error', {error});
+        }
+        if (transaction == null) {
+          let signedTransaction = JSON.parse(withdrawal.signedTransaction);
           let fees = await this.blockchainAdapter.fetchFees(signedTransaction);
           if (fees == null) {
             throw new Error(
@@ -964,7 +980,28 @@ class AccountService extends AsyncStreamEmitter {
               }`
             );
           }
-          let totalAmount = BigInt(withdrawal.amount) + BigInt(fees);
+          let totalAmount;
+          try {
+            totalAmount = BigInt(withdrawal.amount) + BigInt(fees);
+          } catch (error) {
+            this.emit('error', {error});
+            await this.crud.update({
+              type: 'Withdrawal',
+              id: withdrawal.id,
+              value: {
+                canceled: true,
+                settled: true,
+                settledDate: this.thinky.r.now(),
+                settlementShardKey: null
+              }
+            });
+            await this.crud.delete({
+              type: 'Withdrawal',
+              id: withdrawal.id,
+              field: 'settlementShardKey'
+            });
+            return;
+          }
           await this.execTransaction({
             id: withdrawal.transactionId,
             accountId: withdrawal.accountId,
@@ -982,8 +1019,14 @@ class AccountService extends AsyncStreamEmitter {
               value: {
                 canceled: true,
                 settled: true,
-                settledDate: this.thinky.r.now()
+                settledDate: this.thinky.r.now(),
+                settlementShardKey: null
               }
+            });
+            await this.crud.delete({
+              type: 'Withdrawal',
+              id: withdrawal.id,
+              field: 'settlementShardKey'
             });
             return;
           }
@@ -998,7 +1041,8 @@ class AccountService extends AsyncStreamEmitter {
                 value: {
                   height: blockchainTxn.height,
                   settled: true,
-                  settledDate: this.thinky.r.now()
+                  settledDate: this.thinky.r.now(),
+                  settlementShardKey: null
                 }
               });
               await this.crud.delete({
@@ -1025,7 +1069,8 @@ class AccountService extends AsyncStreamEmitter {
               value: {
                 canceled: true,
                 settled: true,
-                settledDate: this.thinky.r.now()
+                settledDate: this.thinky.r.now(),
+                settlementShardKey: null
               }
             });
             await this.crud.delete({
