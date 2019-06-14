@@ -14,7 +14,7 @@ let uuidSchema = {
 };
 let amountSchema = {
   type: 'string',
-  pattern: '^[0-9]*$',
+  // pattern: '^[0-9]*$',
   minLength: 1,
   maxLength: 30
 };

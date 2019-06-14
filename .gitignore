@@ -1,5 +1,4 @@
 node_modules/
-config.dev.js
-config.prod.js
+config/config.dev.js
+config/config.prod.js
 state.json
-

@@ -12,11 +12,11 @@ const Validator = require('jsonschema').Validator;
 const inquirer = require('inquirer');
 const prompt = inquirer.createPromptModule();
 
-const getDataSchema = require('./schema-data');
-const getRequestSchema = require('./schema-request');
+const getDataSchema = require('./config/data-schema');
+const getRPCSchema = require('./config/rpc-schema');
 
-const configDev = require('./config.dev');
-const configProd = require('./config.prod');
+const configDev = require('./config/config.dev');
+const configProd = require('./config/config.prod');
 const config = {
   dev: configDev,
   prod: configProd
@@ -68,8 +68,8 @@ const databaseName = envConfig.databaseName || 'crypticle';
     maxRecordDisplayAge: envConfig.mainInfo.maxRecordDisplayAge
   });
 
-  let requestValidator = new Validator();
-  let requestSchema = getRequestSchema();
+  let rpcValidator = new Validator();
+  let rpcSchema = getRPCSchema();
 
   let agOptions = {
     batchInterval: 50
@@ -152,14 +152,14 @@ const databaseName = envConfig.databaseName || 'crypticle';
   }
 
   function validateRequestSchema(request) {
-    let schema = requestSchema[request.procedure];
+    let schema = rpcSchema[request.procedure];
     if (!schema) {
       let error = new Error(`Could not find a schema for the ${request.procedure} procedure.`);
       error.name = 'NoMatchingRequestSchemaError';
       error.isClientError = true;
       throw error;
     }
-    let validationResult = requestValidator.validate(request.data, schema);
+    let validationResult = rpcValidator.validate(request.data, schema);
     if (!validationResult.valid) {
       let errorsMessage = validationResult.errors.map(error => generateMessageFromSchemaError(error)).join('. ');
       let error = new Error(`${errorsMessage}.`);
@@ -580,49 +580,49 @@ const databaseName = envConfig.databaseName || 'crypticle';
   function colorText(message, color) {
     if (color) {
       return `\x1b[${color}m${message}\x1b[0m`;
-      }
-      return message;
     }
+    return message;
+  }
 
-    if (AGC_STATE_SERVER_HOST) {
-      // Setup broker client to connect to the Asyngular cluster (AGC).
-      let agcClient = agcBrokerClient.attach(agServer.brokerEngine, {
-        instanceId: AGC_INSTANCE_ID,
-        instancePort: ASYNGULAR_PORT,
-        instanceIp: AGC_INSTANCE_IP,
-        instanceIpFamily: AGC_INSTANCE_IP_FAMILY,
-        pubSubBatchDuration: AGC_PUB_SUB_BATCH_DURATION,
-        stateServerHost: AGC_STATE_SERVER_HOST,
-        stateServerPort: AGC_STATE_SERVER_PORT,
-        mappingEngine: AGC_MAPPING_ENGINE,
-        clientPoolSize: AGC_CLIENT_POOL_SIZE,
-        authKey: AGC_AUTH_KEY,
-        stateServerConnectTimeout: AGC_STATE_SERVER_CONNECT_TIMEOUT,
-        stateServerAckTimeout: AGC_STATE_SERVER_ACK_TIMEOUT,
-        stateServerReconnectRandomness: AGC_STATE_SERVER_RECONNECT_RANDOMNESS,
-        brokerRetryDelay: AGC_BROKER_RETRY_DELAY
-      });
+  if (AGC_STATE_SERVER_HOST) {
+    // Setup broker client to connect to the Asyngular cluster (AGC).
+    let agcClient = agcBrokerClient.attach(agServer.brokerEngine, {
+      instanceId: AGC_INSTANCE_ID,
+      instancePort: ASYNGULAR_PORT,
+      instanceIp: AGC_INSTANCE_IP,
+      instanceIpFamily: AGC_INSTANCE_IP_FAMILY,
+      pubSubBatchDuration: AGC_PUB_SUB_BATCH_DURATION,
+      stateServerHost: AGC_STATE_SERVER_HOST,
+      stateServerPort: AGC_STATE_SERVER_PORT,
+      mappingEngine: AGC_MAPPING_ENGINE,
+      clientPoolSize: AGC_CLIENT_POOL_SIZE,
+      authKey: AGC_AUTH_KEY,
+      stateServerConnectTimeout: AGC_STATE_SERVER_CONNECT_TIMEOUT,
+      stateServerAckTimeout: AGC_STATE_SERVER_ACK_TIMEOUT,
+      stateServerReconnectRandomness: AGC_STATE_SERVER_RECONNECT_RANDOMNESS,
+      brokerRetryDelay: AGC_BROKER_RETRY_DELAY
+    });
 
+    (async () => {
+      for await (let event of agcClient.listener('updateWorkers')) {
+        let sortedWorkerURIs = event.workerURIs.sort();
+        let workerCount = sortedWorkerURIs.length;
+        let currentWorkerIndex = event.workerURIs.indexOf(event.sourceWorkerURI);
+        shardInfo.shardIndex = currentWorkerIndex;
+        shardInfo.shardCount = workerCount;
+      }
+    })();
+
+    if (ASYNGULAR_LOG_LEVEL >= 1) {
       (async () => {
-        for await (let event of agcClient.listener('updateWorkers')) {
-          let sortedWorkerURIs = event.workerURIs.sort();
-          let workerCount = sortedWorkerURIs.length;
-          let currentWorkerIndex = event.workerURIs.indexOf(event.sourceWorkerURI);
-          shardInfo.shardIndex = currentWorkerIndex;
-          shardInfo.shardCount = workerCount;
+        for await (let {error} of agcClient.listener('error')) {
+          error.name = 'AGCError';
+          console.error(error);
         }
       })();
-
-      if (ASYNGULAR_LOG_LEVEL >= 1) {
-        (async () => {
-          for await (let {error} of agcClient.listener('error')) {
-            error.name = 'AGCError';
-            console.error(error);
-          }
-        })();
-      }
-    } else {
-      shardInfo.shardIndex = 0;
-      shardInfo.shardCount = 1;
     }
+  } else {
+    shardInfo.shardIndex = 0;
+    shardInfo.shardCount = 1;
+  }
 })();
