@@ -110,3 +110,15 @@
 a[disabled="disabled"] {
   pointer-events: none;
 }
+
+.make-transfer-dropdown {
+  width: 100%;
+}
+
+.make-transfer-dropdown-trigger {
+  width: 100%;
+}
+
+.make-transfer-account-id-display {
+  color: #999999;
+}

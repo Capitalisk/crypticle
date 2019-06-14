@@ -18,6 +18,7 @@ function getComponent(options) {
         this.isModalActive = true;
       },
       closeModal: function () {
+        this.clearForm();
         this.isModalActive = false;
       },
       clearForm: function () {

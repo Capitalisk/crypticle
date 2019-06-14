@@ -5,12 +5,28 @@ function getComponent(options) {
 
   return {
     data: function () {
+      this.accountCollection = new AGCollection({
+        socket,
+        type: 'Account',
+        view: 'usernameSearchView',
+        viewParams: {
+          searchString: '',
+        },
+        viewPrimaryKeys: null,
+        fields: ['username'],
+        pageOffset: 0,
+        realtimeCollection: false,
+        pageSize: 4
+      });
       return {
         mainInfo,
+        accountUsername: null,
         accountId: null,
+        dropdownActive: false,
         amount: null,
         data: null,
         error: null,
+        accounts: this.accountCollection.value,
         isModalActive: false
       };
     },
@@ -19,13 +35,28 @@ function getComponent(options) {
         this.isModalActive = true;
       },
       closeModal: function () {
+        this.clearForm();
         this.isModalActive = false;
       },
       clearForm: function () {
         this.error = null;
+        this.accountUsername = null;
         this.accountId = null;
         this.amount = null;
         this.data = null;
+      },
+      searchForAccount: function () {
+        this.accountId = null;
+        this.dropdownActive = true;
+        this.accountCollection.viewParams = {
+          searchString: this.accountUsername
+        };
+        this.accountCollection.reloadCurrentPage();
+      },
+      selectAccount: function (username, accountId) {
+        this.dropdownActive = false;
+        this.accountUsername = username;
+        this.accountId = accountId;
       },
       sendTransfer: async function () {
         if (!this.accountId) {
@@ -75,10 +106,23 @@ function getComponent(options) {
                 <span>{{error}}</span>
               </div>
               <div class="field">
-                <label class="label" for="make-transfer-account-id">
-                  To account ID
-                </label>
-                <input id="make-transfer-account-id" type="text" v-model="accountId" class="input" @keydown.enter="sendTransfer">
+                <div v-bind:class="{'dropdown': true, 'is-active': dropdownActive && accounts.length > 0, 'make-transfer-dropdown': true}">
+                  <div class="dropdown-trigger make-transfer-dropdown-trigger">
+                    <label class="label" for="make-transfer-account-id">
+                      To account<span v-if="accountId" class="make-transfer-account-id-display"> ({{accountId}})</span>
+                    </label>
+                    <input id="make-transfer-account-id" type="text" class="input make-transfer-account-id-input" v-model="accountUsername" @keydown.enter="sendTransfer" @input="searchForAccount">
+                  </div>
+                  <div class="dropdown-menu" id="dropdown-menu" role="menu">
+                    <div class="dropdown-content">
+                      <template v-for="account of accounts">
+                        <a href="javascript:void(0);" class="dropdown-item" @click="selectAccount(account.username, account.id)">
+                          {{account.username}}
+                        </a>
+                      </template>
+                    </div>
+                  </div>
+                </div>
               </div>
               <div class="field">
                 <label class="label" for="make-transfer-amount">

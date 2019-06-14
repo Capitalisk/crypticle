@@ -79,6 +79,20 @@ function accountAccessController(req) {
     }
   }
 
+  if (
+    query.view === 'usernameSearchView' &&
+    (req.action === 'read' || req.action === 'subscribe')
+  ) {
+    return;
+  }
+
+  if (
+    query.field === 'username' &&
+    (req.action === 'read' || req.action === 'subscribe')
+  ) {
+    return;
+  }
+
   let error = new Error('Not allowed to perform CRUD operation');
   error.name = 'ForbiddenCRUDError';
   error.isClientError = true;
@@ -140,6 +154,28 @@ function getSchema(options) {
       indexes: ['username', 'depositWalletAddress'],
       access: {
         pre: accountAccessController
+      },
+      views: {
+        usernameSearchView: {
+          paramFields: ['searchString'],
+          primaryKeys: [],
+          transform: function (fullTableQuery, r, params) {
+            if (params.searchString === '') {
+              return fullTableQuery.limit(0);
+            }
+            return fullTableQuery
+            .between(
+              params.searchString,
+              r.maxval,
+              {index: 'username', rightBound: 'closed'}
+            )
+            .orderBy({index: 'username'})
+            .limit(20)
+            .filter((doc) => {
+              return doc('username').match(`^${params.searchString}`);
+            });
+          }
+        }
       }
     },
     Transaction: {
