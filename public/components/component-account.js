@@ -12,6 +12,12 @@ function getComponent(options) {
         id: socket.authToken && socket.authToken.accountId,
         fields: ['username', 'balance', 'depositWalletAddress', 'admin']
       });
+      (async () => {
+        for await (let {error} of this.accountModel.listener('error')) {
+          console.error(error);
+        }
+      })();
+
       return {
         mainInfo,
         account: this.accountModel.value,

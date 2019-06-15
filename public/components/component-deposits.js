@@ -24,6 +24,11 @@ function getComponent(options) {
         pageSize: 10,
         getCount: mainInfo.paginationShowTotalCounts
       });
+      (async () => {
+        for await (let {error} of this.depositCollection.listener('error')) {
+          console.error(error);
+        }
+      })();
 
       return {
         mainInfo,

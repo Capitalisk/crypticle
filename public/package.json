@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.html",
   "dependencies": {
-    "ag-collection": "^1.4.2",
+    "ag-collection": "^1.4.3",
     "ag-model": "^1.1.0",
     "async-stream-emitter": "^3.0.3",
     "asyngular-client": "^6.0.0",

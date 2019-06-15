@@ -18,6 +18,12 @@ function getComponent(options) {
         realtimeCollection: false,
         pageSize: 4
       });
+      (async () => {
+        for await (let {error} of this.accountCollection.listener('error')) {
+          console.error(error);
+        }
+      })();
+
       return {
         mainInfo,
         accountUsername: null,
