@@ -273,6 +273,12 @@ const databaseName = envConfig.databaseName || 'crypticle';
             username: accountData.username,
             accountId: accountData.id
           };
+          if (accountData.maxConcurrentTransfers != null) {
+            token.maxConcurrentTransfers = accountData.maxConcurrentTransfers;
+          }
+          if (accountData.maxConcurrentWithdrawals != null) {
+            token.maxConcurrentWithdrawals = accountData.maxConcurrentWithdrawals;
+          }
           if (accountData.admin) {
             token.admin = true;
           }
@@ -312,7 +318,7 @@ const databaseName = envConfig.databaseName || 'crypticle';
               amount: withdrawalData.amount,
               fromAccountId: socket.authToken.accountId,
               toWalletAddress: withdrawalData.toWalletAddress
-            });
+            }, socket.authToken.maxConcurrentWithdrawals);
           } catch (error) {
             if (error.isClientError) {
               request.error(error);
@@ -342,14 +348,14 @@ const databaseName = envConfig.databaseName || 'crypticle';
 
           let transferData = request.data;
           try {
-            await accountService.execTransfer({
+            await accountService.attemptTransfer({
               amount: transferData.amount,
               fromAccountId: socket.authToken.accountId,
               toAccountId: transferData.toAccountId,
               debitId: transferData.debitId,
               creditId: transferData.creditId,
               data: transferData.data
-            });
+            }, socket.authToken.maxConcurrentTransfers);
           } catch (error) {
             if (error.isClientError) {
               request.error(error);

@@ -27,6 +27,7 @@ class AccountService extends AsyncStreamEmitter {
     this.withdrawalInterval = options.withdrawalProcessingInterval;
     this.maxTransactionSettlementsPerAccount = options.maxTransactionSettlementsPerAccount;
     this.maxConcurrentWithdrawalsPerAccount = options.maxConcurrentWithdrawalsPerAccount;
+    this.maxConcurrentDebitTransfersPerAccount = options.maxConcurrentDebitTransfersPerAccount;
     this.blockchainWithdrawalMaxAttempts = options.blockchainWithdrawalMaxAttempts;
     this.secretSignupKey = options.secretSignupKey;
     this.bcryptPasswordRounds = options.bcryptPasswordRounds;
@@ -794,6 +795,48 @@ class AccountService extends AsyncStreamEmitter {
     });
   }
 
+  async fetchAccountPendingTransfersCount(accountId, recordType) {
+    return this.thinky.r.table('Transaction')
+    .between(
+      [accountId, 'transfer', false, this.thinky.r.minval],
+      [accountId, 'transfer', false, this.thinky.r.maxval],
+      {index: 'accountIdTypeSettledCreatedDate'}
+    )
+    .filter(this.thinky.r.row('recordType').eq(recordType))
+    .count()
+    .run();
+  }
+
+  /*
+    transfer.amount: The amount of tokens to transfer.
+    transfer.fromAccountId: The id of the account to debit.
+    transfer.toAccountId: The id of the account to credit.
+    transfer.debitId: The id (UUID) of the underlying debit transaction.
+    transfer.creditId: The id (UUID) of the underlying credit transaction.
+    transfer.data: Custom string to attach to the debit transaction.
+  */
+  async attemptTransfer(transfer, maxConcurrentTransfers) {
+    if (maxConcurrentTransfers == null) {
+      maxConcurrentTransfers = this.maxConcurrentDebitTransfersPerAccount;
+    }
+    let pendingDebitTransfersCount = await this.fetchAccountPendingTransfersCount(transfer.fromAccountId, 'debit');
+    if (pendingDebitTransfersCount >= maxConcurrentTransfers) {
+      let error = Error(
+        `Failed to execute transfer from account ${
+          transfer.fromAccountId
+        } to account ${
+          transfer.toAccountId
+        } because the sender account cannot have more than ${
+          maxConcurrentTransfers
+        } concurrent pending debit transfers`
+      );
+      error.name = 'MaxConcurrentDebitTransfersError';
+      error.isClientError = true;
+      throw error;
+    }
+    return this.execTransfer(transfer);
+  }
+
   /*
     transfer.amount: The amount of tokens to transfer.
     transfer.fromAccountId: The id of the account to debit.
@@ -863,16 +906,19 @@ class AccountService extends AsyncStreamEmitter {
     withdrawal.fromAccountId: The id of the account from which to withdraw.
     withdrawal.toWalletAddress: The blockchain wallet address to send the tokens to.
   */
-  async attemptWithdrawal(withdrawal) {
+  async attemptWithdrawal(withdrawal, maxConcurrentWithdrawals) {
+    if (maxConcurrentWithdrawals == null) {
+      maxConcurrentWithdrawals = this.maxConcurrentWithdrawalsPerAccount;
+    }
     let pendingWithdrawalsCount = await this.fetchAccountPendingWithdrawalsCount(withdrawal.fromAccountId);
-    if (this.maxConcurrentWithdrawalsPerAccount != null && pendingWithdrawalsCount > this.maxConcurrentWithdrawalsPerAccount) {
+    if (pendingWithdrawalsCount >= maxConcurrentWithdrawals) {
       let error = Error(
         `Failed to withdraw to wallet address ${
           withdrawal.toWalletAddress
         } from account ${
           withdrawal.fromAccountId
-        } because the account had more than ${
-          this.maxConcurrentWithdrawalsPerAccount
+        } because the account cannot have more than ${
+          maxConcurrentWithdrawals
         } concurrent pending withdrawals`
       );
       error.name = 'MaxConcurrentWithdrawalsError';
