@@ -36,6 +36,7 @@ module.exports = {
     requiredWithdrawalBlockConfirmations: 3,
     paginationShowTotalCounts: false,
     maxRecordDisplayAge: 2592000000,
+    maxPageSize: 100,
     alwaysRequireSecretSignupKey: false,
     enableAdminAccountSignup: true
   }

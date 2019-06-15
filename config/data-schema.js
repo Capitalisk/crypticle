@@ -48,90 +48,116 @@ let allowedAdminAccountReadFields = {
   createdDate: true
 };
 
-function accountAccessController(req) {
-  let query = req.query || {};
-  let isOwnAccount = req.authToken && req.authToken.accountId === query.id;
-  let isAdmin = req.authToken && req.authToken.admin;
-  let isView = !!query.view;
-
-  if (isOwnAccount) {
-    if (req.action === 'read' || req.action === 'subscribe') {
-      if (allowedAccountReadFields[query.field]) {
-        return;
-      }
-    }
-    if (req.action === 'update') {
-      if (allowedAccountUpdateFields[query.field]) {
-        return;
-      }
-    }
-  }
-  if (isAdmin) {
-    if (req.action === 'read' || req.action === 'subscribe') {
-      if (isView || allowedAdminAccountReadFields[query.field]) {
-        return;
-      }
-    }
-    if (req.action === 'update') {
-      if (allowedAdminAccountUpdateFields[query.field]) {
-        return;
-      }
-    }
-  }
-
-  if (
-    query.view === 'usernameSearchView' &&
-    (req.action === 'read' || req.action === 'subscribe')
-  ) {
-    return;
-  }
-
-  if (
-    query.field === 'username' &&
-    (req.action === 'read' || req.action === 'subscribe')
-  ) {
-    return;
-  }
-
-  let error = new Error('Not allowed to perform CRUD operation');
-  error.name = 'ForbiddenCRUDError';
-  error.isClientError = true;
-  throw error;
-}
-
-function privateResourceAccessController(req) {
-  let query = req.query || {};
-  let isLoggedIn = req.authToken;
-  let isAdmin = req.authToken && req.authToken.admin;
-  let viewParams = query.viewParams || {};
-  let isOwnResource = req.authToken && (
-    (req.resource && req.authToken.accountId === req.resource.accountId) ||
-    (req.authToken.accountId === viewParams.accountId)
-  );
-
-  if (isOwnResource) {
-    if (req.action === 'read' || req.action === 'subscribe') {
-      return;
-    }
-  }
-  if (isAdmin) {
-    if (req.action === 'read' || req.action === 'subscribe') {
-      return;
-    }
-    if (req.action === 'update') {
-      if (query.type === 'Withdrawal' && query.field === 'canceled') {
-        return;
-      }
-    }
-  }
-
-  let error = new Error('Not allowed to perform CRUD operation');
-  error.name = 'ForbiddenCRUDError';
-  error.isClientError = true;
-  throw error;
-}
-
 function getSchema(options) {
+  let {maxPageSize} = options;
+
+  function validateQuery(req) {
+    let query = req.query || {};
+    if (
+      query.view &&
+      typeof query.pageSize === 'number' &&
+      query.pageSize > maxPageSize
+    ) {
+      let error = new Error(
+        `The specified page size of ${
+          query.pageSize
+        } for the ${
+          query.view
+        } view exceeded the maximum page size of ${
+          maxPageSize
+        }`
+      );
+      error.name = 'ForbiddenCRUDError';
+      error.isClientError = true;
+      throw error;
+    }
+  }
+
+  function accountAccessController(req) {
+    validateQuery(req);
+
+    let query = req.query || {};
+    let isOwnAccount = req.authToken && req.authToken.accountId === query.id;
+    let isAdmin = req.authToken && req.authToken.admin;
+    let isView = !!query.view;
+
+    if (isOwnAccount) {
+      if (req.action === 'read' || req.action === 'subscribe') {
+        if (allowedAccountReadFields[query.field]) {
+          return;
+        }
+      }
+      if (req.action === 'update') {
+        if (allowedAccountUpdateFields[query.field]) {
+          return;
+        }
+      }
+    }
+    if (isAdmin) {
+      if (req.action === 'read' || req.action === 'subscribe') {
+        if (isView || allowedAdminAccountReadFields[query.field]) {
+          return;
+        }
+      }
+      if (req.action === 'update') {
+        if (allowedAdminAccountUpdateFields[query.field]) {
+          return;
+        }
+      }
+    }
+
+    if (
+      query.view === 'usernameSearchView' &&
+      (req.action === 'read' || req.action === 'subscribe')
+    ) {
+      return;
+    }
+
+    if (
+      query.field === 'username' &&
+      (req.action === 'read' || req.action === 'subscribe')
+    ) {
+      return;
+    }
+
+    let error = new Error('Not allowed to perform CRUD operation');
+    error.name = 'ForbiddenCRUDError';
+    error.isClientError = true;
+    throw error;
+  }
+
+  function privateResourceAccessController(req) {
+    let query = req.query || {};
+    let isLoggedIn = req.authToken;
+    let isAdmin = req.authToken && req.authToken.admin;
+    let viewParams = query.viewParams || {};
+    let isOwnResource = req.authToken && (
+      (req.resource && req.authToken.accountId === req.resource.accountId) ||
+      (req.authToken.accountId === viewParams.accountId)
+    );
+
+    if (isOwnResource) {
+      if (req.action === 'read' || req.action === 'subscribe') {
+        return;
+      }
+    }
+    if (isAdmin) {
+      if (req.action === 'read' || req.action === 'subscribe') {
+        return;
+      }
+      if (req.action === 'update') {
+        if (query.type === 'Withdrawal' && query.field === 'canceled') {
+          return;
+        }
+      }
+    }
+
+    let error = new Error('Not allowed to perform CRUD operation');
+    error.name = 'ForbiddenCRUDError';
+    error.isClientError = true;
+    throw error;
+  }
+
   return {
     Account: {
       fields: {
@@ -217,6 +243,7 @@ function getSchema(options) {
         }
       ],
       access: {
+        pre: validateQuery,
         post: privateResourceAccessController
       },
       views: {
@@ -290,6 +317,7 @@ function getSchema(options) {
         }
       ],
       access: {
+        pre: validateQuery,
         post: privateResourceAccessController
       },
       relations: {
@@ -365,6 +393,7 @@ function getSchema(options) {
         }
       ],
       access: {
+        pre: validateQuery,
         post: privateResourceAccessController
       },
       views: {

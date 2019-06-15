@@ -65,7 +65,8 @@ const databaseName = envConfig.databaseName || 'crypticle';
 
   const dataSchema = getDataSchema({
     dbName: databaseName,
-    maxRecordDisplayAge: envConfig.mainInfo.maxRecordDisplayAge
+    maxRecordDisplayAge: envConfig.mainInfo.maxRecordDisplayAge,
+    maxPageSize: envConfig.mainInfo.maxPageSize
   });
 
   let rpcValidator = new Validator();
