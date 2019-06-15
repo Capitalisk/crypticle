@@ -113,7 +113,7 @@ function getComponent(options) {
                     </label>
                     <input id="make-transfer-account-id" type="text" class="input make-transfer-account-id-input" v-model="accountUsername" @keydown.enter="sendTransfer" @input="searchForAccount">
                   </div>
-                  <div class="dropdown-menu" id="dropdown-menu" role="menu">
+                  <div class="dropdown-menu make-transfer-dropdown-menu" id="dropdown-menu" role="menu">
                     <div class="dropdown-content">
                       <template v-for="account of accounts">
                         <a href="javascript:void(0);" class="dropdown-item" @click="selectAccount(account.username, account.id)">
