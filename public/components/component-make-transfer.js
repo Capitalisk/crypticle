@@ -109,7 +109,7 @@ function getComponent(options) {
                 <div v-bind:class="{'dropdown': true, 'is-active': dropdownActive && accounts.length > 0, 'make-transfer-dropdown': true}">
                   <div class="dropdown-trigger make-transfer-dropdown-trigger">
                     <label class="label" for="make-transfer-account-id">
-                      To account<span v-if="accountId" class="make-transfer-account-id-display"> ({{accountId}})</span>
+                      To account <span v-if="accountId" class="make-transfer-account-id-display">({{accountId}})</span><span v-if="!accountId" class="make-transfer-account-id-display">(search by username)</span>
                     </label>
                     <input id="make-transfer-account-id" type="text" class="input make-transfer-account-id-input" v-model="accountUsername" @keydown.enter="sendTransfer" @input="searchForAccount">
                   </div>
