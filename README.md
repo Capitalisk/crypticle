@@ -1,5 +1,7 @@
 # Crypticle
 
+[![Join the chat at https://gitter.im/crypticle-io/community](https://badges.gitter.im/crypticle-io/community.svg)](https://gitter.im/crypticle-io/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 ## This project is pre-alpha and is not yet ready for production.
 
 A multi-tenant hot wallet manager and off-chain payment microservice. Crypticle lets users convert value between blockchain tokens and pegged credit which can be efficiently spent and/or transferred between accounts within the context of a centralized service/platform. The credit is entrusted to the service provider and is pegged to the value of the underlying blockchain tokens - This credit can be used to support high-thoughput off-chain transactions (related to a specific service). Any unused credit can be converted back into trustless blockchain tokens at any time.
