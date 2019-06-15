@@ -80,8 +80,45 @@ const databaseName = envConfig.databaseName || 'crypticle';
     Object.assign(agOptions, envOptions);
   }
 
+  function monitorBackpressure(socket) {
+    let authToken = socket.authToken;
+    let maxBackpressure = (
+      authToken && authToken.maxSocketBackpressure
+    ) || envConfig.maxSocketBackpressure;
+    
+    if (socket.getBackpressure() > maxBackpressure) {
+      throw new Error(
+        `The total backpressure of socket ${
+          socket.id
+        } with account ID ${
+          socket.authToken && socket.authToken.accountId
+        } exceeded the maximum threshold of ${
+          maxBackpressure
+        } operations`
+      );
+    }
+  }
+
   let httpServer = eetase(http.createServer());
   let agServer = asyngularServer.attach(httpServer, agOptions);
+
+  agServer.setMiddleware(agServer.MIDDLEWARE_INBOUND_RAW, async (middlewareStream) => {
+    for await (let action of middlewareStream) {
+      let {socket} = action;
+      try {
+        monitorBackpressure(socket);
+      } catch (error) {
+        console.warn('[BackpressureMonitor]', error);
+        let clientError = new Error('Socket consumed too many resources');
+        clientError.name = 'ResourceOveruseError';
+        clientError.isClientError = true;
+        action.block(clientError);
+        socket.disconnect(4500, 'Socket consumed too many resources');
+        continue;
+      }
+      action.allow();
+    }
+  });
 
   let crudOptions = {
     defaultPageSize: 10,
@@ -278,6 +315,9 @@ const databaseName = envConfig.databaseName || 'crypticle';
           }
           if (accountData.maxConcurrentWithdrawals != null) {
             token.maxConcurrentWithdrawals = accountData.maxConcurrentWithdrawals;
+          }
+          if (accountData.maxSocketBackpressure != null) {
+            token.maxSocketBackpressure = accountData.maxSocketBackpressure;
           }
           if (accountData.admin) {
             token.admin = true;

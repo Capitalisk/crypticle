@@ -148,6 +148,7 @@ function getSchema(options) {
         passwordResetExpiry: type.date().optional(),
         maxConcurrentWithdrawals: type.number().optional(),
         maxConcurrentTransfers: type.number().optional(),
+        maxSocketBackpressure: type.number().optional(),
         active: type.boolean().default(true),
         admin: type.boolean().default(false),
         balance: type.string().default('0'),
