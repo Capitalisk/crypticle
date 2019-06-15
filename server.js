@@ -85,8 +85,9 @@ const databaseName = envConfig.databaseName || 'crypticle';
     let maxBackpressure = (
       authToken && authToken.maxSocketBackpressure
     ) || envConfig.maxSocketBackpressure;
-    
-    if (socket.getBackpressure() > maxBackpressure) {
+    let isAdmin = authToken && authToken.admin;
+
+    if (!isAdmin && socket.getBackpressure() > maxBackpressure) {
       throw new Error(
         `The total backpressure of socket ${
           socket.id
