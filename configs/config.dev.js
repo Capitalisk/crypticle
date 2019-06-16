@@ -1,6 +1,4 @@
 module.exports = {
-  origin: 'http://localhost:8000',
-  adminEmailAddress: 'Crypticle <grosjona@yahoo.com.au>',
   secretSignupKey: '313e7cc1-ad75-4030-a927-6a09f39c1603',
   databaseName: 'crypticle',
   maxSocketBackpressure: 1000,
