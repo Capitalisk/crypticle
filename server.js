@@ -355,8 +355,9 @@ const databaseName = envConfig.databaseName || 'crypticle';
           }
 
           let withdrawalData = request.data;
+          let result;
           try {
-            await accountService.attemptWithdrawal({
+            result = await accountService.attemptWithdrawal({
               amount: withdrawalData.amount,
               fromAccountId: socket.authToken.accountId,
               toWalletAddress: withdrawalData.toWalletAddress
@@ -373,7 +374,7 @@ const databaseName = envConfig.databaseName || 'crypticle';
             console.error(error);
             continue;
           }
-          request.end();
+          request.end(result);
         }
       })();
 
@@ -389,8 +390,9 @@ const databaseName = envConfig.databaseName || 'crypticle';
           }
 
           let transferData = request.data;
+          let result;
           try {
-            await accountService.attemptTransfer({
+            result = await accountService.attemptTransfer({
               amount: transferData.amount,
               fromAccountId: socket.authToken.accountId,
               toAccountId: transferData.toAccountId,
@@ -410,7 +412,7 @@ const databaseName = envConfig.databaseName || 'crypticle';
             console.error(error);
             continue;
           }
-          request.end();
+          request.end(result);
         }
       })();
 
@@ -509,8 +511,9 @@ const databaseName = envConfig.databaseName || 'crypticle';
           }
 
           let withdrawalData = request.data;
+          let result;
           try {
-            await accountService.execWithdrawal({
+            result = await accountService.execWithdrawal({
               amount: withdrawalData.amount,
               fromAccountId: withdrawalData.fromAccountId,
               toWalletAddress: withdrawalData.toWalletAddress
@@ -527,7 +530,7 @@ const databaseName = envConfig.databaseName || 'crypticle';
             console.error(error);
             continue;
           }
-          request.end();
+          request.end(result);
         }
       })();
 
@@ -543,8 +546,9 @@ const databaseName = envConfig.databaseName || 'crypticle';
           }
 
           let transferData = request.data;
+          let result;
           try {
-            await accountService.execTransfer({
+            result = await accountService.execTransfer({
               amount: transferData.amount,
               fromAccountId: transferData.fromAccountId,
               toAccountId: transferData.toAccountId,
@@ -564,7 +568,7 @@ const databaseName = envConfig.databaseName || 'crypticle';
             console.error(error);
             continue;
           }
-          request.end();
+          request.end(result);
         }
       })();
 

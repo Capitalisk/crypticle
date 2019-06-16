@@ -717,9 +717,12 @@ class AccountService extends AsyncStreamEmitter {
     }
     let targetAccountList = await this.getAccountsByDepositWalletAddress(blockchainTransaction.recipientId);
     if (targetAccountList.length > 1) {
-      throw new Error(
-        `Multiple accounts were associated with the deposit address ${blockchainTransaction.recipientId}`
-      );
+      this.emit('error', {
+        error: new Error(
+          `Multiple accounts were associated with the deposit address ${blockchainTransaction.recipientId}`
+        )
+      });
+      return;
     }
     if (targetAccountList.length < 1) {
       return;
@@ -819,6 +822,7 @@ class AccountService extends AsyncStreamEmitter {
     if (maxConcurrentTransfers == null) {
       maxConcurrentTransfers = this.maxConcurrentDebitTransfersPerAccount;
     }
+
     let pendingDebitTransfersCount = await this.fetchAccountPendingTransfersCount(transfer.fromAccountId, 'debit');
     if (pendingDebitTransfersCount >= maxConcurrentTransfers) {
       let error = Error(
@@ -888,6 +892,10 @@ class AccountService extends AsyncStreamEmitter {
       }
       throw error;
     }
+    return {
+      debitId: transfer.debitId,
+      creditId: transfer.creditId
+    };
   }
 
   async fetchAccountPendingWithdrawalsCount(accountId) {
@@ -995,6 +1003,10 @@ class AccountService extends AsyncStreamEmitter {
       // the processing phase.
       this.emit('error', {error});
     }
+
+    return {
+      withdrawalId: signedTransaction.id
+    };
   }
 
   async processPendingWithdrawals(currentBlockHeight) {
