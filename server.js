@@ -12,11 +12,11 @@ const Validator = require('jsonschema').Validator;
 const inquirer = require('inquirer');
 const prompt = inquirer.createPromptModule();
 
-const getDataSchema = require('./config/data-schema');
-const getRPCSchema = require('./config/rpc-schema');
+const getDataSchema = require('./schemas/data-schema');
+const getRPCSchema = require('./schemas/rpc-schema');
 
-const configDev = require('./config/config.dev');
-const configProd = require('./config/config.prod');
+const configDev = require('./configs/config.dev');
+const configProd = require('./configs/config.prod');
 const config = {
   dev: configDev,
   prod: configProd
