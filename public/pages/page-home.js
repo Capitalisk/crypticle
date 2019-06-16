@@ -17,6 +17,9 @@ function getPageComponent(pageOptions) {
             The API adheres to the <a href="https://github.com/SocketCluster/socketcluster/blob/master/socketcluster-protocol.md#socketcluster-protocol-v1">SocketCluster protocol</a>.
             The following examples make use of the <a href="https://github.com/SocketCluster/asyngular-client">Asyngular JavaScript client</a>.
           </p>
+          <p>
+            For more details about the API including the realtime CRUD API, visit <a href="https://crypticle.io">crypticle.io</a>.
+          </p>
 
           <hr class="hr hr-medium-spacing" />
 
@@ -56,7 +59,7 @@ function getPageComponent(pageOptions) {
             </li>
           </ul>
           <p>
-            The <code>Promise</code> will be rejected if the signup operation fails on the server.
+            Returns a <code>Promise</code> which will be rejected if the signup operation fails on the server.
           </p>
 
           <div class="spacer"></div>
@@ -77,14 +80,14 @@ function getPageComponent(pageOptions) {
             <li class="list-item"><code>password</code> is the account password.</li>
           </ul>
           <p>
-            The <code>Promise</code> will be rejected if the login operation fails on the server.
+            Returns a <code>Promise</code> which will be rejected if the login operation fails on the server.
           </p>
 
           <div class="spacer"></div>
 
           <h5 class="title is-5">Transfer</h5>
           <pre class="code-snippet"><code>
-    socket.invoke('transfer', {
+    let {creditId, debitId} = await socket.invoke('transfer', {
       amount: '1000000000',
       toAccountId: '18b50e59-f3a1-4b57-8f0b-7daeba7259ad',
       data: 'Notes...'
@@ -97,6 +100,7 @@ function getPageComponent(pageOptions) {
             <li class="list-item"><code>debitId</code> is an optional ID (string in UUID format) to use for the underlying debit transaction. If not provided, it will be automatically generated on the backend.</li>
             <li class="list-item"><code>creditId</code> is an optional ID (string in UUID format) to use for the underlying credit transaction. If not provided, it will be automatically generated on the backend.</li>
           </ul>
+          <p>Returns a promise which resolves with an object containing the <code>creditId</code> and <code>debitId</code> (transaction IDs) of the underlying transactions.</p>
 
           <div class="spacer"></div>
 
@@ -105,14 +109,14 @@ function getPageComponent(pageOptions) {
     let balance = await socket.invoke('getBalance')
           </code></pre>
           <p>
-            Returns the current logged in user's account balance as a string (resolved from the <code>Promise</code>).
+            Returns a <code>Promise</code> which resolves with the current logged in user's account balance as a string.
           </p>
 
           <div class="spacer"></div>
 
           <h5 class="title is-5">Withdraw</h5>
           <pre class="code-snippet"><code>
-    socket.invoke('withdraw', {
+    let {withdrawalId} = await socket.invoke('withdraw', {
       amount: '1100000000',
       toWalletAddress: '6942317426094516776R'
     })
@@ -121,6 +125,7 @@ function getPageComponent(pageOptions) {
             <li class="list-item"><code>amount</code> is the amount of funds to withdraw from your Crypticle account - It is expressed in the smallest possible cryptocurrency unit.</li>
             <li class="list-item"><code>toWalletAddress</code> is the blockchain wallet address to send the funds to.</li>
           </ul>
+          <p>Returns a <code>Promise</code> which resolves with the withdrawal ID as a string.</p>
 
           <div class="spacer"></div>
 
@@ -156,7 +161,7 @@ function getPageComponent(pageOptions) {
 
           <h5 class="title is-5">Transfer</h5>
           <pre class="code-snippet"><code>
-    socket.invoke('adminTransfer', {
+    let {creditId, debitId} = await socket.invoke('adminTransfer', {
       amount: '20000000',
       fromAccountId: '213288af-9239-494d-844d-d064ced6f9ea',
       toAccountId: '18b50e59-f3a1-4b57-8f0b-7daeba7259ad',
@@ -171,6 +176,7 @@ function getPageComponent(pageOptions) {
             <li class="list-item"><code>debitId</code> is an optional ID (string in UUID format) to use for the underlying debit transaction. If not provided, it will be automatically generated on the backend.</li>
             <li class="list-item"><code>creditId</code> is an optional ID (string in UUID format) to use for the underlying credit transaction. If not provided, it will be automatically generated on the backend.</li>
           </ul>
+          <p>Returns a promise which resolves with an object containing the <code>creditId</code> and <code>debitId</code> (transaction IDs) of the underlying transactions.</p>
 
           <div class="spacer"></div>
 
@@ -184,14 +190,14 @@ function getPageComponent(pageOptions) {
             <li class="list-item"><code>accountId</code> is the ID of the Crypticle account to get the balance from.</li>
           </ul>
           <p>
-            Returns the current balance of the specified account as a string (resolved from the <code>Promise</code>).
+            Returns a <code>Promise</code> which resolves with the current balance of the specified account as a string.
           </p>
 
           <div class="spacer"></div>
 
           <h5 class="title is-5">Withdraw</h5>
           <pre class="code-snippet"><code>
-    socket.invoke('adminWithdraw', {
+    let {withdrawalId} = await socket.invoke('adminWithdraw', {
       amount: '234000000',
       fromAccountId: '7667174938767705051R',
       toWalletAddress: '6942317426094516776R'
@@ -202,6 +208,8 @@ function getPageComponent(pageOptions) {
             <li class="list-item"><code>fromAccountId</code> is the ID of the Crypticle account from which to withdraw the funds.</li>
             <li class="list-item"><code>toWalletAddress</code> is the blockchain wallet address to send the funds to.</li>
           </ul>
+          <p>Returns a <code>Promise</code> which resolves with the withdrawal ID as a string.</p>
+        </div>
 
         <hr class="hr hr-medium-spacing" />
 
