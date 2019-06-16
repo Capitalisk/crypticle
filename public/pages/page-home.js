@@ -23,12 +23,16 @@ function getPageComponent(pageOptions) {
           <h4 class="title is-4">Account RPCs</h4>
           <h5 class="title is-5">Signup</h5>
           <pre class="code-snippet"><code>
-    socket.invoke('signup', {
-      username: 'alice123',
-      password: 'password123',
-      admin: false,
-      secretSignupKey: '313e7cc1-ad75-4030-a927-6a09f39c1603'
-    })
+    try {
+      await socket.invoke('signup', {
+        username: 'alice123',
+        password: 'password123',
+        admin: false,
+        secretSignupKey: '313e7cc1-ad75-4030-a927-6a09f39c1603'
+      })
+    } catch (error) {
+      // Handle failure
+    }
           </code></pre>
           <ul class="list">
             <li class="list-item"><code>username</code> is the account username.</li>
@@ -51,20 +55,30 @@ function getPageComponent(pageOptions) {
               </p>
             </li>
           </ul>
+          <p>
+            The <code>Promise</code> will be rejected if the signup operation fails on the server.
+          </p>
 
           <div class="spacer"></div>
 
           <h5 class="title is-5">Login</h5>
           <pre class="code-snippet"><code>
-    socket.invoke('login', {
-      username: 'alice123',
-      password: 'password123'
-    })
+    try {
+      await socket.invoke('login', {
+        username: 'alice123',
+        password: 'password123'
+      })
+    } catch (error) {
+      // Handle login failure.
+    }
           </code></pre>
           <ul class="list">
             <li class="list-item"><code>username</code> is the account username.</li>
             <li class="list-item"><code>password</code> is the account password.</li>
           </ul>
+          <p>
+            The <code>Promise</code> will be rejected if the login operation fails on the server.
+          </p>
 
           <div class="spacer"></div>
 
@@ -91,7 +105,7 @@ function getPageComponent(pageOptions) {
     let balance = await socket.invoke('getBalance')
           </code></pre>
           <p>
-            Returns the current logged in user's account balance as a string.
+            Returns the current logged in user's account balance as a string (resolved from the <code>Promise</code>).
           </p>
 
           <div class="spacer"></div>
@@ -123,13 +137,20 @@ function getPageComponent(pageOptions) {
 
           <h5 class="title is-5">Impersonate</h5>
           <pre class="code-snippet"><code>
-    socket.invoke('adminImpersonate', {
-      username: 'alice123'
-    })
+    try {
+      await socket.invoke('adminImpersonate', {
+        username: 'alice123'
+      })
+    } catch (error) {
+      // Handle impersonation failure.
+    }
           </code></pre>
           <ul class="list">
             <li class="list-item"><code>username</code> is the username of the account to impersonate.</li>
           </ul>
+          <p>
+            The <code>Promise</code> will be rejected if the impersonate operation fails on the server.
+          </p>
 
           <div class="spacer"></div>
 
@@ -163,7 +184,7 @@ function getPageComponent(pageOptions) {
             <li class="list-item"><code>accountId</code> is the ID of the Crypticle account to get the balance from.</li>
           </ul>
           <p>
-            Returns the current balance of the specified account as a string.
+            Returns the current balance of the specified account as a string (resolved from the <code>Promise</code>).
           </p>
 
           <div class="spacer"></div>
