@@ -100,7 +100,7 @@ function getPageComponent(pageOptions) {
             <li class="list-item"><code>debitId</code> is an optional ID (string in UUID format) to use for the underlying debit transaction. If not provided, it will be automatically generated on the backend.</li>
             <li class="list-item"><code>creditId</code> is an optional ID (string in UUID format) to use for the underlying credit transaction. If not provided, it will be automatically generated on the backend.</li>
           </ul>
-          <p>Returns a promise which resolves with an object containing the <code>creditId</code> and <code>debitId</code> (transaction IDs) of the underlying transactions.</p>
+          <p>Returns a <code>Promise</code> which resolves with an object containing the <code>creditId</code> and <code>debitId</code> (transaction IDs) of the underlying transactions.</p>
 
           <div class="spacer"></div>
 
@@ -176,7 +176,7 @@ function getPageComponent(pageOptions) {
             <li class="list-item"><code>debitId</code> is an optional ID (string in UUID format) to use for the underlying debit transaction. If not provided, it will be automatically generated on the backend.</li>
             <li class="list-item"><code>creditId</code> is an optional ID (string in UUID format) to use for the underlying credit transaction. If not provided, it will be automatically generated on the backend.</li>
           </ul>
-          <p>Returns a promise which resolves with an object containing the <code>creditId</code> and <code>debitId</code> (transaction IDs) of the underlying transactions.</p>
+          <p>Returns a <code>Promise</code> which resolves with an object containing the <code>creditId</code> and <code>debitId</code> (transaction IDs) of the underlying transactions.</p>
 
           <div class="spacer"></div>
 
