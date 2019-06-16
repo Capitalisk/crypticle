@@ -182,14 +182,6 @@ function getPageComponent(pageOptions) {
             <li class="list-item"><code>toWalletAddress</code> is the blockchain wallet address to send the funds to.</li>
           </ul>
 
-          <div class="spacer"></div>
-
-          <h5 class="title is-5">Deposit</h5>
-          <p>
-            To make a deposit, send a blockchain transaction to the deposit address of the relevant Crypticle account.
-          </p>
-        </div>
-
         <hr class="hr hr-medium-spacing" />
 
         <div class="container is-fullhd content">
