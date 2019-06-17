@@ -190,7 +190,7 @@ const databaseName = envConfig.databaseName || 'crypticle';
     return `The ${error.property.split('.')[1]} field ${error.message}`;
   }
 
-  function validateRequestSchema(request) {
+  function validateRPCSchema(request) {
     let schema = rpcSchema[request.procedure];
     if (!schema) {
       let error = new Error(`Could not find a schema for the ${request.procedure} procedure.`);
@@ -253,7 +253,7 @@ const databaseName = envConfig.databaseName || 'crypticle';
       (async () => {
         for await (let request of socket.procedure('signup')) {
           try {
-            validateRequestSchema(request);
+            validateRPCSchema(request);
           } catch (error) {
             request.error(error);
             console.error(error);
@@ -286,7 +286,7 @@ const databaseName = envConfig.databaseName || 'crypticle';
       (async () => {
         for await (let request of socket.procedure('login')) {
           try {
-            validateRequestSchema(request);
+            validateRPCSchema(request);
           } catch (error) {
             request.error(error);
             console.error(error);
@@ -312,8 +312,8 @@ const databaseName = envConfig.databaseName || 'crypticle';
             username: accountData.username,
             accountId: accountData.id
           };
-          if (accountData.maxConcurrentTransfers != null) {
-            token.maxConcurrentTransfers = accountData.maxConcurrentTransfers;
+          if (accountData.maxConcurrentDebits != null) {
+            token.maxConcurrentDebits = accountData.maxConcurrentDebits;
           }
           if (accountData.maxConcurrentWithdrawals != null) {
             token.maxConcurrentWithdrawals = accountData.maxConcurrentWithdrawals;
@@ -332,7 +332,7 @@ const databaseName = envConfig.databaseName || 'crypticle';
       (async () => {
         for await (let request of socket.procedure('getMainInfo')) {
           try {
-            validateRequestSchema(request);
+            validateRPCSchema(request);
           } catch (error) {
             request.error(error);
             console.error(error);
@@ -347,7 +347,7 @@ const databaseName = envConfig.databaseName || 'crypticle';
         for await (let request of socket.procedure('withdraw')) {
           try {
             verifyUserAuth(request, socket);
-            validateRequestSchema(request);
+            validateRPCSchema(request);
           } catch (error) {
             request.error(error);
             console.error(error);
@@ -382,7 +382,7 @@ const databaseName = envConfig.databaseName || 'crypticle';
         for await (let request of socket.procedure('transfer')) {
           try {
             verifyUserAuth(request, socket);
-            validateRequestSchema(request);
+            validateRPCSchema(request);
           } catch (error) {
             request.error(error);
             console.error(error);
@@ -399,7 +399,7 @@ const databaseName = envConfig.databaseName || 'crypticle';
               debitId: transferData.debitId,
               creditId: transferData.creditId,
               data: transferData.data
-            }, socket.authToken.maxConcurrentTransfers);
+            }, socket.authToken.maxConcurrentDebits);
           } catch (error) {
             if (error.isClientError) {
               request.error(error);
@@ -417,10 +417,46 @@ const databaseName = envConfig.databaseName || 'crypticle';
       })();
 
       (async () => {
+        for await (let request of socket.procedure('debit')) {
+          try {
+            verifyUserAuth(request, socket);
+            validateRPCSchema(request);
+          } catch (error) {
+            request.error(error);
+            console.error(error);
+            continue;
+          }
+
+          let debitData = request.data;
+          let result;
+          try {
+            result = await accountService.attemptDirectDebit({
+              amount: debitData.amount,
+              fromAccountId: socket.authToken.accountId,
+              debitId: debitData.debitId,
+              data: debitData.data
+            }, socket.authToken.maxConcurrentDebits);
+          } catch (error) {
+            if (error.isClientError) {
+              request.error(error);
+            } else {
+              let clientError = new Error('Failed to execute debit due to a server error');
+              clientError.name = 'DebitError';
+              clientError.isClientError = true;
+              request.error(clientError);
+            }
+            console.error(error);
+            continue;
+          }
+          request.end(result);
+        }
+      })();
+
+      (async () => {
         for await (let request of socket.procedure('getBalance')) {
           try {
             verifyUserAuth(request, socket);
-            validateRequestSchema(request);
+            validateRPCSchema(request);
           } catch (error) {
             request.error(error);
             console.error(error);
@@ -450,7 +486,7 @@ const databaseName = envConfig.databaseName || 'crypticle';
         for await (let request of socket.procedure('adminImpersonate')) {
           try {
             verifyAdminUserAuth(request, socket);
-            validateRequestSchema(request);
+            validateRPCSchema(request);
           } catch (error) {
             request.error(error);
             console.error(error);
@@ -503,7 +539,7 @@ const databaseName = envConfig.databaseName || 'crypticle';
         for await (let request of socket.procedure('adminWithdraw')) {
           try {
             verifyAdminUserAuth(request, socket);
-            validateRequestSchema(request);
+            validateRPCSchema(request);
           } catch (error) {
             request.error(error);
             console.error(error);
@@ -538,7 +574,7 @@ const databaseName = envConfig.databaseName || 'crypticle';
         for await (let request of socket.procedure('adminTransfer')) {
           try {
             verifyAdminUserAuth(request, socket);
-            validateRequestSchema(request);
+            validateRPCSchema(request);
           } catch (error) {
             request.error(error);
             console.error(error);
@@ -573,10 +609,82 @@ const databaseName = envConfig.databaseName || 'crypticle';
       })();
 
       (async () => {
+        for await (let request of socket.procedure('adminDebit')) {
+          try {
+            verifyAdminUserAuth(request, socket);
+            validateRPCSchema(request);
+          } catch (error) {
+            request.error(error);
+            console.error(error);
+            continue;
+          }
+
+          let debitData = request.data;
+          let result;
+          try {
+            result = await accountService.execDirectDebit({
+              amount: debitData.amount,
+              fromAccountId: debitData.fromAccountId,
+              debitId: debitData.debitId,
+              data: debitData.data
+            });
+          } catch (error) {
+            if (error.isClientError) {
+              request.error(error);
+            } else {
+              let clientError = new Error('Failed to execute debit due to a server error');
+              clientError.name = 'DebitError';
+              clientError.isClientError = true;
+              request.error(clientError);
+            }
+            console.error(error);
+            continue;
+          }
+          request.end(result);
+        }
+      })();
+
+      (async () => {
+        for await (let request of socket.procedure('adminCredit')) {
+          try {
+            verifyAdminUserAuth(request, socket);
+            validateRPCSchema(request);
+          } catch (error) {
+            request.error(error);
+            console.error(error);
+            continue;
+          }
+
+          let creditData = request.data;
+          let result;
+          try {
+            result = await accountService.execDirectCredit({
+              amount: creditData.amount,
+              toAccountId: creditData.toAccountId,
+              creditId: creditData.creditId,
+              data: creditData.data
+            });
+          } catch (error) {
+            if (error.isClientError) {
+              request.error(error);
+            } else {
+              let clientError = new Error('Failed to execute credit due to a server error');
+              clientError.name = 'CreditError';
+              clientError.isClientError = true;
+              request.error(clientError);
+            }
+            console.error(error);
+            continue;
+          }
+          request.end(result);
+        }
+      })();
+
+      (async () => {
         for await (let request of socket.procedure('adminGetBalance')) {
           try {
             verifyAdminUserAuth(request, socket);
-            validateRequestSchema(request);
+            validateRPCSchema(request);
           } catch (error) {
             request.error(error);
             console.error(error);

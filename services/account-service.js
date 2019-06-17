@@ -27,7 +27,7 @@ class AccountService extends AsyncStreamEmitter {
     this.withdrawalInterval = options.withdrawalProcessingInterval;
     this.maxTransactionSettlementsPerAccount = options.maxTransactionSettlementsPerAccount;
     this.maxConcurrentWithdrawalsPerAccount = options.maxConcurrentWithdrawalsPerAccount;
-    this.maxConcurrentDebitTransfersPerAccount = options.maxConcurrentDebitTransfersPerAccount;
+    this.maxConcurrentDebitsPerAccount = options.maxConcurrentDebitsPerAccount;
     this.blockchainWithdrawalMaxAttempts = options.blockchainWithdrawalMaxAttempts;
     this.secretSignupKey = options.secretSignupKey;
     this.bcryptPasswordRounds = options.bcryptPasswordRounds;
@@ -107,6 +107,59 @@ class AccountService extends AsyncStreamEmitter {
   async fetchAccountByWalletAddress(walletAddress) {
     let walletAccountList = await this.getAccountsByDepositWalletAddress(walletAddress);
     return walletAccountList[0];
+  }
+
+  async attemptDirectDebit(directDebit, maxConcurrentDebits) {
+    if (maxConcurrentDebits == null) {
+      maxConcurrentDebits = this.maxConcurrentDebitsPerAccount;
+    }
+
+    let pendingDebitTransfersCount = await this.fetchAccountPendingTransfersCount(directDebit.fromAccountId, 'debit');
+    if (pendingDebitTransfersCount >= maxConcurrentDebits) {
+      let error = Error(
+        `Failed to execute debit on account ${
+          directDebit.fromAccountId
+        } because the account cannot have more than ${
+          maxConcurrentDebits
+        } concurrent pending debit transactions`
+      );
+      error.name = 'MaxConcurrentDebitsError';
+      error.isClientError = true;
+      throw error;
+    }
+    return this.execDirectDebit(directDebit);
+  }
+
+  async execDirectDebit(directDebit) {
+    if (directDebit.debitId == null) {
+      directDebit.debitId = uuid.v4();
+    }
+    let debitTransaction = {
+      id: directDebit.debitId,
+      accountId: directDebit.fromAccountId,
+      type: 'transfer',
+      recordType: 'debit',
+      amount: directDebit.amount,
+      data: directDebit.data
+    };
+    await this.execTransaction(debitTransaction);
+    return {debitId: directDebit.debitId};
+  }
+
+  async execDirectCredit(directCredit) {
+    if (directCredit.creditId == null) {
+      directCredit.creditId = uuid.v4();
+    }
+    let creditTransaction = {
+      id: directCredit.creditId,
+      accountId: directCredit.toAccountId,
+      type: 'transfer',
+      recordType: 'credit',
+      amount: directCredit.amount,
+      data: directCredit.data
+    };
+    await this.execTransaction(creditTransaction);
+    return {creditId: directCredit.creditId};
   }
 
   async execTransaction(transaction) {
@@ -242,9 +295,9 @@ class AccountService extends AsyncStreamEmitter {
                 this.emit('error', {error});
               }
               if (newBalance >= 0n) {
-                // If the transaction is not a valid tranfer between two accounts.
                 if (txn.counterpartyAccountId == null) {
-                  txn.canceled = true;
+                  // If the transaction has no counterparty, then it is a direct debit or credit.
+                  account.balance = newBalance;
                 } else {
                   let counterpartyAccount = await this.thinky.r.table('Account')
                   .get(txn.counterpartyAccountId).run();
@@ -818,23 +871,23 @@ class AccountService extends AsyncStreamEmitter {
     transfer.creditId: The id (UUID) of the underlying credit transaction.
     transfer.data: Custom string to attach to the debit transaction.
   */
-  async attemptTransfer(transfer, maxConcurrentTransfers) {
-    if (maxConcurrentTransfers == null) {
-      maxConcurrentTransfers = this.maxConcurrentDebitTransfersPerAccount;
+  async attemptTransfer(transfer, maxConcurrentDebits) {
+    if (maxConcurrentDebits == null) {
+      maxConcurrentDebits = this.maxConcurrentDebitsPerAccount;
     }
 
     let pendingDebitTransfersCount = await this.fetchAccountPendingTransfersCount(transfer.fromAccountId, 'debit');
-    if (pendingDebitTransfersCount >= maxConcurrentTransfers) {
+    if (pendingDebitTransfersCount >= maxConcurrentDebits) {
       let error = Error(
         `Failed to execute transfer from account ${
           transfer.fromAccountId
         } to account ${
           transfer.toAccountId
         } because the sender account cannot have more than ${
-          maxConcurrentTransfers
-        } concurrent pending debit transfers`
+          maxConcurrentDebits
+        } concurrent pending debit transactions`
       );
-      error.name = 'MaxConcurrentDebitTransfersError';
+      error.name = 'MaxConcurrentDebitsError';
       error.isClientError = true;
       throw error;
     }

@@ -67,6 +67,15 @@ let requestSchema = {
     },
     required: ['amount', 'toAccountId']
   },
+  debit: {
+    type: 'object',
+    properties: {
+      amount: amountSchema,
+      data: customDataSchema,
+      debitId: uuidSchema
+    },
+    required: ['amount']
+  },
   getBalance: {},
   adminImpersonate: {
     type: 'object',
@@ -95,6 +104,26 @@ let requestSchema = {
       creditId: uuidSchema
     },
     required: ['amount', 'fromAccountId', 'toAccountId']
+  },
+  adminDebit: {
+    type: 'object',
+    properties: {
+      amount: amountSchema,
+      fromAccountId: uuidSchema,
+      data: customDataSchema,
+      debitId: uuidSchema
+    },
+    required: ['amount', 'fromAccountId']
+  },
+  adminCredit: {
+    type: 'object',
+    properties: {
+      amount: amountSchema,
+      toAccountId: uuidSchema,
+      data: customDataSchema,
+      creditId: uuidSchema
+    },
+    required: ['amount', 'toAccountId']
   },
   adminGetBalance: {
     type: 'object',

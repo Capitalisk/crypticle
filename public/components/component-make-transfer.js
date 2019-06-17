@@ -33,16 +33,24 @@ function getComponent(options) {
         data: null,
         error: null,
         accounts: this.accountCollection.value,
-        isModalActive: false
+        isTransferModalActive: false,
+        isDebitModalActive: false
       };
     },
     methods: {
-      openModal: function () {
-        this.isModalActive = true;
+      openTransferModal: function () {
+        this.isTransferModalActive = true;
       },
-      closeModal: function () {
+      closeTransferModal: function () {
         this.clearForm();
-        this.isModalActive = false;
+        this.isTransferModalActive = false;
+      },
+      openDebitModal: function () {
+        this.isDebitModalActive = true;
+      },
+      closeDebitModal: function () {
+        this.clearForm();
+        this.isDebitModalActive = false;
       },
       clearForm: function () {
         this.error = null;
@@ -93,19 +101,45 @@ function getComponent(options) {
           return;
         }
         this.clearForm();
-        this.closeModal();
+        this.closeTransferModal();
+      },
+      sendDebit: async function () {
+        if (!this.amount || this.amount < 0) {
+          this.error = 'Could not execute the debit. The amount was not provided or was invalid.';
+          return;
+        }
+        if (mainInfo.cryptocurrency.unit == null) {
+          this.error = 'Could not execute the debit. The cryptocurrency unit value could not be determined.';
+          return;
+        }
+        let unitAmount = parseFloat(this.amount);
+        let totalAmount = Math.round(unitAmount * parseInt(mainInfo.cryptocurrency.unit));
+        let totalAmountString = totalAmount.toString();
+
+        try {
+          await socket.invoke('debit', {
+            amount: totalAmountString,
+            data: this.data
+          });
+        } catch (error) {
+          this.error = error.message;
+          return;
+        }
+        this.clearForm();
+        this.closeDebitModal();
       }
     },
     template: `
       <div class="component-container container is-fullhd">
-        <input type="button" class="button is-primary" value="Make a transfer" @click="openModal" />
+        <input type="button" class="button is-primary" value="Make a transfer" @click="openTransferModal" />
+        <input type="button" class="button is-primary" value="Make a debit" @click="openDebitModal" />
 
-        <div v-bind:class="{'modal': true, 'is-active': isModalActive}">
+        <div v-bind:class="{'modal': true, 'is-active': isTransferModalActive}">
           <div class="modal-background"></div>
           <div class="modal-card">
             <header class="modal-card-head">
               <span class="modal-card-title">Make a transfer</span>
-              <button class="delete" aria-label="close" @click="closeModal"></button>
+              <button class="delete" aria-label="close" @click="closeTransferModal"></button>
             </header>
             <section class="modal-card-body">
               <div v-if="error" class="has-text-danger field">
@@ -145,7 +179,38 @@ function getComponent(options) {
             </section>
             <footer class="modal-card-foot">
               <button class="button is-link" @click="sendTransfer">Send transfer</button>
-              <button class="button" @click="closeModal">Cancel</button>
+              <button class="button" @click="closeTransferModal">Cancel</button>
+            </footer>
+          </div>
+        </div>
+
+        <div v-bind:class="{'modal': true, 'is-active': isDebitModalActive}">
+          <div class="modal-background"></div>
+          <div class="modal-card">
+            <header class="modal-card-head">
+              <span class="modal-card-title">Make a debit</span>
+              <button class="delete" aria-label="close" @click="closeDebitModal"></button>
+            </header>
+            <section class="modal-card-body">
+              <div v-if="error" class="has-text-danger field">
+                <span>{{error}}</span>
+              </div>
+              <div class="field">
+                <label class="label" for="make-transfer-amount">
+                  Amount ({{mainInfo.cryptocurrency.symbol}})
+                </label>
+                <input id="make-transfer-amount" type="text" v-model="amount" class="input" @keydown.enter="sendDebit">
+              </div>
+              <div class="field">
+                <label class="label" for="make-transfer-data">
+                  Data
+                </label>
+                <input id="make-transfer-data" type="text" v-model="data" class="input" @keydown.enter="sendDebit">
+              </div>
+            </section>
+            <footer class="modal-card-foot">
+              <button class="button is-link" @click="sendDebit">Send debit</button>
+              <button class="button" @click="closeDebitModal">Cancel</button>
             </footer>
           </div>
         </div>

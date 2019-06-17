@@ -173,7 +173,7 @@ function getSchema(options) {
         passwordResetKey: type.string().optional(),
         passwordResetExpiry: type.date().optional(),
         maxConcurrentWithdrawals: type.number().optional(),
-        maxConcurrentTransfers: type.number().optional(),
+        maxConcurrentDebits: type.number().optional(),
         maxSocketBackpressure: type.number().optional(),
         active: type.boolean().default(true),
         admin: type.boolean().default(false),
@@ -239,6 +239,13 @@ function getSchema(options) {
           type: 'compound', // Compound indexes are ordered lexicographically
           fn: function (r) {
             return [r.row('accountId'), r.row('settledDate')];
+          }
+        },
+        {
+          name: 'counterpartyAccountIdSettledDate',
+          type: 'compound', // Compound indexes are ordered lexicographically
+          fn: function (r) {
+            return [r.row('counterpartyAccountId'), r.row('settledDate')];
           }
         }
       ],
