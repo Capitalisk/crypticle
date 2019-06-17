@@ -227,7 +227,14 @@ class AccountService extends AsyncStreamEmitter {
               txn.canceled = true;
             }
           } else if (txn.type === 'transfer') {
-            if (txn.recordType === 'debit') {
+            if (txn.recordType === 'credit') {
+              try {
+                account.balance += BigInt(txn.amount);
+              } catch (error) {
+                this.emit('error', {error});
+                txn.canceled = true;
+              }
+            } else {
               let newBalance;
               try {
                 newBalance = account.balance - BigInt(txn.amount);
@@ -254,13 +261,6 @@ class AccountService extends AsyncStreamEmitter {
                   }
                 }
               } else {
-                txn.canceled = true;
-              }
-            } else {
-              try {
-                account.balance += BigInt(txn.amount);
-              } catch (error) {
-                this.emit('error', {error});
                 txn.canceled = true;
               }
             }
