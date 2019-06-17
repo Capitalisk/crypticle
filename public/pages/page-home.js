@@ -96,11 +96,27 @@ function getPageComponent(pageOptions) {
           <ul class="list">
             <li class="list-item"><code>amount</code> is the amount of funds to send to the specified Crypticle account - It is expressed in the smallest possible cryptocurrency unit.</li>
             <li class="list-item"><code>toAccountId</code> is the ID of the Crypticle account to send the funds to.</li>
-            <li class="list-item"><code>data</code> is a custom string to add to both the debit and credit transactions which will be created as a result of the transfer.</li>
+            <li class="list-item"><code>data</code> is an optional custom string to add to both the debit and credit transactions which will be created as a result of the transfer.</li>
             <li class="list-item"><code>debitId</code> is an optional ID (string in UUID format) to use for the underlying debit transaction. If not provided, it will be automatically generated on the backend.</li>
             <li class="list-item"><code>creditId</code> is an optional ID (string in UUID format) to use for the underlying credit transaction. If not provided, it will be automatically generated on the backend.</li>
           </ul>
           <p>Returns a <code>Promise</code> which resolves with an object containing the <code>creditId</code> and <code>debitId</code> (transaction IDs) of the underlying transactions.</p>
+
+          <div class="spacer"></div>
+
+          <h5 class="title is-5">Debit</h5>
+          <pre class="code-snippet"><code>
+    let {debitId} = await socket.invoke('debit', {
+      amount: '1000000000',
+      data: 'Notes...'
+    })
+          </code></pre>
+          <ul class="list">
+            <li class="list-item"><code>amount</code> is the amount of funds to debit from the current authenticated account - It is expressed in the smallest possible cryptocurrency unit.</li>
+            <li class="list-item"><code>data</code> is an optional custom string to add to the debit transaction.</li>
+            <li class="list-item"><code>debitId</code> is an optional ID (string in UUID format) to use for the underlying debit transaction. If not provided, it will be automatically generated on the backend.</li>
+          </ul>
+          <p>Returns a <code>Promise</code> which resolves with an object containing the <code>debitId</code> (transaction ID) of the underlying transaction.</p>
 
           <div class="spacer"></div>
 
@@ -170,13 +186,49 @@ function getPageComponent(pageOptions) {
           </code></pre>
           <ul class="list">
             <li class="list-item"><code>amount</code> is the amount of funds to send to the specified Crypticle account - It is expressed in the smallest possible cryptocurrency unit.</li>
-            <li class="list-item"><code>fromAccountId</code> is the ID of the Crypticle account from which to take the funds from.</li>
+            <li class="list-item"><code>fromAccountId</code> is the ID of the Crypticle account from which to take the funds.</li>
             <li class="list-item"><code>toAccountId</code> is the ID of the Crypticle account to send the funds to.</li>
-            <li class="list-item"><code>data</code> is a custom string to add to both the debit and credit transactions which will be created as a result of the transfer.</li>
+            <li class="list-item"><code>data</code> is an optional custom string to add to both the debit and credit transactions which will be created as a result of the transfer.</li>
             <li class="list-item"><code>debitId</code> is an optional ID (string in UUID format) to use for the underlying debit transaction. If not provided, it will be automatically generated on the backend.</li>
             <li class="list-item"><code>creditId</code> is an optional ID (string in UUID format) to use for the underlying credit transaction. If not provided, it will be automatically generated on the backend.</li>
           </ul>
           <p>Returns a <code>Promise</code> which resolves with an object containing the <code>creditId</code> and <code>debitId</code> (transaction IDs) of the underlying transactions.</p>
+
+          <div class="spacer"></div>
+
+          <h5 class="title is-5">Debit</h5>
+          <pre class="code-snippet"><code>
+    let {debitId} = await socket.invoke('adminDebit', {
+      amount: '1000000000',
+      fromAccountId: '213288af-9239-494d-844d-d064ced6f9ea',
+      data: 'Notes...'
+    })
+          </code></pre>
+          <ul class="list">
+            <li class="list-item"><code>amount</code> is the amount of funds to debit from the specified account - It is expressed in the smallest possible cryptocurrency unit.</li>
+            <li class="list-item"><code>fromAccountId</code> is the ID of the Crypticle account from which to debit the funds.</li>
+            <li class="list-item"><code>data</code> is an optional custom string to add to the debit transaction.</li>
+            <li class="list-item"><code>debitId</code> is an optional ID (string in UUID format) to use for the underlying debit transaction. If not provided, it will be automatically generated on the backend.</li>
+          </ul>
+          <p>Returns a <code>Promise</code> which resolves with an object containing the <code>debitId</code> (transaction ID) of the underlying transaction.</p>
+
+          <div class="spacer"></div>
+
+          <h5 class="title is-5">Credit</h5>
+          <pre class="code-snippet"><code>
+    let {creditId} = await socket.invoke('adminCredit', {
+      amount: '1000000000',
+      toAccountId: '213288af-9239-494d-844d-d064ced6f9ea',
+      data: 'Notes...'
+    })
+          </code></pre>
+          <ul class="list">
+            <li class="list-item"><code>amount</code> is the amount of funds to credit to the specified account - It is expressed in the smallest possible cryptocurrency unit.</li>
+            <li class="list-item"><code>toAccountId</code> is the ID of the Crypticle account to credit the funds to.</li>
+            <li class="list-item"><code>data</code> is an optional custom string to add to the credit transaction.</li>
+            <li class="list-item"><code>creditId</code> is an optional ID (string in UUID format) to use for the underlying credit transaction. If not provided, it will be automatically generated on the backend.</li>
+          </ul>
+          <p>Returns a <code>Promise</code> which resolves with an object containing the <code>creditId</code> (transaction ID) of the underlying transaction.</p>
 
           <div class="spacer"></div>
 
