@@ -240,13 +240,6 @@ function getSchema(options) {
           fn: function (r) {
             return [r.row('accountId'), r.row('settledDate')];
           }
-        },
-        {
-          name: 'counterpartyAccountIdSettledDate',
-          type: 'compound', // Compound indexes are ordered lexicographically
-          fn: function (r) {
-            return [r.row('counterpartyAccountId'), r.row('settledDate')];
-          }
         }
       ],
       access: {
