@@ -261,9 +261,10 @@ const databaseName = envConfig.databaseName || 'crypticle';
           }
 
           let accountData;
+          let accountId;
           try {
             accountData = await accountService.sanitizeSignupCredentials(request.data);
-            await crud.create({
+            accountId = await crud.create({
               type: 'Account',
               value: accountData
             });
@@ -279,7 +280,7 @@ const databaseName = envConfig.databaseName || 'crypticle';
             console.error(error);
             continue;
           }
-          request.end();
+          request.end({accountId});
         }
       })();
 
