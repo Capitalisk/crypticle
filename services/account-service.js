@@ -266,14 +266,17 @@ class AccountService extends AsyncStreamEmitter {
 
         for (let i = 0; i < len; i++) {
           let txn = account.unsettledTransactions[i];
+          let txnAmount;
+          try {
+            txnAmount = BigInt(txn.amount);
+          } catch (error) {
+            this.emit('error', {error});
+          }
 
-          if (txn.type === 'withdrawal') {
-            let newBalance;
-            try {
-              newBalance = account.balance - BigInt(txn.amount);
-            } catch (error) {
-              this.emit('error', {error});
-            }
+          if (txnAmount == null || txnAmount <= 0n) {
+            txn.canceled = true;
+          } else if (txn.type === 'withdrawal') {
+            let newBalance = account.balance - txnAmount;
             if (newBalance >= 0n) {
               account.balance = newBalance;
             } else {
@@ -281,19 +284,9 @@ class AccountService extends AsyncStreamEmitter {
             }
           } else if (txn.type === 'transfer') {
             if (txn.recordType === 'credit') {
-              try {
-                account.balance += BigInt(txn.amount);
-              } catch (error) {
-                this.emit('error', {error});
-                txn.canceled = true;
-              }
+              account.balance += txnAmount;
             } else {
-              let newBalance;
-              try {
-                newBalance = account.balance - BigInt(txn.amount);
-              } catch (error) {
-                this.emit('error', {error});
-              }
+              let newBalance = account.balance - txnAmount;
               if (newBalance >= 0n) {
                 if (txn.counterpartyAccountId == null) {
                   // If the transaction has no counterparty, then it is a direct debit or credit.
@@ -318,12 +311,7 @@ class AccountService extends AsyncStreamEmitter {
               }
             }
           } else if (txn.type === 'deposit') {
-            try {
-              account.balance += BigInt(txn.amount);
-            } catch (error) {
-              this.emit('error', {error});
-              txn.canceled = true;
-            }
+            account.balance += txnAmount;
           }
 
           txn.balance = account.balance.toString();

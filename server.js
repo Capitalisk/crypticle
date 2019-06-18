@@ -222,7 +222,7 @@ const databaseName = envConfig.databaseName || 'crypticle';
     }
   }
 
-  function verifyAdminUserAuth(request, socket) {
+  function verifyAdminAuth(request, socket) {
     if (!socket.authToken || !socket.authToken.admin) {
       let error = new Error(
         `Cannot invoke the ${
@@ -485,7 +485,7 @@ const databaseName = envConfig.databaseName || 'crypticle';
       (async () => {
         for await (let request of socket.procedure('adminImpersonate')) {
           try {
-            verifyAdminUserAuth(request, socket);
+            verifyAdminAuth(request, socket);
             validateRPCSchema(request);
           } catch (error) {
             request.error(error);
@@ -538,7 +538,7 @@ const databaseName = envConfig.databaseName || 'crypticle';
       (async () => {
         for await (let request of socket.procedure('adminWithdraw')) {
           try {
-            verifyAdminUserAuth(request, socket);
+            verifyAdminAuth(request, socket);
             validateRPCSchema(request);
           } catch (error) {
             request.error(error);
@@ -573,7 +573,7 @@ const databaseName = envConfig.databaseName || 'crypticle';
       (async () => {
         for await (let request of socket.procedure('adminTransfer')) {
           try {
-            verifyAdminUserAuth(request, socket);
+            verifyAdminAuth(request, socket);
             validateRPCSchema(request);
           } catch (error) {
             request.error(error);
@@ -611,7 +611,7 @@ const databaseName = envConfig.databaseName || 'crypticle';
       (async () => {
         for await (let request of socket.procedure('adminDebit')) {
           try {
-            verifyAdminUserAuth(request, socket);
+            verifyAdminAuth(request, socket);
             validateRPCSchema(request);
           } catch (error) {
             request.error(error);
@@ -647,7 +647,7 @@ const databaseName = envConfig.databaseName || 'crypticle';
       (async () => {
         for await (let request of socket.procedure('adminCredit')) {
           try {
-            verifyAdminUserAuth(request, socket);
+            verifyAdminAuth(request, socket);
             validateRPCSchema(request);
           } catch (error) {
             request.error(error);
@@ -683,7 +683,7 @@ const databaseName = envConfig.databaseName || 'crypticle';
       (async () => {
         for await (let request of socket.procedure('adminGetBalance')) {
           try {
-            verifyAdminUserAuth(request, socket);
+            verifyAdminAuth(request, socket);
             validateRPCSchema(request);
           } catch (error) {
             request.error(error);
