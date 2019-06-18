@@ -32,7 +32,7 @@ function getPageComponent(pageOptions) {
         password: 'password123',
         admin: false,
         secretSignupKey: 'f502b122-5d7a-48cc-a0df-82d2a82465bd'
-      })
+      });
     } catch (error) {
       // Handle failure
     }
@@ -59,7 +59,7 @@ function getPageComponent(pageOptions) {
             </li>
           </ul>
           <p>
-            Returns a <code>Promise</code> which will be rejected if the signup operation fails on the server.
+            Returns a <code>Promise</code> which will resolve with an object containing the <code>accountId</code> or which will be rejected if the signup operation fails on the server.
           </p>
 
           <div class="spacer"></div>
@@ -67,10 +67,10 @@ function getPageComponent(pageOptions) {
           <h5 class="title is-5">Login</h5>
           <pre class="code-snippet"><code>
     try {
-      await socket.invoke('login', {
+      let {accountId} = await socket.invoke('login', {
         username: 'alice123',
         password: 'password123'
-      })
+      });
     } catch (error) {
       // Handle login failure.
     }
@@ -80,7 +80,7 @@ function getPageComponent(pageOptions) {
             <li class="list-item"><code>password</code> is the account password.</li>
           </ul>
           <p>
-            Returns a <code>Promise</code> which will be rejected if the login operation fails on the server.
+            Returns a <code>Promise</code> which will resolve with an object containing the <code>accountId</code> or which will be rejected if the login operation fails on the server.
           </p>
 
           <div class="spacer"></div>
@@ -91,7 +91,7 @@ function getPageComponent(pageOptions) {
       amount: '1000000000',
       toAccountId: '18b50e59-f3a1-4b57-8f0b-7daeba7259ad',
       data: 'Notes...'
-    })
+    });
           </code></pre>
           <ul class="list">
             <li class="list-item"><code>amount</code> is the amount of funds to send to the specified Crypticle account - It is expressed in the smallest possible cryptocurrency unit.</li>
@@ -100,7 +100,7 @@ function getPageComponent(pageOptions) {
             <li class="list-item"><code>debitId</code> is an optional ID (string in UUID format) to use for the underlying debit transaction. If not provided, it will be automatically generated on the backend.</li>
             <li class="list-item"><code>creditId</code> is an optional ID (string in UUID format) to use for the underlying credit transaction. If not provided, it will be automatically generated on the backend.</li>
           </ul>
-          <p>Returns a <code>Promise</code> which resolves with an object containing the <code>creditId</code> and <code>debitId</code> (transaction IDs) of the underlying transactions.</p>
+          <p>Returns a <code>Promise</code> which will resolve with an object containing the <code>creditId</code> and <code>debitId</code> (transaction IDs) of the underlying transactions.</p>
 
           <div class="spacer"></div>
 
@@ -109,14 +109,14 @@ function getPageComponent(pageOptions) {
     let {debitId} = await socket.invoke('debit', {
       amount: '1000000000',
       data: 'Notes...'
-    })
+    });
           </code></pre>
           <ul class="list">
             <li class="list-item"><code>amount</code> is the amount of funds to debit from the current authenticated account - It is expressed in the smallest possible cryptocurrency unit.</li>
             <li class="list-item"><code>data</code> is an optional custom string to add to the debit transaction.</li>
             <li class="list-item"><code>debitId</code> is an optional ID (string in UUID format) to use for the underlying debit transaction. If not provided, it will be automatically generated on the backend.</li>
           </ul>
-          <p>Returns a <code>Promise</code> which resolves with an object containing the <code>debitId</code> (transaction ID) of the underlying transaction.</p>
+          <p>Returns a <code>Promise</code> which will resolve with an object containing the <code>debitId</code> (transaction ID) of the underlying transaction.</p>
 
           <div class="spacer"></div>
 
@@ -125,7 +125,7 @@ function getPageComponent(pageOptions) {
     let balance = await socket.invoke('getBalance')
           </code></pre>
           <p>
-            Returns a <code>Promise</code> which resolves with the current logged in user's account balance as a string.
+            Returns a <code>Promise</code> which will resolve with the current logged in user's account balance as a string.
           </p>
 
           <div class="spacer"></div>
@@ -135,13 +135,13 @@ function getPageComponent(pageOptions) {
     let {withdrawalId} = await socket.invoke('withdraw', {
       amount: '1100000000',
       toWalletAddress: '6942317426094516776R'
-    })
+    });
           </code></pre>
           <ul class="list">
             <li class="list-item"><code>amount</code> is the amount of funds to withdraw from your Crypticle account - It is expressed in the smallest possible cryptocurrency unit.</li>
             <li class="list-item"><code>toWalletAddress</code> is the blockchain wallet address to send the funds to.</li>
           </ul>
-          <p>Returns a <code>Promise</code> which resolves with the withdrawal ID as a string.</p>
+          <p>Returns a <code>Promise</code> which will resolve with an object containing the <code>withdrawalId</code> as a string.</p>
 
           <div class="spacer"></div>
 
@@ -159,9 +159,9 @@ function getPageComponent(pageOptions) {
           <h5 class="title is-5">Impersonate</h5>
           <pre class="code-snippet"><code>
     try {
-      await socket.invoke('adminImpersonate', {
+      let {accountId} = await socket.invoke('adminImpersonate', {
         username: 'alice123'
-      })
+      });
     } catch (error) {
       // Handle impersonation failure.
     }
@@ -170,7 +170,7 @@ function getPageComponent(pageOptions) {
             <li class="list-item"><code>username</code> is the username of the account to impersonate.</li>
           </ul>
           <p>
-            The <code>Promise</code> will be rejected if the impersonate operation fails on the server.
+            The <code>Promise</code> will resolve with an object containing the <code>accountId</code> or which will be rejected if the impersonate operation fails on the server.
           </p>
 
           <div class="spacer"></div>
@@ -182,7 +182,7 @@ function getPageComponent(pageOptions) {
       fromAccountId: '213288af-9239-494d-844d-d064ced6f9ea',
       toAccountId: '18b50e59-f3a1-4b57-8f0b-7daeba7259ad',
       data: 'Notes...'
-    })
+    });
           </code></pre>
           <ul class="list">
             <li class="list-item"><code>amount</code> is the amount of funds to send to the specified Crypticle account - It is expressed in the smallest possible cryptocurrency unit.</li>
@@ -192,7 +192,7 @@ function getPageComponent(pageOptions) {
             <li class="list-item"><code>debitId</code> is an optional ID (string in UUID format) to use for the underlying debit transaction. If not provided, it will be automatically generated on the backend.</li>
             <li class="list-item"><code>creditId</code> is an optional ID (string in UUID format) to use for the underlying credit transaction. If not provided, it will be automatically generated on the backend.</li>
           </ul>
-          <p>Returns a <code>Promise</code> which resolves with an object containing the <code>creditId</code> and <code>debitId</code> (transaction IDs) of the underlying transactions.</p>
+          <p>Returns a <code>Promise</code> which will resolve with an object containing the <code>creditId</code> and <code>debitId</code> (transaction IDs) of the underlying transactions.</p>
 
           <div class="spacer"></div>
 
@@ -202,7 +202,7 @@ function getPageComponent(pageOptions) {
       amount: '1000000000',
       fromAccountId: '213288af-9239-494d-844d-d064ced6f9ea',
       data: 'Notes...'
-    })
+    });
           </code></pre>
           <ul class="list">
             <li class="list-item"><code>amount</code> is the amount of funds to debit from the specified account - It is expressed in the smallest possible cryptocurrency unit.</li>
@@ -210,7 +210,7 @@ function getPageComponent(pageOptions) {
             <li class="list-item"><code>data</code> is an optional custom string to add to the debit transaction.</li>
             <li class="list-item"><code>debitId</code> is an optional ID (string in UUID format) to use for the underlying debit transaction. If not provided, it will be automatically generated on the backend.</li>
           </ul>
-          <p>Returns a <code>Promise</code> which resolves with an object containing the <code>debitId</code> (transaction ID) of the underlying transaction.</p>
+          <p>Returns a <code>Promise</code> which will resolve with an object containing the <code>debitId</code> (transaction ID) of the underlying transaction.</p>
 
           <div class="spacer"></div>
 
@@ -220,7 +220,7 @@ function getPageComponent(pageOptions) {
       amount: '1000000000',
       toAccountId: '213288af-9239-494d-844d-d064ced6f9ea',
       data: 'Notes...'
-    })
+    });
           </code></pre>
           <ul class="list">
             <li class="list-item"><code>amount</code> is the amount of funds to credit to the specified account - It is expressed in the smallest possible cryptocurrency unit.</li>
@@ -228,7 +228,7 @@ function getPageComponent(pageOptions) {
             <li class="list-item"><code>data</code> is an optional custom string to add to the credit transaction.</li>
             <li class="list-item"><code>creditId</code> is an optional ID (string in UUID format) to use for the underlying credit transaction. If not provided, it will be automatically generated on the backend.</li>
           </ul>
-          <p>Returns a <code>Promise</code> which resolves with an object containing the <code>creditId</code> (transaction ID) of the underlying transaction.</p>
+          <p>Returns a <code>Promise</code> which will resolve with an object containing the <code>creditId</code> (transaction ID) of the underlying transaction.</p>
 
           <div class="spacer"></div>
 
@@ -236,13 +236,13 @@ function getPageComponent(pageOptions) {
           <pre class="code-snippet"><code>
     let balance = await socket.invoke('adminGetBalance', {
       accountId: '213288af-9239-494d-844d-d064ced6f9ea'
-    })
+    });
           </code></pre>
           <ul class="list">
             <li class="list-item"><code>accountId</code> is the ID of the Crypticle account to get the balance from.</li>
           </ul>
           <p>
-            Returns a <code>Promise</code> which resolves with the current balance of the specified account as a string.
+            Returns a <code>Promise</code> which will resolve with the current balance of the specified account as a string.
           </p>
 
           <div class="spacer"></div>
@@ -253,14 +253,14 @@ function getPageComponent(pageOptions) {
       amount: '234000000',
       fromAccountId: '7667174938767705051R',
       toWalletAddress: '6942317426094516776R'
-    })
+    });
           </code></pre>
           <ul class="list">
             <li class="list-item"><code>amount</code> is the amount of funds to withdraw from the specified Crypticle account - It is expressed in the smallest possible cryptocurrency unit.</li>
             <li class="list-item"><code>fromAccountId</code> is the ID of the Crypticle account from which to withdraw the funds.</li>
             <li class="list-item"><code>toWalletAddress</code> is the blockchain wallet address to send the funds to.</li>
           </ul>
-          <p>Returns a <code>Promise</code> which resolves with the withdrawal ID as a string.</p>
+          <p>Returns a <code>Promise</code> which will resolve with an object containing the <code>withdrawalId</code> as a string.</p>
         </div>
 
         <hr class="hr hr-medium-spacing" />
