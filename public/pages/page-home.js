@@ -122,7 +122,7 @@ function getPageComponent(pageOptions) {
 
           <h5 class="title is-5">Get balance</h5>
           <pre class="code-snippet"><code>
-    let balance = await socket.invoke('getBalance')
+    let balance = await socket.invoke('getBalance');
           </code></pre>
           <p>
             Returns a <code>Promise</code> which will resolve with the current logged in user's account balance as a string.
