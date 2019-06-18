@@ -27,11 +27,11 @@ function getPageComponent(pageOptions) {
           <h5 class="title is-5">Signup</h5>
           <pre class="code-snippet"><code>
     try {
-      await socket.invoke('signup', {
+      let {accountId} = await socket.invoke('signup', {
         username: 'alice123',
         password: 'password123',
         admin: false,
-        secretSignupKey: '313e7cc1-ad75-4030-a927-6a09f39c1603'
+        secretSignupKey: 'f502b122-5d7a-48cc-a0df-82d2a82465bd'
       })
     } catch (error) {
       // Handle failure
