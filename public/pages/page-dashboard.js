@@ -91,7 +91,7 @@ function getPageComponent(pageOptions) {
         <div class="spacer"></div>
 
         <component-make-withdrawal></component-make-withdrawal>
-        
+
         <div class="spacer"></div>
       </div>
     `

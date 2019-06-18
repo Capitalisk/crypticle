@@ -37,6 +37,9 @@ function getComponent(options) {
         isDebitModalActive: false
       };
     },
+    destroyed: function () {
+      this.accountCollection.destroy();
+    },
     methods: {
       openTransferModal: function () {
         this.isTransferModalActive = true;

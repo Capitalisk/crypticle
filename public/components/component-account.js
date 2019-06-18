@@ -24,6 +24,9 @@ function getComponent(options) {
         isImpersonating: socket.authToken && !!socket.authToken.impersonator
       };
     },
+    destroyed: function () {
+      this.accountModel.destroy();
+    },
     methods: {
       toBlockchainUnits: function (amount) {
         let value = Number(amount) / Number(mainInfo.cryptocurrency.unit);

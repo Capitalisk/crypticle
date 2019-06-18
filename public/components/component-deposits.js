@@ -37,6 +37,9 @@ function getComponent(options) {
         depositType: options.type
       };
     },
+    destroyed: function () {
+      this.depositCollection.destroy();
+    },
     methods: {
       toBlockchainUnits: function (amount) {
         let value = Number(amount) / Number(mainInfo.cryptocurrency.unit);

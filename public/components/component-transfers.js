@@ -37,6 +37,9 @@ function getComponent(options) {
         transactionType: options.type
       };
     },
+    destroyed: function () {
+      this.transactionCollection.destroy();
+    },
     methods: {
       toBlockchainUnits: function (amount, recordType) {
         let value = Number(amount) / Number(mainInfo.cryptocurrency.unit);

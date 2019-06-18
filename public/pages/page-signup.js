@@ -22,6 +22,9 @@ function getPageComponent(pageOptions) {
         mainInfo
       };
     },
+    destroyed: function () {
+      this.accountCollection.destroy();
+    },
     methods: {
       signup: async function () {
         let details = {

@@ -38,6 +38,9 @@ function getComponent(options) {
         withdrawalType: options.type
       };
     },
+    destroyed: function () {
+      this.withdrawalCollection.destroy();
+    },
     methods: {
       toBlockchainUnits: function (amount) {
         let value = Number(amount) / Number(mainInfo.cryptocurrency.unit);
