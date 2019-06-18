@@ -326,7 +326,7 @@ const databaseName = envConfig.databaseName || 'crypticle';
             token.admin = true;
           }
           socket.setAuthToken(token, {expiresIn: TOKEN_EXPIRY_SECONDS});
-          request.end();
+          request.end({accountId: accountData.id});
         }
       })();
 
@@ -532,7 +532,7 @@ const databaseName = envConfig.databaseName || 'crypticle';
             token.impersonator = realAccountId;
           }
           socket.setAuthToken(token, {expiresIn: TOKEN_EXPIRY_SECONDS});
-          request.end();
+          request.end({accountId: accountData.id});
         }
       })();
 
