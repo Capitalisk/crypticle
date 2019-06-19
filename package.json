@@ -24,7 +24,7 @@
     "jsonschema": "^1.2.4",
     "morgan": "^1.7.0",
     "nodemon": "^1.18.9",
-    "risejs": "^1.4.1",
+    "risejs": "^1.5.1",
     "sc-errors": "^2.0.0",
     "sc-hasher": "^1.0.1",
     "serve-static": "^1.13.2",
