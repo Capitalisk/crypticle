@@ -9,6 +9,7 @@
     }
   ],
   "dependencies": {
+    "@liskhq/lisk-passphrase": "^2.0.0",
     "ag-crud-rethink": "^2.4.2",
     "agc-broker-client": "^5.4.1",
     "async-stream-emitter": "^3.0.3",
@@ -30,7 +31,10 @@
     "serve-static": "^1.13.2",
     "tweetnacl": "^1.0.1",
     "uuid": "^3.3.2",
-    "writable-consumable-stream": "^1.1.1"
+    "writable-consumable-stream": "^1.1.1",
+    "@liskhq/lisk-cryptography": "latest",
+    "@liskhq/lisk-api-client": "latest",
+    "@liskhq/lisk-transactions": "latest"
   },
   "keywords": [
     "websocket",
