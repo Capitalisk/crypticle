@@ -46,7 +46,7 @@ class AccountService extends AsyncStreamEmitter {
     this.crud = options.crud;
     this.lastBlockHeight = 0;
 
-    this.blockchainAdapterPath = options.blockchainAdapterPath || '../adapters/rise-adapter.js';
+    this.blockchainAdapterPath = options.blockchainAdapterPath;
     const BlockchainAdapter = require(this.blockchainAdapterPath);
 
     this.blockchainAdapter = new BlockchainAdapter({

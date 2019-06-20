@@ -1,9 +1,9 @@
 const http = require('http');
+const path = require('path');
 const eetase = require('eetase');
 const asyngularServer = require('asyngular-server');
 const express = require('express');
 const serveStatic = require('serve-static');
-const path = require('path');
 const morgan = require('morgan');
 const uuid = require('uuid');
 const agcBrokerClient = require('agc-broker-client');
@@ -15,16 +15,8 @@ const prompt = inquirer.createPromptModule();
 const getDataSchema = require('./schemas/data-schema');
 const getRPCSchema = require('./schemas/rpc-schema');
 
-const configDev = require('./configs/config.dev');
-const configProd = require('./configs/config.prod');
-const config = {
-  dev: configDev,
-  prod: configProd
-};
-
-const AccountService = require('./services/account-service');
-
 const ENVIRONMENT = process.env.ENV || 'dev';
+const BLOCKCHAIN = process.env.BLOCKCHAIN || 'rise';
 const ASYNGULAR_PORT = process.env.ASYNGULAR_PORT || 8000;
 const ASYNGULAR_WS_ENGINE = process.env.ASYNGULAR_WS_ENGINE || 'ws';
 const ASYNGULAR_SOCKET_CHANNEL_LIMIT = Number(process.env.ASYNGULAR_SOCKET_CHANNEL_LIMIT) || 1000;
@@ -43,6 +35,15 @@ const AGC_STATE_SERVER_ACK_TIMEOUT = Number(process.env.AGC_STATE_SERVER_ACK_TIM
 const AGC_STATE_SERVER_RECONNECT_RANDOMNESS = Number(process.env.AGC_STATE_SERVER_RECONNECT_RANDOMNESS) || null;
 const AGC_PUB_SUB_BATCH_DURATION = Number(process.env.AGC_PUB_SUB_BATCH_DURATION) || null;
 const AGC_BROKER_RETRY_DELAY = Number(process.env.AGC_BROKER_RETRY_DELAY) || null;
+
+const configDev = require(`./blockchains/${BLOCKCHAIN}/config.dev`);
+const configProd = require(`./blockchains/${BLOCKCHAIN}/config.prod`);
+const config = {
+  dev: configDev,
+  prod: configProd
+};
+
+const AccountService = require('./services/account-service');
 
 const envConfig = config[ENVIRONMENT];
 const databaseName = envConfig.databaseName || 'crypticle';
@@ -153,7 +154,8 @@ const authTokenExpiry = Math.round(envConfig.authTokenExpiry / 1000);
     mainInfo: envConfig.mainInfo,
     shardInfo,
     blockchainNodeWalletPassphrase,
-    secretSignupKey: envConfig.secretSignupKey
+    secretSignupKey: envConfig.secretSignupKey,
+    blockchainAdapterPath: path.resolve(__dirname, 'blockchains', BLOCKCHAIN, `adapter.js`)
   });
 
   (async () => {
