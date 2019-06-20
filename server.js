@@ -73,7 +73,8 @@ const databaseName = envConfig.databaseName || 'crypticle';
   let rpcSchema = getRPCSchema();
 
   let agOptions = {
-    batchInterval: 50
+    batchInterval: 50,
+    authKey: envConfig.authKey
   };
 
   if (process.env.ASYNGULAR_OPTIONS) {
