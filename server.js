@@ -44,10 +44,10 @@ const AGC_STATE_SERVER_RECONNECT_RANDOMNESS = Number(process.env.AGC_STATE_SERVE
 const AGC_PUB_SUB_BATCH_DURATION = Number(process.env.AGC_PUB_SUB_BATCH_DURATION) || null;
 const AGC_BROKER_RETRY_DELAY = Number(process.env.AGC_BROKER_RETRY_DELAY) || null;
 
-const TOKEN_EXPIRY_SECONDS = 60 * 60;
-
 const envConfig = config[ENVIRONMENT];
 const databaseName = envConfig.databaseName || 'crypticle';
+
+const authTokenExpiry = Math.round(envConfig.authTokenExpiry / 1000);
 
 (async () => {
   let {blockchainNodeWalletPassphrase} = envConfig.services.account;
@@ -243,6 +243,21 @@ const databaseName = envConfig.databaseName || 'crypticle';
     }
   })();
 
+  (async () => {
+    for await (let {socket} of agServer.listener('disconnection')) {
+      if (socket.authTokenRenewalIntervalId != null) {
+        clearInterval(socket.authTokenRenewalIntervalId);
+      }
+    }
+  })();
+
+  function renewAuthToken(socket) {
+    if (socket.authToken) {
+      let {exp, iat, ...tokenData} = socket.authToken;
+      socket.setAuthToken(tokenData, {expiresIn: authTokenExpiry});
+    }
+  }
+
   // Asyngular/WebSocket connection handling loop.
   (async () => {
     for await (let {socket} of agServer.listener('connection')) {
@@ -250,6 +265,13 @@ const databaseName = envConfig.databaseName || 'crypticle';
 
       // Batch everything to improve performance.
       socket.startBatching();
+
+      renewAuthToken(socket);
+
+      // Refresh the token on an interval so long as the socket is connected.
+      socket.authTokenRenewalIntervalId = setInterval(() => {
+        renewAuthToken(socket);
+      }, envConfig.authTokenRenewalInterval);
 
       (async () => {
         for await (let request of socket.procedure('signup')) {
@@ -326,7 +348,7 @@ const databaseName = envConfig.databaseName || 'crypticle';
           if (accountData.admin) {
             token.admin = true;
           }
-          socket.setAuthToken(token, {expiresIn: TOKEN_EXPIRY_SECONDS});
+          socket.setAuthToken(token, {expiresIn: authTokenExpiry});
           request.end({accountId: accountData.id});
         }
       })();
@@ -532,7 +554,7 @@ const databaseName = envConfig.databaseName || 'crypticle';
           if (!isOwnAdminAccount) {
             token.impersonator = realAccountId;
           }
-          socket.setAuthToken(token, {expiresIn: TOKEN_EXPIRY_SECONDS});
+          socket.setAuthToken(token, {expiresIn: authTokenExpiry});
           request.end({accountId: accountData.id});
         }
       })();

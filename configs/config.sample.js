@@ -2,6 +2,8 @@ module.exports = {
   secretSignupKey: '313e7cc1-ad75-4030-a927-6a09f39c1603',
   databaseName: 'crypticle_rise',
   authKey: '15d16361-6402-41a5-8840-d2a330b8ea40',
+  authTokenExpiry: 30000,
+  authTokenRenewalInterval: 20000,
   maxSocketBackpressure: 1000,
   services: {
     account: {
