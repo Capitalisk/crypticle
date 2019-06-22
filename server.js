@@ -17,6 +17,8 @@ const getRPCSchema = require('./schemas/rpc-schema');
 
 const ENVIRONMENT = process.env.ENV || 'dev';
 const BLOCKCHAIN = process.env.BLOCKCHAIN || 'rise';
+const SYNC_FROM_BLOCK_HEIGHT = Number(process.env.SYNC_FROM_BLOCK_HEIGHT) || null;
+
 const ASYNGULAR_PORT = process.env.ASYNGULAR_PORT || 8000;
 const ASYNGULAR_WS_ENGINE = process.env.ASYNGULAR_WS_ENGINE || 'ws';
 const ASYNGULAR_SOCKET_CHANNEL_LIMIT = Number(process.env.ASYNGULAR_SOCKET_CHANNEL_LIMIT) || 1000;
@@ -128,9 +130,9 @@ const authTokenExpiry = Math.round(envConfig.authTokenExpiry / 1000);
     defaultPageSize: 10,
     schema: dataSchema,
     thinkyOptions: {
-      host: '127.0.0.1',
+      host: envConfig.databaseHost || '127.0.0.1',
       db: databaseName,
-      port: 28015
+      port: envConfig.databasePort || 28015
     }
   };
 
@@ -155,7 +157,8 @@ const authTokenExpiry = Math.round(envConfig.authTokenExpiry / 1000);
     shardInfo,
     blockchainNodeWalletPassphrase,
     secretSignupKey: envConfig.secretSignupKey,
-    blockchainAdapterPath: path.resolve(__dirname, 'blockchains', BLOCKCHAIN, `adapter.js`)
+    blockchainAdapterPath: path.resolve(__dirname, 'blockchains', BLOCKCHAIN, `adapter.js`),
+    syncFromBlockHeight: SYNC_FROM_BLOCK_HEIGHT
   });
 
   (async () => {

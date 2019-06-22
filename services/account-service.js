@@ -45,6 +45,7 @@ class AccountService extends AsyncStreamEmitter {
     this.thinky = options.thinky;
     this.crud = options.crud;
     this.lastBlockHeight = 0;
+    this.syncFromBlockHeight = options.syncFromBlockHeight;
 
     this.blockchainAdapterPath = options.blockchainAdapterPath;
     const BlockchainAdapter = require(this.blockchainAdapterPath);
@@ -90,11 +91,24 @@ class AccountService extends AsyncStreamEmitter {
       }
     })();
 
-    if (this.blockchainSync) {
-      this.startBlockchainSyncInterval();
-    }
-    this.startSettlementInterval();
-    this.startWithdrawalInterval();
+    (async () => {
+      if (this.syncFromBlockHeight != null) {
+        try {
+          let state = await this.readStateFromFile();
+          await this.writeStateToFile({
+            ...state,
+            syncFromBlockHeight: this.syncFromBlockHeight
+          });
+        } catch (error) {
+          this.emit('error', {error});
+        }
+      }
+      if (this.blockchainSync) {
+        this.startBlockchainSyncInterval();
+      }
+      this.startSettlementInterval();
+      this.startWithdrawalInterval();
+    })();
   }
 
   async getAccountsByDepositWalletAddress(walletAddress) {
@@ -529,14 +543,25 @@ class AccountService extends AsyncStreamEmitter {
     return accountData;
   }
 
+  async readStateFromFile() {
+    return JSON.parse(
+      await readFile(STATE_FILE_PATH, {
+        encoding: 'utf8'
+      })
+    );
+  }
+
+  async writeStateToFile(state) {
+    await writeFile(
+      STATE_FILE_PATH,
+      JSON.stringify(state, ' ', 2)
+    );
+  }
+
   async processBlockchainDeposits() {
     let state;
     try {
-      state = JSON.parse(
-        await readFile(STATE_FILE_PATH, {
-          encoding: 'utf8'
-        })
-      );
+      state = await this.readStateFromFile();
     } catch (error) {
       this.emit('info', {
         info: `Could not find a valid state file at path ${STATE_FILE_PATH}. A new one will be created.`
@@ -597,17 +622,10 @@ class AccountService extends AsyncStreamEmitter {
       syncFromBlockHeight = lastBlock.height;
     }
 
-    await writeFile(
-      STATE_FILE_PATH,
-      JSON.stringify(
-        {
-          ...state,
-          syncFromBlockHeight
-        },
-        ' ',
-        2
-      )
-    );
+    await this.writeStateToFile({
+      ...state,
+      syncFromBlockHeight
+    });
 
     return safeHeightDiff > 0;
   }

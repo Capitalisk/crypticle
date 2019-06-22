@@ -418,8 +418,7 @@ if (command === 'create') {
   let projectPath = arg1 || '.';
   let absoluteProjectPath = path.resolve(projectPath);
   let absoluteBlockchainSrcPath = path.resolve(absoluteProjectPath, 'blockchains');
-  let pkg = parsePackageFile(projectPath);
-  let serviceName = pkg.name;
+  let serviceName = path.parse(absoluteProjectPath).base;
 
   let portNumber = Number(argv.p) || 8000;
   let envVarList;
@@ -464,8 +463,7 @@ if (command === 'create') {
   if (!serviceName) {
     let projectPath = '.';
     let absoluteProjectPath = path.resolve(projectPath);
-    let pkg = parsePackageFile(projectPath);
-    serviceName = pkg.name;
+    serviceName = path.parse(absoluteProjectPath).base;
   }
   try {
     execSync(`docker stop ${serviceName}`, {stdio: 'ignore'});
@@ -483,8 +481,7 @@ if (command === 'create') {
   if (!serviceName) {
     let projectPath = '.';
     let absoluteProjectPath = path.resolve(projectPath);
-    let pkg = parsePackageFile(projectPath);
-    serviceName = pkg.name;
+    serviceName = path.parse(absoluteProjectPath).base;
   }
   try {
     execSync(`docker stop ${serviceName}`);
@@ -508,8 +505,7 @@ if (command === 'create') {
   if (!serviceName) {
     let projectPath = '.';
     let absoluteProjectPath = path.resolve(projectPath);
-    let pkg = parsePackageFile(projectPath);
-    serviceName = pkg.name;
+    serviceName = path.parse(absoluteProjectPath).base;
   }
   let command = exec(`docker logs ${serviceName}${commandRawArgsString}`, (err) => {
     if (err) {
@@ -522,8 +518,7 @@ if (command === 'create') {
 } else if (command === 'deploy' || command === 'deploy-update') {
   let projectPath = arg1 || '.';
   let absoluteProjectPath = path.resolve(projectPath);
-  let pkg = parsePackageFile(projectPath);
-  let serviceName = pkg.name;
+  let serviceName = path.parse(absoluteProjectPath).base;
 
   let isUpdate = (command === 'deploy-update');
 
@@ -776,9 +771,8 @@ if (command === 'create') {
   }
 } else if (command === 'undeploy') {
   let projectPath = arg1 || '.';
-
-  let pkg = parsePackageFile(projectPath);
-  let serviceName = pkg.name;
+  let absoluteProjectPath = path.resolve(projectPath);
+  let serviceName = path.parse(absoluteProjectPath).base;
 
   let kubernetesDirPath = projectPath + '/kubernetes';
   let kubeFiles = fs.readdirSync(kubernetesDirPath);

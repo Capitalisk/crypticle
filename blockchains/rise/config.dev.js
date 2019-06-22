@@ -1,6 +1,8 @@
 module.exports = {
   secretSignupKey: '313e7cc1-ad75-4030-a927-6a09f39c1603',
   databaseName: 'crypticle',
+  databaseHost: '127.0.0.1',
+  databasePort: 28015,
   authKey: '15d16361-6402-41a5-8840-d2a330b8ea40',
   authTokenExpiry: 3600000,
   authTokenRenewalInterval: 20000,
