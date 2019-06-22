@@ -44,5 +44,8 @@
     "start": "node server.js",
     "start:watch": "./node_modules/nodemon/bin/nodemon.js server.js",
     "start:docker": "./node_modules/nodemon/bin/nodemon.js /usr/src/app/server.js"
+  },
+  "bin": {
+    "crypticle": "bin/cli.js"
   }
 }
