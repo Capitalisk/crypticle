@@ -1,6 +1,6 @@
 {
   "name": "crypticle",
-  "description": "Blockchain token to centralized credit converter",
+  "description": "Scalable multi-tenant pegged off-chain payment microservice with realtime API",
   "version": "1.0.0",
   "contributors": [
     {
