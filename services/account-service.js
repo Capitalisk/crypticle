@@ -573,11 +573,10 @@ class AccountService extends AsyncStreamEmitter {
     }
 
     try {
-      blocks = await this.blockchainAdapter.fetchBlocks({
-        orderBy: 'height:asc',
-        offset: syncFromBlockHeight,
-        limit: this.blockFetchLimit - safeHeightDiff
-      });
+      blocks = await this.blockchainAdapter.fetchBlocks(
+        syncFromBlockHeight,
+        this.blockFetchLimit - safeHeightDiff
+      );
     } catch (error) {
       this.emit('error', {error});
       return false;

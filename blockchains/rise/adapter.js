@@ -33,7 +33,14 @@ class RiseAdapter {
     return (await rise.blocks.getHeight()).height;
   }
 
-  async fetchBlocks(queryParams) {
+  // offset is the block height from which to start fetching.
+  // limit is the number of blocks to fetch.
+  async fetchBlocks(offset, limit) {
+    let queryParams = {
+      orderBy: 'height:asc',
+      offset,
+      limit
+    };
     return (await rise.blocks.getBlocks(queryParams)).blocks;
   }
 
