@@ -17,9 +17,11 @@
     "bcryptjs": "^2.4.3",
     "bip39": "^3.0.1",
     "connect": "^3.6.6",
+    "crypticle-blockchains": "file:blockchains",
     "dpos-offline": "^2.0.7",
     "eetase": "^3.0.1",
     "express": "^4.16.3",
+    "fs-extra": "^8.0.1",
     "inquirer": "^6.3.1",
     "jsonschema": "^1.2.4",
     "morgan": "^1.7.0",
@@ -30,7 +32,8 @@
     "serve-static": "^1.13.2",
     "tweetnacl": "^1.0.1",
     "uuid": "^3.3.2",
-    "writable-consumable-stream": "^1.1.1"
+    "writable-consumable-stream": "^1.1.1",
+    "yamljs": "^0.3.0"
   },
   "keywords": [
     "websocket",

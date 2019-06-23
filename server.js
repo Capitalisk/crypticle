@@ -9,6 +9,7 @@ const uuid = require('uuid');
 const agcBrokerClient = require('agc-broker-client');
 const agCrudRethink = require('ag-crud-rethink');
 const Validator = require('jsonschema').Validator;
+const AccountService = require('./services/account-service');
 
 const getDataSchema = require('./schemas/data-schema');
 const getRPCSchema = require('./schemas/rpc-schema');
@@ -37,18 +38,23 @@ const AGC_STATE_SERVER_RECONNECT_RANDOMNESS = Number(process.env.AGC_STATE_SERVE
 const AGC_PUB_SUB_BATCH_DURATION = Number(process.env.AGC_PUB_SUB_BATCH_DURATION) || null;
 const AGC_BROKER_RETRY_DELAY = Number(process.env.AGC_BROKER_RETRY_DELAY) || null;
 
-const configDev = require(`./blockchains/${BLOCKCHAIN}/config.dev`);
-const configProd = require(`./blockchains/${BLOCKCHAIN}/config.prod`);
-const config = {
-  dev: configDev,
-  prod: configProd
-};
+let envConfig;
 
-const AccountService = require('./services/account-service');
+try {
+  // A config file attached via a Docker/K8s volume have priority.
+  envConfig = require(`./config/config.${ENVIRONMENT}.json`);
+} catch (error) {
+  const configDev = require(`./blockchains/${BLOCKCHAIN}/config.dev.json`);
+  const configProd = require(`./blockchains/${BLOCKCHAIN}/config.prod.json`);
+  const config = {
+    dev: configDev,
+    prod: configProd
+  };
 
-const envConfig = config[ENVIRONMENT];
+  envConfig = config[ENVIRONMENT];
+}
+
 const databaseName = envConfig.databaseName || 'crypticle';
-
 const authTokenExpiry = Math.round(envConfig.authTokenExpiry / 1000);
 
 if (

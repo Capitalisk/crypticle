@@ -1,2 +1,5 @@
+node_modules/
+blockchains/node_modules/
+package-lock.json
 crypticle-k8s.json
 state.json

@@ -193,6 +193,8 @@ let sourceBlockchainDir = supportedBlockchains[targetBlockchain] ? targetBlockch
 let wd = process.cwd();
 
 let destDir = path.normalize(`${wd}/${arg1}`);
+let dockerfileSourceDir = path.resolve(__dirname, '..', 'Dockerfile');
+let dockerfileDestDir = path.resolve(destDir, 'Dockerfile');
 let dockerignoreSourceDir = path.resolve(__dirname, '..', '.dockerignore');
 let dockerignoreDestDir = path.resolve(destDir, '.dockerignore');
 let blockchainsSourceDir = path.resolve(__dirname, '..', 'blockchains', sourceBlockchainDir);
@@ -252,6 +254,7 @@ let confirmReplaceSetup = function (confirm) {
       rmdirRecursive(destDir) &&
       copyDirRecursive(blockchainsSourceDir, blockchainsDestDir) &&
       copyDirRecursive(kubernetesSourceDir, kubernetesDestDir) &&
+      copyDirRecursive(dockerfileSourceDir, dockerfileDestDir) &&
       copyDirRecursive(dockerignoreSourceDir, dockerignoreDestDir)
     ) {
       createSuccess();
@@ -354,10 +357,13 @@ if (command === 'create') {
       let kubeConfContentAGCWorker = fs.readFileSync(kubeConfAGCWorker, {encoding: 'utf8'});
       let deploymentConfAGCWorker = YAML.parse(kubeConfContentAGCWorker);
 
-      deploymentConfAGCWorker.spec.template.spec.volumes = [{
+      if (!deploymentConfAGCWorker.spec.template.spec.volumes) {
+        deploymentConfAGCWorker.spec.template.spec.volumes = [];
+      }
+      deploymentConfAGCWorker.spec.template.spec.volumes.push({
         name: 'blockchain-src-volume',
         emptyDir: {}
-      }];
+      });
       let containers = deploymentConfAGCWorker.spec.template.spec.containers;
       let templateSpec = deploymentConfAGCWorker.spec.template.spec;
       if (!templateSpec.initContainers) {
@@ -381,6 +387,33 @@ if (command === 'create') {
       containers[serviceWorkerContainerIndex].env.push({
         name: 'BLOCKCHAIN',
         value: targetBlockchain
+      });
+      containers[serviceWorkerContainerIndex].env.push({
+        name: 'SECRET_SIGNUP_KEY',
+        valueFrom: {
+          secretKeyRef: {
+            name: 'crypticle-secret',
+            key: 'SECRET_SIGNUP_KEY'
+          }
+        }
+      });
+      containers[serviceWorkerContainerIndex].env.push({
+        name: 'AUTH_KEY',
+        valueFrom: {
+          secretKeyRef: {
+            name: 'crypticle-secret',
+            key: 'AUTH_KEY'
+          }
+        }
+      });
+      containers[serviceWorkerContainerIndex].env.push({
+        name: 'BLOCKCHAIN_WALLET_PASSPHRASE',
+        valueFrom: {
+          secretKeyRef: {
+            name: 'crypticle-secret',
+            key: 'BLOCKCHAIN_WALLET_PASSPHRASE'
+          }
+        }
       });
       initContainers.push({
         name: 'blockchain-src-container',
@@ -413,6 +446,7 @@ if (command === 'create') {
       if (
         copyDirRecursive(blockchainsSourceDir, blockchainsDestDir) &&
         copyDirRecursive(kubernetesSourceDir, kubernetesDestDir) &&
+        copyDirRecursive(dockerfileSourceDir, dockerfileDestDir) &&
         copyDirRecursive(dockerignoreSourceDir, dockerignoreDestDir)
       ) {
         transformK8sConfigs((err) => {

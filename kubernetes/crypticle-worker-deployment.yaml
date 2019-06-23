@@ -18,7 +18,7 @@ spec:
           image: 'socketcluster/crypticle:v1.1.2'
           ports:
             -
-              name: crypticle-worker
+              name: worker-port
               containerPort: 8000
           env:
             -
@@ -35,33 +35,21 @@ spec:
           readinessProbe:
             httpGet:
               path: /health-check
-              port: crypticle-worker
+              port: worker-port
             initialDelaySeconds: 5
             timeoutSeconds: 10
           livenessProbe:
             httpGet:
               path: /health-check
-              port: crypticle-worker
+              port: worker-port
             initialDelaySeconds: 15
             timeoutSeconds: 20
           volumeMounts:
             -
-              mountPath: /usr/src/app
-              name: app-src-volume
+              name: config-volume
+              mountPath: /usr/src/config
       volumes:
         -
-          name: app-src-volume
-          emptyDir: {}
-      initContainers:
-        -
-          name: app-src-container
-          image: ""
-          volumeMounts:
-            -
-              mountPath: /usr/dest
-              name: app-src-volume
-          command:
-            - cp
-            - '-a'
-            - /usr/src/.
-            - /usr/dest/
+          name: config-volume
+          configMap:
+            name: crypticle-config
