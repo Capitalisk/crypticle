@@ -21,7 +21,7 @@ class AccountService extends AsyncStreamEmitter {
 
     this.thinky = options.thinky;
     this.crud = options.crud;
-    this.mainInfo = options.mainInfo;
+    this.publicInfo = options.publicInfo;
     this.shardInfo = options.shardInfo;
     this.settlementInterval = options.transactionSettlementInterval;
     this.withdrawalInterval = options.withdrawalProcessingInterval;
@@ -32,15 +32,15 @@ class AccountService extends AsyncStreamEmitter {
     this.secretSignupKey = options.secretSignupKey;
     this.bcryptPasswordRounds = options.bcryptPasswordRounds;
 
-    this.mainWalletAddress = options.mainInfo.mainWalletAddress;
-    this.requiredDepositBlockConfirmations = options.mainInfo.requiredDepositBlockConfirmations;
-    this.requiredWithdrawalBlockConfirmations = options.mainInfo.requiredWithdrawalBlockConfirmations;
-    this.alwaysRequireSecretSignupKey = options.mainInfo.alwaysRequireSecretSignupKey;
-    this.enableAdminAccountSignup = options.mainInfo.enableAdminAccountSignup;
+    this.mainWalletAddress = options.publicInfo.mainWalletAddress;
+    this.requiredDepositBlockConfirmations = options.publicInfo.requiredDepositBlockConfirmations;
+    this.requiredWithdrawalBlockConfirmations = options.publicInfo.requiredWithdrawalBlockConfirmations;
+    this.alwaysRequireSecretSignupKey = options.publicInfo.alwaysRequireSecretSignupKey;
+    this.enableAdminAccountSignup = options.publicInfo.enableAdminAccountSignup;
     this.blockPollInterval = options.blockPollInterval;
     this.blockFetchLimit = options.blockFetchLimit;
     this.blockchainSync = options.blockchainSync;
-    this.blockchainNodeWalletPassphrase = options.blockchainNodeWalletPassphrase;
+    this.blockchainWalletPassphrase = options.blockchainWalletPassphrase;
     this.shardInfo = options.shardInfo;
     this.thinky = options.thinky;
     this.crud = options.crud;
@@ -1009,7 +1009,7 @@ class AccountService extends AsyncStreamEmitter {
         amount: withdrawal.amount,
         recipient: withdrawal.toWalletAddress
       },
-      this.blockchainNodeWalletPassphrase
+      this.blockchainWalletPassphrase
     );
 
     let fees = await this.blockchainAdapter.fetchFees(signedTransaction);

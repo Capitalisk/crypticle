@@ -2,7 +2,7 @@ import AGModel from '/node_modules/ag-model/ag-model.js';
 import AGCollection from '/node_modules/ag-collection/ag-collection.js';
 
 function getComponent(options) {
-  let {socket, mainInfo} = options;
+  let {socket, publicInfo} = options;
 
   return {
     data: function () {
@@ -19,7 +19,7 @@ function getComponent(options) {
       })();
 
       return {
-        mainInfo,
+        publicInfo,
         account: this.accountModel.value,
         isImpersonating: socket.authToken && !!socket.authToken.impersonator
       };
@@ -29,7 +29,7 @@ function getComponent(options) {
     },
     methods: {
       toBlockchainUnits: function (amount) {
-        let value = Number(amount) / Number(mainInfo.cryptocurrency.unit);
+        let value = Number(amount) / Number(publicInfo.cryptocurrency.unit);
         return Math.round(value * 10000) / 10000;
       },
       capitalize: function (message) {
@@ -41,7 +41,7 @@ function getComponent(options) {
         if (this.account.username == null) {
           return 'Loading...';
         }
-        return `${this.toBlockchainUnits(this.account.balance)} ${this.mainInfo.cryptocurrency.symbol}`;
+        return `${this.toBlockchainUnits(this.account.balance)} ${this.publicInfo.cryptocurrency.symbol}`;
       }
     },
     template: `
@@ -71,7 +71,7 @@ function getComponent(options) {
             </tr>
             <tr>
               <td>
-                <b>Deposit wallet address ({{mainInfo.cryptocurrency.symbol}})</b>
+                <b>Deposit wallet address ({{publicInfo.cryptocurrency.symbol}})</b>
               </td>
               <td>{{account.depositWalletAddress}}</td>
             </tr>

@@ -12,7 +12,7 @@ socket.startBatching();
 
 let pageOptions = {
   socket,
-  mainInfo: {
+  publicInfo: {
     cryptocurrency: {},
     mainWalletAddress: null,
     requiredDepositBlockConfirmations: null,
@@ -25,13 +25,13 @@ let pageOptions = {
 };
 
 (async () => {
-  let mainInfo;
+  let publicInfo;
   try {
-    mainInfo = await socket.invoke('getMainInfo');
+    publicInfo = await socket.invoke('getMainInfo');
   } catch (error) {
     console.error(error);
   }
-  Object.assign(pageOptions.mainInfo, mainInfo);
+  Object.assign(pageOptions.publicInfo, publicInfo);
 })();
 
 let PageHome = getHomePageComponent(pageOptions);
@@ -101,7 +101,7 @@ new Vue({
   router,
   data: function () {
     return {
-      mainInfo: pageOptions.mainInfo,
+      publicInfo: pageOptions.publicInfo,
       isAuthenticated: false,
       isAdmin: false
     };
@@ -170,7 +170,7 @@ new Vue({
             <div class="buttons">
               <a class="button is-link" href="#/console" v-bind:disabled="isOnPage('/console')">Console</a>
               <a v-if="isAdmin" class="button is-primary" v-bind:href="impersonatePath" v-bind:disabled="isOnPage('/impersonate')">Impersonate</a>
-              <a v-if="mainInfo.enableAdminAccountSignup" class="button is-primary" href="#/signup/admin" v-bind:disabled="isOnPage('/signup/admin')">Signup admin</a>
+              <a v-if="publicInfo.enableAdminAccountSignup" class="button is-primary" href="#/signup/admin" v-bind:disabled="isOnPage('/signup/admin')">Signup admin</a>
               <a class="button is-primary" href="#/signup" v-bind:disabled="isOnPage('/signup')">Signup</a>
               <a v-if="!isAuthenticated" class="button is-primary" v-bind:href="loginPath" v-bind:disabled="isOnPage('/login')">Login</a>
               <input v-if="isAuthenticated" type="button" class="button is-primary" value="Logout" @click="logout">

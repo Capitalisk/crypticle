@@ -2,7 +2,7 @@ import AGModel from '/node_modules/ag-model/ag-model.js';
 import AGCollection from '/node_modules/ag-collection/ag-collection.js';
 
 function getComponent(options) {
-  let {socket, mainInfo} = options;
+  let {socket, publicInfo} = options;
   let view;
 
   if (options.type === 'pending') {
@@ -23,7 +23,7 @@ function getComponent(options) {
         fields: ['transactionId', 'amount', 'height', 'toWalletAddress', 'attemptCount', 'canceled', 'createdDate'],
         pageOffset: 0,
         pageSize: 10,
-        getCount: mainInfo.paginationShowTotalCounts
+        getCount: publicInfo.paginationShowTotalCounts
       });
       (async () => {
         for await (let {error} of this.withdrawalCollection.listener('error')) {
@@ -32,7 +32,7 @@ function getComponent(options) {
       })();
 
       return {
-        mainInfo,
+        publicInfo,
         withdrawals: this.withdrawalCollection.value,
         withdrawalsMeta: this.withdrawalCollection.meta,
         withdrawalType: options.type
@@ -43,7 +43,7 @@ function getComponent(options) {
     },
     methods: {
       toBlockchainUnits: function (amount) {
-        let value = Number(amount) / Number(mainInfo.cryptocurrency.unit);
+        let value = Number(amount) / Number(publicInfo.cryptocurrency.unit);
         return Math.round(value * 10000) / 10000;
       },
       toSimpleDate: function (dateString) {
@@ -74,7 +74,7 @@ function getComponent(options) {
       }
     },
     watch: {
-      'mainInfo.paginationShowTotalCounts': function (value) {
+      'publicInfo.paginationShowTotalCounts': function (value) {
         this.withdrawalCollection.getCount = value;
       }
     },
@@ -98,7 +98,7 @@ function getComponent(options) {
               <template v-for="wit of withdrawals">
                 <tr v-bind:class="{'table-row-failure': wit.canceled}">
                   <td class="table-cell-id table-first-column">{{wit.id}}</td>
-                  <td class="table-cell-amount">{{toBlockchainUnits(wit.amount)}}<span v-if="mainInfo.cryptocurrency"> {{mainInfo.cryptocurrency.symbol}}</span></td>
+                  <td class="table-cell-amount">{{toBlockchainUnits(wit.amount)}}<span v-if="publicInfo.cryptocurrency"> {{publicInfo.cryptocurrency.symbol}}</span></td>
                   <td v-if="withdrawalType === 'settled'" class="table-cell-height">{{wit.height}}</td>
                   <td>{{wit.toWalletAddress}}</td>
                   <td v-if="withdrawalType === 'pending'">{{wit.attemptCount}}</td>
@@ -112,7 +112,7 @@ function getComponent(options) {
           </table>
         </div>
         <input type="button" class="button" value="Previous page" v-bind:disabled="!withdrawalsMeta.pageOffset" @click="goToPrevPage" />
-        <div class="paginator-text">Items <b>{{firstItemIndex}}</b> to <b>{{lastItemIndex}}</b><span v-if="mainInfo.paginationShowTotalCounts"> of <b>{{withdrawalsMeta.count}}</b></span></div>
+        <div class="paginator-text">Items <b>{{firstItemIndex}}</b> to <b>{{lastItemIndex}}</b><span v-if="publicInfo.paginationShowTotalCounts"> of <b>{{withdrawalsMeta.count}}</b></span></div>
         <input type="button" class="button" value="Next page" v-bind:disabled="withdrawalsMeta.isLastPage" @click="goToNextPage" />
       </div>
     `

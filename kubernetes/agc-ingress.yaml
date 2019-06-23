@@ -14,5 +14,5 @@ spec:
     -
       secretName: agc-tls-credentials
   backend:
-    serviceName: agc-worker
+    serviceName: crypticle-worker
     servicePort: 8000

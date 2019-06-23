@@ -1,7 +1,7 @@
 import AGCollection from '/node_modules/ag-collection/ag-collection.js';
 
 function getPageComponent(pageOptions) {
-  let {socket, mainInfo} = pageOptions;
+  let {socket, publicInfo} = pageOptions;
 
   return {
     data: function () {
@@ -19,7 +19,7 @@ function getPageComponent(pageOptions) {
         password: '',
         secretSignupKey: null,
         showConsoleLink: false,
-        mainInfo
+        publicInfo
       };
     },
     destroyed: function () {

@@ -1,7 +1,7 @@
 import AGCollection from '/node_modules/ag-collection/ag-collection.js';
 
 function getComponent(options) {
-  let {socket, mainInfo} = options;
+  let {socket, publicInfo} = options;
   let view;
 
   if (options.type === 'pending') {
@@ -22,7 +22,7 @@ function getComponent(options) {
         fields: ['type', 'recordType', 'amount', 'counterpartyAccountId', 'data', 'canceled', 'createdDate'],
         pageOffset: 0,
         pageSize: 10,
-        getCount: mainInfo.paginationShowTotalCounts
+        getCount: publicInfo.paginationShowTotalCounts
       });
       (async () => {
         for await (let {error} of this.transactionCollection.listener('error')) {
@@ -31,7 +31,7 @@ function getComponent(options) {
       })();
 
       return {
-        mainInfo,
+        publicInfo,
         transactions: this.transactionCollection.value,
         transactionsMeta: this.transactionCollection.meta,
         transactionType: options.type
@@ -42,7 +42,7 @@ function getComponent(options) {
     },
     methods: {
       toBlockchainUnits: function (amount, recordType) {
-        let value = Number(amount) / Number(mainInfo.cryptocurrency.unit);
+        let value = Number(amount) / Number(publicInfo.cryptocurrency.unit);
         if (recordType === 'debit') {
           value *= -1;
         }
@@ -76,7 +76,7 @@ function getComponent(options) {
       }
     },
     watch: {
-      'mainInfo.paginationShowTotalCounts': function (value) {
+      'publicInfo.paginationShowTotalCounts': function (value) {
         this.transactionCollection.getCount = value;
       }
     },
@@ -101,7 +101,7 @@ function getComponent(options) {
                   <td class="table-cell-id table-first-column">{{transaction.id}}</td>
                   <td>{{transaction.counterpartyAccountId}}</td>
                   <td class="table-cell-data">{{transaction.data}}</td>
-                  <td class="table-cell-amount">{{toBlockchainUnits(transaction.amount, transaction.recordType)}}<span v-if="mainInfo.cryptocurrency"> {{mainInfo.cryptocurrency.symbol}}</span></td>
+                  <td class="table-cell-amount">{{toBlockchainUnits(transaction.amount, transaction.recordType)}}<span v-if="publicInfo.cryptocurrency"> {{publicInfo.cryptocurrency.symbol}}</span></td>
                   <td class="table-cell-date">{{toSimpleDate(transaction.createdDate)}}</td>
                 </tr>
               </template>
@@ -112,7 +112,7 @@ function getComponent(options) {
           </table>
         </div>
         <input type="button" class="button" value="Previous page" v-bind:disabled="!transactionsMeta.pageOffset" @click="goToPrevPage" />
-        <div class="paginator-text">Items <b>{{firstItemIndex}}</b> to <b>{{lastItemIndex}}</b><span v-if="mainInfo.paginationShowTotalCounts"> of <b>{{transactionsMeta.count}}</b></span></div>
+        <div class="paginator-text">Items <b>{{firstItemIndex}}</b> to <b>{{lastItemIndex}}</b><span v-if="publicInfo.paginationShowTotalCounts"> of <b>{{transactionsMeta.count}}</b></span></div>
         <input type="button" class="button" value="Next page" v-bind:disabled="transactionsMeta.isLastPage" @click="goToNextPage" />
       </div>
     `

@@ -87,10 +87,13 @@ let showCorrectUsage = function () {
   console.log('  deploy <path>               [requires kubectl] Deploy the service at path to your Kubernetes cluster');
   console.log('  deploy-update <path>        [requires kubectl] Deploy update to an service which was previously deployed');
   console.log('  undeploy <path>             [requires kubectl] Shutdown all core services running on your cluster');
-  console.log('  add-secret                  [requires kubectl] Upload a TLS key and cert pair to your cluster');
+  console.log('  add-tls-secret              [requires kubectl] Upload a TLS key and cert pair to your cluster');
   console.log(`    -s                        Optional secret name; defaults to "${DEFAULT_TLS_SECRET_NAME}"`);
   console.log('    -k                        Path to a key file');
   console.log('    -c                        Path to a certificate file');
+  console.log('  add-secret <name> <value>   [requires kubectl] Upload a secret to your cluster');
+  console.log('                              Crypticle requires the following secrets to be set:');
+  console.log('                              SECRET_SIGNUP_KEY, AUTH_KEY and BLOCKCHAIN_WALLET_PASSPHRASE');
   console.log('  remove-secret               [requires kubectl] Remove a TLS key and cert pair from your cluster');
   console.log(`    -s                        Optional secret name; defaults to "${DEFAULT_TLS_SECRET_NAME}"`);
   console.log('');
@@ -262,7 +265,7 @@ let confirmReplaceSetup = function (confirm) {
 };
 
 let getAGCWorkerDeploymentDefPath = function (kubernetesTargetDir) {
-  return `${kubernetesTargetDir}/agc-worker-deployment.yaml`;
+  return `${kubernetesTargetDir}/crypticle-worker-deployment.yaml`;
 };
 
 let getAGCBrokerDeploymentDefPath = function (kubernetesTargetDir) {
@@ -315,6 +318,20 @@ let uploadTLSSecret = function (secretName, privateKeyPath, certFilePath, errorL
   return true;
 };
 
+let uploadSecret = function (secretName, secretValue, errorLogger) {
+  try {
+    execSync(`kubectl create secret generic ${secretName} –from-literal ${secretValue}`, {stdio: 'inherit'});
+  } catch (err) {
+    errorLogger(
+      'Failed to upload TLS key and certificate pair to Kubernetes. ' +
+      'You can try using the following command to upload them manually: ' +
+      `kubectl create secret tls ${secretName} --key ${privateKeyPath} --cert ${certFilePath}`
+    );
+    return false;
+  }
+  return true;
+};
+
 let removeTLSSecret = function (secretName, errorLogger) {
   try {
     execSync(`kubectl delete secret ${secretName}`, {stdio: 'inherit'});
@@ -349,7 +366,7 @@ if (command === 'create') {
       let initContainers = templateSpec.initContainers;
       let serviceWorkerContainerIndex;
       containers.forEach((value, index) => {
-        if (value && value.name == 'agc-worker') {
+        if (value && value.name == 'crypticle-worker') {
           serviceWorkerContainerIndex = index;
           return;
         }
@@ -649,7 +666,7 @@ if (command === 'create') {
       fs.writeFileSync(kubeConfAGCBroker, formattedYAMLStringAGCBroker);
 
       let ingressKubeFileName = 'agc-ingress.yaml';
-      let agcWorkerDeploymentFileName = 'agc-worker-deployment.yaml';
+      let agcWorkerDeploymentFileName = 'crypticle-worker-deployment.yaml';
 
       let deploySuccess = () => {
         successMessage(
@@ -786,7 +803,7 @@ if (command === 'create') {
   successMessage(`The '${serviceName}' service was undeployed successfully.`);
 
   process.exit();
-} else if (command === 'add-secret') {
+} else if (command === 'add-tls-secret') {
   let secretName = argv.s || DEFAULT_TLS_SECRET_NAME;
   let privateKeyPath = argv.k;
   let certFilePath = argv.c;
@@ -797,6 +814,19 @@ if (command === 'create') {
     let success = uploadTLSSecret(secretName, privateKeyPath, certFilePath, errorMessage);
     if (success) {
       successMessage(`The private key and cert pair were added to your cluster under the secret name "${secretName}".`);
+    }
+  }
+  process.exit();
+} else if (command === 'add-secret') {
+  let secretName = argv._[0];
+  let secretValue = argv._[1];
+
+  if (secretName == null || secretValue == null) {
+    errorMessage(`Failed to upload secret. Both a name and value must be provided.`);
+  } else {
+    let success = uploadTLSSecret(secretName, privateKeyPath, certFilePath, errorMessage);
+    if (success) {
+      successMessage(`The secret was added to your cluster under the name "${secretName}".`);
     }
   }
   process.exit();

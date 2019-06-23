@@ -1,7 +1,7 @@
 import AGCollection from '/node_modules/ag-collection/ag-collection.js';
 
 function getPageComponent(pageOptions) {
-  let {socket, mainInfo} = pageOptions;
+  let {socket, publicInfo} = pageOptions;
 
   return {
     data: function () {
@@ -19,7 +19,7 @@ function getPageComponent(pageOptions) {
         password: '',
         secretSignupKey: null,
         showConsoleLink: false,
-        mainInfo
+        publicInfo
       };
     },
     destroyed: function () {
@@ -69,7 +69,7 @@ function getPageComponent(pageOptions) {
           </label>
           <input id="signup-form-password" type="password" v-model="password" class="input" @keydown.enter="signup">
         </div>
-        <div v-if="mainInfo.alwaysRequireSecretSignupKey" class="field">
+        <div v-if="publicInfo.alwaysRequireSecretSignupKey" class="field">
           <label class="label" for="signup-form-secret-signup-key">
             Secret signup key
           </label>

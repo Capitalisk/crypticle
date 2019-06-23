@@ -1,24 +1,24 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: agc-worker
+  name: crypticle-worker
 spec:
   replicas: 1
   selector:
     matchLabels:
-      component: agc-worker
+      component: crypticle-worker
   template:
     metadata:
       labels:
-        component: agc-worker
+        component: crypticle-worker
     spec:
       containers:
         -
-          name: agc-worker
-          image: 'socketcluster/asyngular:v5.4.2'
+          name: crypticle-worker
+          image: 'socketcluster/crypticle:v1.1.2'
           ports:
             -
-              name: agc-worker
+              name: crypticle-worker
               containerPort: 8000
           env:
             -
@@ -35,13 +35,13 @@ spec:
           readinessProbe:
             httpGet:
               path: /health-check
-              port: agc-worker
+              port: crypticle-worker
             initialDelaySeconds: 5
             timeoutSeconds: 10
           livenessProbe:
             httpGet:
               path: /health-check
-              port: agc-worker
+              port: crypticle-worker
             initialDelaySeconds: 15
             timeoutSeconds: 20
           volumeMounts:
