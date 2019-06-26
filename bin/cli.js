@@ -51,6 +51,10 @@ let parseJSONFile = function (filePath) {
   return {};
 };
 
+let isYAMLFile = function (filePath) {
+  return /[.]ya?ml$/.test(filePath);
+};
+
 let parsePackageFile = function (moduleDir) {
   let packageFile = path.join(moduleDir, 'package.json');
   return parseJSONFile(packageFile);
@@ -91,10 +95,7 @@ let showCorrectUsage = function () {
   console.log(`    -s                        Optional secret name; defaults to "${DEFAULT_TLS_SECRET_NAME}"`);
   console.log('    -k                        Path to a key file');
   console.log('    -c                        Path to a certificate file');
-  console.log('  add-secret <name> <value>   [requires kubectl] Upload a secret to your cluster');
-  console.log('                              Crypticle requires the following secrets to be set:');
-  console.log('                              SECRET_SIGNUP_KEY, AUTH_KEY and BLOCKCHAIN_WALLET_PASSPHRASE');
-  console.log('  remove-secret               [requires kubectl] Remove a TLS key and cert pair from your cluster');
+  console.log('  remove-tls-secret           [requires kubectl] Remove a TLS key and cert pair from your cluster');
   console.log(`    -s                        Optional secret name; defaults to "${DEFAULT_TLS_SECRET_NAME}"`);
   console.log('');
   let extraMessage = 'Note that the path in the commands above is optional - If not provided, ' +
@@ -267,9 +268,11 @@ let confirmReplaceSetup = function (confirm) {
   }
 };
 
-let getAGCWorkerDeploymentDefPath = function (kubernetesTargetDir) {
+let getCrypticleWorkerDeploymentDefPath = function (kubernetesTargetDir) {
   return `${kubernetesTargetDir}/crypticle-worker-deployment.yaml`;
 };
+
+let localPathStorageConfigFileName = 'local-path-storage.yaml';
 
 let getAGCBrokerDeploymentDefPath = function (kubernetesTargetDir) {
   return `${kubernetesTargetDir}/agc-broker-deployment.yaml`;
@@ -352,7 +355,7 @@ let removeTLSSecret = function (secretName, errorLogger) {
 if (command === 'create') {
   let transformK8sConfigs = function (callback) {
     let kubernetesTargetDir = destDir + '/kubernetes';
-    let kubeConfAGCWorker = getAGCWorkerDeploymentDefPath(kubernetesTargetDir);
+    let kubeConfAGCWorker = getCrypticleWorkerDeploymentDefPath(kubernetesTargetDir);
     try {
       let kubeConfContentAGCWorker = fs.readFileSync(kubeConfAGCWorker, {encoding: 'utf8'});
       let deploymentConfAGCWorker = YAML.parse(kubeConfContentAGCWorker);
@@ -674,7 +677,7 @@ if (command === 'create') {
 
       let kubernetesDirPath = projectPath + '/kubernetes';
 
-      let kubeConfAGCWorker = getAGCWorkerDeploymentDefPath(kubernetesDirPath);
+      let kubeConfAGCWorker = getCrypticleWorkerDeploymentDefPath(kubernetesDirPath);
       let kubeConfContentAGCWorker = fs.readFileSync(kubeConfAGCWorker, {encoding: 'utf8'});
 
       let deploymentConfAGCWorker = YAML.parse(kubeConfContentAGCWorker);
@@ -719,8 +722,10 @@ if (command === 'create') {
       } else {
         let kubeFiles = fs.readdirSync(kubernetesDirPath);
         let serviceAndDeploymentKubeFiles = kubeFiles.filter((configFilePath) => {
-          return configFilePath != ingressKubeFileName && /[.]ya?ml$/.test(configFilePath);
+          return configFilePath !== ingressKubeFileName && isYAMLFile(configFilePath) && configFilePath !== localPathStorageConfigFileName;
         });
+        // Create StorageClass first.
+        serviceAndDeploymentKubeFiles.unshift(`${kubernetesDirPath}/${localPathStorageConfigFileName}`);
         serviceAndDeploymentKubeFiles.forEach((configFilePath) => {
           let absolutePath = path.resolve(kubernetesDirPath, configFilePath);
           execSync(`kubectl create -f ${absolutePath}`, {stdio: 'inherit'});
@@ -826,7 +831,9 @@ if (command === 'create') {
   let serviceName = path.parse(absoluteProjectPath).base;
 
   let kubernetesDirPath = projectPath + '/kubernetes';
-  let kubeFiles = fs.readdirSync(kubernetesDirPath);
+  let kubeFiles = fs.readdirSync(kubernetesDirPath).filter((fileName) => {
+    return isYAMLFile(fileName);
+  });
   kubeFiles.forEach((configFilePath) => {
     let absolutePath = path.resolve(kubernetesDirPath, configFilePath);
     try {
@@ -851,20 +858,7 @@ if (command === 'create') {
     }
   }
   process.exit();
-} else if (command === 'add-secret') {
-  let secretName = argv._[0];
-  let secretValue = argv._[1];
-
-  if (secretName == null || secretValue == null) {
-    errorMessage(`Failed to upload secret. Both a name and value must be provided.`);
-  } else {
-    let success = uploadTLSSecret(secretName, privateKeyPath, certFilePath, errorMessage);
-    if (success) {
-      successMessage(`The secret was added to your cluster under the name "${secretName}".`);
-    }
-  }
-  process.exit();
-} else if (command === 'remove-secret') {
+} else if (command === 'remove-tls-secret') {
   let secretName = argv.s || DEFAULT_TLS_SECRET_NAME;
   let success = removeTLSSecret(secretName, errorMessage);
   if (success) {
