@@ -194,10 +194,10 @@ let sourceBlockchainDir = supportedBlockchains[targetBlockchain] ? targetBlockch
 let wd = process.cwd();
 
 let destDir = path.normalize(`${wd}/${arg1}`);
-let dockerfileSourceDir = path.resolve(__dirname, '..', 'Dockerfile');
-let dockerfileDestDir = path.resolve(destDir, 'Dockerfile');
-let dockerignoreSourceDir = path.resolve(__dirname, '..', '.dockerignore');
-let dockerignoreDestDir = path.resolve(destDir, '.dockerignore');
+let dockerfileSourceFile = path.resolve(__dirname, '..', 'Dockerfile-project');
+let dockerfileDestFile = path.resolve(destDir, 'Dockerfile');
+let dockerignoreSourceFile = path.resolve(__dirname, '..', '.dockerignore');
+let dockerignoreDestFile = path.resolve(destDir, '.dockerignore');
 let blockchainsSourceDir = path.resolve(__dirname, '..', 'blockchains', sourceBlockchainDir);
 let blockchainsDestDir = path.resolve(destDir, 'blockchains', targetBlockchain);
 let kubernetesSourceDir = path.resolve(__dirname, '..', 'kubernetes');
@@ -255,8 +255,8 @@ let confirmReplaceSetup = function (confirm) {
       rmdirRecursive(destDir) &&
       copyDirRecursive(blockchainsSourceDir, blockchainsDestDir) &&
       copyDirRecursive(kubernetesSourceDir, kubernetesDestDir) &&
-      copyDirRecursive(dockerfileSourceDir, dockerfileDestDir) &&
-      copyDirRecursive(dockerignoreSourceDir, dockerignoreDestDir)
+      copyDirRecursive(dockerfileSourceFile, dockerfileDestFile) &&
+      copyDirRecursive(dockerignoreSourceFile, dockerignoreDestFile)
     ) {
       createSuccess();
     } else {
@@ -384,8 +384,8 @@ if (command === 'create') {
         containers[serviceWorkerContainerIndex].volumeMounts = [];
       }
       containers[serviceWorkerContainerIndex].volumeMounts.push({
-        mountPath: '/usr/src/blockchains',
-        name: 'blockchain-src-volume'
+        name: 'blockchain-src-volume',
+        mountPath: '/usr/src/blockchains'
       });
       containers[serviceWorkerContainerIndex].env.push({
         name: 'BLOCKCHAIN',
@@ -419,11 +419,11 @@ if (command === 'create') {
         }
       });
       initContainers.push({
-        name: 'blockchain-src-volume',
+        name: 'blockchain-src-container',
         image: '', // image name will be generated during deployment
         volumeMounts: [{
-          mountPath: '/usr/dest',
-          name: 'blockchain-src-volume'
+          name: 'blockchain-src-volume',
+          mountPath: '/usr/dest'
         }],
         command: ['cp', '-a', '/usr/src/blockchains/.', '/usr/dest/']
       });
@@ -449,8 +449,8 @@ if (command === 'create') {
       if (
         copyDirRecursive(blockchainsSourceDir, blockchainsDestDir) &&
         copyDirRecursive(kubernetesSourceDir, kubernetesDestDir) &&
-        copyDirRecursive(dockerfileSourceDir, dockerfileDestDir) &&
-        copyDirRecursive(dockerignoreSourceDir, dockerignoreDestDir)
+        copyDirRecursive(dockerfileSourceFile, dockerfileDestFile) &&
+        copyDirRecursive(dockerignoreSourceFile, dockerignoreDestFile)
       ) {
         transformK8sConfigs((err) => {
           if (err) {
@@ -685,7 +685,7 @@ if (command === 'create') {
       let initContainersAGCWorker = deploymentConfAGCWorker.spec.template.spec.initContainers;
       initContainersAGCWorker.forEach((value, index) => {
         if (value) {
-          if (value.name === 'blockchain-src-volume') {
+          if (value.name === 'blockchain-src-container') {
             initContainersAGCWorker[index].image = dockerConfig.imageName;
           }
         }

@@ -1,0 +1,17 @@
+FROM node:11.13.0-slim
+
+LABEL maintainer="Jonathan Gros-Dubois"
+LABEL version="1.0.0"
+LABEL description="Volume container which holds source code for a Crypticle service."
+
+RUN mkdir -p /usr/src/
+WORKDIR /usr/src/
+COPY . /usr/src/
+
+WORKDIR /usr/src/blockchains/
+RUN npm install .
+
+WORKDIR /usr/src/
+
+# Since this is just a volume container, we don't need to run any init commands.
+CMD ["sleep", "infinity"]
