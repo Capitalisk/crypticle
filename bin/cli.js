@@ -719,7 +719,7 @@ if (command === 'create') {
       } else {
         let kubeFiles = fs.readdirSync(kubernetesDirPath);
         let serviceAndDeploymentKubeFiles = kubeFiles.filter((configFilePath) => {
-          return configFilePath != ingressKubeFileName;
+          return configFilePath != ingressKubeFileName && /[.]ya?ml$/.test(configFilePath);
         });
         serviceAndDeploymentKubeFiles.forEach((configFilePath) => {
           let absolutePath = path.resolve(kubernetesDirPath, configFilePath);

@@ -5,7 +5,7 @@ metadata:
     db: rethinkdb
   name: rethinkdb-admin
 spec:
-  type: NodePort
+  type: LoadBalancer
   ports:
    - port: 8080
      targetPort: admin
