@@ -301,7 +301,7 @@ let promptSecret = function (callback) {
 };
 
 let promptK8sTLSCredentials = function (callback) {
-  promptConfirm('Would you like to upload a TLS private key and certificate to your cluster? (both must be unencrypted)', {default: true}, (provideKeyAndCert) => {
+  promptConfirm('Would you like to upload a TLS private key and certificate to your cluster for HTTPS access? (both files must be unencrypted)', {default: true}, (provideKeyAndCert) => {
     if (provideKeyAndCert) {
       promptSecret(callback);
     } else {
@@ -419,7 +419,7 @@ if (command === 'create') {
         }
       });
       initContainers.push({
-        name: 'blockchain-src-container',
+        name: 'blockchain-src-volume',
         image: '', // image name will be generated during deployment
         volumeMounts: [{
           mountPath: '/usr/dest',
@@ -685,7 +685,7 @@ if (command === 'create') {
       let initContainersAGCWorker = deploymentConfAGCWorker.spec.template.spec.initContainers;
       initContainersAGCWorker.forEach((value, index) => {
         if (value) {
-          if (value.name === 'blockchain-src-container') {
+          if (value.name === 'blockchain-src-volume') {
             initContainersAGCWorker[index].image = dockerConfig.imageName;
           }
         }
@@ -725,7 +725,7 @@ if (command === 'create') {
           return configFilePath !== ingressKubeFileName && isYAMLFile(configFilePath) && configFilePath !== localPathStorageConfigFileName;
         });
         // Create StorageClass first.
-        serviceAndDeploymentKubeFiles.unshift(`${kubernetesDirPath}/${localPathStorageConfigFileName}`);
+        serviceAndDeploymentKubeFiles.unshift(localPathStorageConfigFileName);
         serviceAndDeploymentKubeFiles.forEach((configFilePath) => {
           let absolutePath = path.resolve(kubernetesDirPath, configFilePath);
           execSync(`kubectl create -f ${absolutePath}`, {stdio: 'inherit'});
