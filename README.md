@@ -34,11 +34,28 @@ After a Crypticle node has been attached to a specific Blockchain and has starte
 - `cd public && npm install ; cd ..`
 - `npm start`
 
-## Deploy and scale on Kubernetes
+## Deploy and scale on Kubernetes from the command line
 
 The node is designed to be deployed and scaled on Kubernetes.
 Transactions are automatically sharded across available nodes.
 More info on this coming soon.
+
+- Make sure that you have [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) and [docker](https://docs.docker.com/install/) installed
+- Setup your Kubernetes cluster with multiple nodes on your provider ([Rancher](https://rancher.com/) is recommended) (3 is ideal for testing)
+- Get the `Kubeconfig` from your K8s control panel (or cloud provider) and paste it into the `~/.kube/config` file on your local machine
+- Install the `crypticle` CLI tool with `npm install -g crypticle`
+- Create your project directory with `crypticle create myproject`
+- Navigate to your project directory with `cd myproject`
+- Upload `SECRET_SIGNUP_KEY`, `AUTH_KEY` and `BLOCKCHAIN_WALLET_PASSPHRASE` secrets to your K8s cluster with `kubectl create secret generic crypticle-secret --from-literal=SECRET_SIGNUP_KEY=313e7cc1-ad75-4030-a927-6a09f39c1603 --from-literal=AUTH_KEY=15d16361-6402-41a5-8840-d2a330b8ea40 --from-literal=BLOCKCHAIN_WALLET_PASSPHRASE="drastic spot aerobic web wave tourist library first scout fatal inherit arrange"`
+- If your custom `adapter.js` file has any dependencies, make sure that they are all inside the `blockchains/node_modules/` directory (to allow them to build correctly)
+- Use `crypticle deploy` to build your Docker image containing your custom adapter logic and your config files and then deploy it to your K8s cluster
+
+Note that if you want to push a config file update to your cluster later without rebuilding the image, you can do it with `kubectl create configmap crypticle-config --from-file=blockchains/rise/config.prod.json` (for example).
+
+## Scaling on K8s
+
+You can scale any `Deployment` or the RethinkDB `StatefulSet` using standard `kubectl scale ... --replicas=...` commands.
+Be very careful when scaling down the RethinkDB `StatefulSet` as this may cause data loss if not done carefully.
 
 ## Contributions
 
