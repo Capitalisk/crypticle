@@ -1,6 +1,6 @@
 {
   "databaseName": "crypticle_rise",
-  "databaseHost": "127.0.0.1",
+  "databaseHost": "rethinkdb-proxy",
   "databasePort": 28015,
   "authTokenExpiry": 30000,
   "authTokenRenewalInterval": 20000,
