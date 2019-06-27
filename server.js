@@ -16,7 +16,7 @@ const getRPCSchema = require('./schemas/rpc-schema');
 
 const ENVIRONMENT = process.env.ENV || 'dev';
 const BLOCKCHAIN = process.env.BLOCKCHAIN || 'rise';
-const SYNC_FROM_BLOCK_HEIGHT = Number(process.env.SYNC_FROM_BLOCK_HEIGHT) || null;
+const SYNC_FROM_BLOCK_HEIGHT = parseInt(process.env.SYNC_FROM_BLOCK_HEIGHT) || null;
 const {SECRET_SIGNUP_KEY, AUTH_KEY, BLOCKCHAIN_WALLET_PASSPHRASE} = process.env;
 
 const ASYNGULAR_PORT = process.env.ASYNGULAR_PORT || 8000;
@@ -795,7 +795,10 @@ function renewAuthToken(socket) {
   }
 })();
 
-httpServer.listen(ASYNGULAR_PORT);
+(async () => {
+  await crud.thinky.dbReady();
+  httpServer.listen(ASYNGULAR_PORT);
+})();
 
 if (ASYNGULAR_LOG_LEVEL >= 1) {
   (async () => {
@@ -865,3 +868,13 @@ if (AGC_STATE_SERVER_HOST) {
   shardInfo.shardIndex = 0;
   shardInfo.shardCount = 1;
 }
+
+process.on('uncaughtException', (error) => {
+  console.error('[uncaughtException]', error);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (error) => {
+  console.error('[unhandledRejection]', error);
+  process.exit(1);
+});
