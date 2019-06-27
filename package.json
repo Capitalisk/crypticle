@@ -1,7 +1,7 @@
 {
   "name": "crypticle",
   "description": "Scalable multi-tenant pegged off-chain payment microservice with realtime API",
-  "version": "1.0.4",
+  "version": "1.0.7",
   "contributors": [
     {
       "name": "Jonathan Gros-Dubois",
@@ -17,7 +17,6 @@
     "bcryptjs": "^2.4.3",
     "bip39": "^3.0.1",
     "connect": "^3.6.6",
-    "crypticle-blockchains": "file:blockchains",
     "dpos-offline": "^2.0.7",
     "eetase": "^3.0.1",
     "express": "^4.16.3",
