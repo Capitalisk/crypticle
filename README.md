@@ -37,9 +37,9 @@ After a Crypticle node has been attached to a specific Blockchain and has starte
 
 ## Deploy and scale on Kubernetes from the command line
 
-The node is designed to be deployed and scaled on Kubernetes.
-Transactions are automatically sharded across available nodes.
-More info on this coming soon.
+The service is designed to be deployed and scaled on Kubernetes.
+Transaction processing can be automatically sharded across available nodes.
+Follow these steps to deploy Crypticle to your K8s cluster:
 
 - Make sure that you have [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) and [docker](https://docs.docker.com/install/) installed
 - Setup your Kubernetes cluster with multiple nodes on your provider ([Rancher](https://rancher.com/) is recommended) (3 is ideal for testing)
@@ -56,6 +56,11 @@ More info on this coming soon.
 
 You can scale any `Deployment` or the RethinkDB `StatefulSet` using standard `kubectl scale ... --replicas=...` commands.
 Be very careful when scaling down the RethinkDB `StatefulSet` as this may cause data loss if not done carefully.
+
+## Sharding transaction processing in the database
+
+The RethinkDB admin control panel lets you shard any table at the click of a button.
+After you've scaled your `rethinkdb` service to multiple hosts, you will be able to increase the number of shards for the `Transaction` table.
 
 ## Contributions
 
