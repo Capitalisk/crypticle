@@ -504,7 +504,7 @@ if (command === 'create') {
   } catch (e) {}
 
   let dockerCommand = `docker run -d -p ${portNumber}:8000 -v ${absoluteProjectPath}/blockchains/:/usr/src/blockchains/ ` +
-    `${envFlagString}--name ${serviceName} socketcluster/crypticle:v1.0.8`;
+    `${envFlagString}--name ${serviceName} --network=host socketcluster/crypticle:v1.0.8`;
   try {
     execSync(dockerCommand, {stdio: 'inherit'});
     successMessage(`Service "${serviceName}" is running at http://localhost:${portNumber}`);
