@@ -45,6 +45,10 @@ function isSocketAuthenticated() {
   return socket.authState === 'authenticated';
 }
 
+function isSocketOpen() {
+  return socket.state === socket.OPEN;
+}
+
 let Console = {
   components: {
     'page-login': PageLogin,
@@ -52,26 +56,45 @@ let Console = {
   },
   data: function () {
     return {
-      isAuthenticated: false
+      isAuthenticated: false,
+      isConnected: false
     };
   },
   created: function () {
     this.isAuthenticated = isSocketAuthenticated();
+    this.isConnected = isSocketOpen();
 
     (async () => {
       for await (let event of socket.listener('authStateChange')) {
         this.isAuthenticated = isSocketAuthenticated();
       }
     })();
+
+    (async () => {
+      for await (let event of socket.listener('connect')) {
+        this.isConnected = isSocketOpen();
+      }
+    })();
+
+    (async () => {
+      for await (let event of socket.listener('close')) {
+        this.isConnected = isSocketOpen();
+      }
+    })();
   },
   template: `
     <div class="console container is-fullhd">
-      <div v-if="isAuthenticated" class="container is-fullhd">
-        <router-view></router-view>
-      </div>
-      <div v-if="!isAuthenticated" class="container is-fullhd">
-        <page-login></page-login>
-      </div>
+      <template v-if="!isConnected">
+        <h4 class="title is-4">Loading...</h4>
+      </template>
+      <template v-if="isConnected">
+        <div v-if="isAuthenticated" class="container is-fullhd">
+          <router-view></router-view>
+        </div>
+        <div v-if="!isAuthenticated" class="container is-fullhd">
+          <page-login></page-login>
+        </div>
+      </template>
     </div>
   `
 };
