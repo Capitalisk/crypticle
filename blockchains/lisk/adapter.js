@@ -5,11 +5,11 @@ const LiskTransactions = require('@liskhq/lisk-transactions');
 
 class LiskAdapter {
 
-  constructor() {
-    this.client = LiskApiClient.createMainnetAPIClient();
+  constructor(options) {
+    this.client = new LiskApiClient([options.nodeAddress])
   }
 
-  async generateWallet() {
+  generateWallet() {
     const passphrase = LiskPassphrase.Mnemonic.generateMnemonic();
 
     const { publicKey, privateKey } = LiskCryptography.getPrivateAndPublicKeyFromPassphrase(passphrase);
@@ -24,15 +24,28 @@ class LiskAdapter {
   }
 
   async fetchHeight() {
-    return (await this.client.node.getStatus()).data.networkHeight;
+    return (await this.client.node.getStatus()).data.height;
   }
 
-  async fetchBlocks(queryParams) {
-    return (await this.client.blocks.get(queryParams)).data;
+  async fetchBlocks({ offset = 0, limit = 10 } = {}) {
+    let queryParams = {
+      sort: 'height:asc',
+      offset,
+      limit
+    };
+
+    return Promise.all(
+        (await this.client.blocks.get(queryParams)).data.map(async (block) => {
+          return {
+            ...block,
+            transactions: (await this.client.transactions.get({blockId: block.id})).data
+          };
+        })
+    );
   }
 
   async fetchTransaction(transactionId) {
-    return (await this.client.transactions.get({id: transactionId})).data;
+    return (await this.client.transactions.get({id: transactionId})).data[0];
   }
 
   async fetchWalletBalance(walletAddress) {
