@@ -29,6 +29,7 @@ After a Crypticle node has been attached to a specific Blockchain and has starte
 
 ### Run from source
 
+- Launch the RethinkDB server in a separate terminal (e.g. using the `rethinkdb` command)
 - `git clone git@github.com:jondubois/crypticle.git`
 - `cd crypticle && npm install`
 - `cd public && npm install ; cd ..`
