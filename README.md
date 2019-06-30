@@ -39,7 +39,7 @@ After a Crypticle node has been attached to a specific Blockchain and has starte
 
 The service is designed to be deployed and scaled on Kubernetes.
 Transaction processing can be automatically sharded across available nodes.
-Follow these steps to deploy Crypticle to your K8s cluster:
+Follow these steps to deploy Crypticle to a K8s cluster:
 
 - Make sure that you have [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) and [docker](https://docs.docker.com/install/) installed
 - Setup your Kubernetes cluster with multiple nodes on your provider ([Rancher](https://rancher.com/) is recommended) (3 is ideal for testing)
