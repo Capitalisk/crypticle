@@ -1,7 +1,7 @@
 import AGCollection from '/node_modules/ag-collection/ag-collection.js';
 
 function getComponent(options) {
-  let {socket, mainInfo} = options;
+  let {socket, publicInfo} = options;
   let view;
 
   if (options.type === 'pending') {
@@ -22,7 +22,7 @@ function getComponent(options) {
         fields: ['transactionId', 'amount', 'height', 'canceled', 'createdDate'],
         pageOffset: 0,
         pageSize: 10,
-        getCount: mainInfo.paginationShowTotalCounts
+        getCount: publicInfo.paginationShowTotalCounts
       });
       (async () => {
         for await (let {error} of this.depositCollection.listener('error')) {
@@ -31,7 +31,7 @@ function getComponent(options) {
       })();
 
       return {
-        mainInfo,
+        publicInfo,
         deposits: this.depositCollection.value,
         depositsMeta: this.depositCollection.meta,
         depositType: options.type
@@ -42,7 +42,7 @@ function getComponent(options) {
     },
     methods: {
       toBlockchainUnits: function (amount) {
-        let value = Number(amount) / Number(mainInfo.cryptocurrency.unit);
+        let value = Number(amount) / Number(publicInfo.cryptocurrency.unit);
         return Math.round(value * 10000) / 10000;
       },
       toSimpleDate: function (dateString) {
@@ -73,7 +73,7 @@ function getComponent(options) {
       }
     },
     watch: {
-      'mainInfo.paginationShowTotalCounts': function (value) {
+      'publicInfo.paginationShowTotalCounts': function (value) {
         this.depositCollection.getCount = value;
       }
     },
@@ -95,7 +95,7 @@ function getComponent(options) {
               <template v-for="dep of deposits">
                 <tr v-bind:class="{'table-row-failure': dep.canceled}">
                   <td class="table-cell-id table-first-column">{{dep.id}}</td>
-                  <td class="table-cell-amount">{{toBlockchainUnits(dep.amount)}}<span v-if="mainInfo.cryptocurrency"> {{mainInfo.cryptocurrency.symbol}}</span></td>
+                  <td class="table-cell-amount">{{toBlockchainUnits(dep.amount)}}<span v-if="publicInfo.cryptocurrency"> {{publicInfo.cryptocurrency.symbol}}</span></td>
                   <td v-if="depositType === 'settled'" class="table-cell-height">{{dep.height}}</td>
                   <td class="table-cell-date">{{toSimpleDate(dep.createdDate)}}</td>
                 </tr>
@@ -107,7 +107,7 @@ function getComponent(options) {
           </table>
         </div>
         <input type="button" class="button" value="Previous page" v-bind:disabled="!depositsMeta.pageOffset" @click="goToPrevPage" />
-        <div class="paginator-text">Items <b>{{firstItemIndex}}</b> to <b>{{lastItemIndex}}</b><span v-if="mainInfo.paginationShowTotalCounts"> of <b>{{depositsMeta.count}}</b></span></div>
+        <div class="paginator-text">Items <b>{{firstItemIndex}}</b> to <b>{{lastItemIndex}}</b><span v-if="publicInfo.paginationShowTotalCounts"> of <b>{{depositsMeta.count}}</b></span></div>
         <input type="button" class="button" value="Next page" v-bind:disabled="depositsMeta.isLastPage" @click="goToNextPage" />
       </div>
     `

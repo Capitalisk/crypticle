@@ -1,0 +1,15 @@
+{
+  "name": "crypticle-blockchains",
+  "version": "1.0.0",
+  "description": "Crypticle blockchain packages.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "crypticle",
+    "blockchain"
+  ],
+  "author": "Jonathan Gros-Dubois",
+  "license": "AGPL-3.0"
+}

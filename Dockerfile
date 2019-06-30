@@ -1,13 +1,20 @@
-FROM node:10-slim
+FROM node:11.13.0-slim
 
 LABEL maintainer="Jonathan Gros-Dubois"
-LABEL version="5.4.2"
-LABEL description="Docker file for Asyngular with support for clustering."
+LABEL version="1.0.8"
+LABEL description="Docker file for Crypticle."
 
 RUN mkdir -p /usr/src/
 WORKDIR /usr/src/
 COPY . /usr/src/
 
+WORKDIR /usr/src/blockchains/
+RUN npm install .
+
+WORKDIR /usr/src/public/
+RUN npm install .
+
+WORKDIR /usr/src/
 RUN npm install .
 
 EXPOSE 8000

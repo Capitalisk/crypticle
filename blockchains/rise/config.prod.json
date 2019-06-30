@@ -1,0 +1,34 @@
+{
+  "databaseName": "crypticle_rise",
+  "databaseHost": "rethinkdb-proxy",
+  "databasePort": 28015,
+  "authTokenExpiry": 30000,
+  "authTokenRenewalInterval": 20000,
+  "maxSocketBackpressure": 1000,
+  "transactionSettlementInterval": 5000,
+  "withdrawalProcessingInterval": 20000,
+  "maxTransactionSettlementsPerAccount": 10,
+  "maxConcurrentWithdrawalsPerAccount": 10,
+  "maxConcurrentDebitsPerAccount": 50,
+  "blockchainSync": true,
+  "blockchainNodeAddress": "https://wallet.rise.vision",
+  "blockPollInterval": 5000,
+  "blockFetchLimit": 100,
+  "blockchainWithdrawalMaxAttempts": 20,
+  "bcryptPasswordRounds": 10,
+  "publicInfo": {
+    "cryptocurrency": {
+      "name": "Rise",
+      "symbol": "RISE",
+      "unit": "100000000"
+    },
+    "mainWalletAddress": "6255037810762443539R",
+    "requiredDepositBlockConfirmations": 102,
+    "requiredWithdrawalBlockConfirmations": 3,
+    "paginationShowTotalCounts": false,
+    "maxRecordDisplayAge": 2592000000,
+    "maxPageSize": 100,
+    "alwaysRequireSecretSignupKey": false,
+    "enableAdminAccountSignup": true
+  }
+}

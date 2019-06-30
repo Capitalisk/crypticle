@@ -21,7 +21,7 @@ class AccountService extends AsyncStreamEmitter {
 
     this.thinky = options.thinky;
     this.crud = options.crud;
-    this.mainInfo = options.mainInfo;
+    this.publicInfo = options.publicInfo;
     this.shardInfo = options.shardInfo;
     this.settlementInterval = options.transactionSettlementInterval;
     this.withdrawalInterval = options.withdrawalProcessingInterval;
@@ -32,19 +32,20 @@ class AccountService extends AsyncStreamEmitter {
     this.secretSignupKey = options.secretSignupKey;
     this.bcryptPasswordRounds = options.bcryptPasswordRounds;
 
-    this.mainWalletAddress = options.mainInfo.mainWalletAddress;
-    this.requiredDepositBlockConfirmations = options.mainInfo.requiredDepositBlockConfirmations;
-    this.requiredWithdrawalBlockConfirmations = options.mainInfo.requiredWithdrawalBlockConfirmations;
-    this.alwaysRequireSecretSignupKey = options.mainInfo.alwaysRequireSecretSignupKey;
-    this.enableAdminAccountSignup = options.mainInfo.enableAdminAccountSignup;
+    this.mainWalletAddress = options.publicInfo.mainWalletAddress;
+    this.requiredDepositBlockConfirmations = options.publicInfo.requiredDepositBlockConfirmations;
+    this.requiredWithdrawalBlockConfirmations = options.publicInfo.requiredWithdrawalBlockConfirmations;
+    this.alwaysRequireSecretSignupKey = options.publicInfo.alwaysRequireSecretSignupKey;
+    this.enableAdminAccountSignup = options.publicInfo.enableAdminAccountSignup;
     this.blockPollInterval = options.blockPollInterval;
     this.blockFetchLimit = options.blockFetchLimit;
     this.blockchainSync = options.blockchainSync;
-    this.blockchainNodeWalletPassphrase = options.blockchainNodeWalletPassphrase;
+    this.blockchainWalletPassphrase = options.blockchainWalletPassphrase;
     this.shardInfo = options.shardInfo;
     this.thinky = options.thinky;
     this.crud = options.crud;
     this.lastBlockHeight = 0;
+    this.syncFromBlockHeight = options.syncFromBlockHeight;
 
     this.blockchainAdapterPath = options.blockchainAdapterPath;
     const BlockchainAdapter = require(this.blockchainAdapterPath);
@@ -90,11 +91,24 @@ class AccountService extends AsyncStreamEmitter {
       }
     })();
 
-    if (this.blockchainSync) {
-      this.startBlockchainSyncInterval();
-    }
-    this.startSettlementInterval();
-    this.startWithdrawalInterval();
+    (async () => {
+      if (this.syncFromBlockHeight != null) {
+        try {
+          let state = await this.readStateFromFile();
+          await this.writeStateToFile({
+            ...state,
+            syncFromBlockHeight: this.syncFromBlockHeight
+          });
+        } catch (error) {
+          this.emit('error', {error});
+        }
+      }
+      if (this.blockchainSync) {
+        this.startBlockchainSyncInterval();
+      }
+      this.startSettlementInterval();
+      this.startWithdrawalInterval();
+    })();
   }
 
   async getAccountsByDepositWalletAddress(walletAddress) {
@@ -529,14 +543,25 @@ class AccountService extends AsyncStreamEmitter {
     return accountData;
   }
 
+  async readStateFromFile() {
+    return JSON.parse(
+      await readFile(STATE_FILE_PATH, {
+        encoding: 'utf8'
+      })
+    );
+  }
+
+  async writeStateToFile(state) {
+    await writeFile(
+      STATE_FILE_PATH,
+      JSON.stringify(state, ' ', 2)
+    );
+  }
+
   async processBlockchainDeposits() {
     let state;
     try {
-      state = JSON.parse(
-        await readFile(STATE_FILE_PATH, {
-          encoding: 'utf8'
-        })
-      );
+      state = await this.readStateFromFile();
     } catch (error) {
       this.emit('info', {
         info: `Could not find a valid state file at path ${STATE_FILE_PATH}. A new one will be created.`
@@ -574,7 +599,6 @@ class AccountService extends AsyncStreamEmitter {
 
     try {
       blocks = await this.blockchainAdapter.fetchBlocks({
-        orderBy: 'height:asc',
         offset: syncFromBlockHeight,
         limit: this.blockFetchLimit - safeHeightDiff
       });
@@ -598,17 +622,10 @@ class AccountService extends AsyncStreamEmitter {
       syncFromBlockHeight = lastBlock.height;
     }
 
-    await writeFile(
-      STATE_FILE_PATH,
-      JSON.stringify(
-        {
-          ...state,
-          syncFromBlockHeight
-        },
-        ' ',
-        2
-      )
-    );
+    await this.writeStateToFile({
+      ...state,
+      syncFromBlockHeight
+    });
 
     return safeHeightDiff > 0;
   }
@@ -992,7 +1009,7 @@ class AccountService extends AsyncStreamEmitter {
         amount: withdrawal.amount,
         recipient: withdrawal.toWalletAddress
       },
-      this.blockchainNodeWalletPassphrase
+      this.blockchainWalletPassphrase
     );
 
     let fees = await this.blockchainAdapter.fetchFees(signedTransaction);

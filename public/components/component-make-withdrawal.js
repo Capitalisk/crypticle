@@ -1,12 +1,12 @@
 import AGCollection from '/node_modules/ag-collection/ag-collection.js';
 
 function getComponent(options) {
-  let {socket, mainInfo} = options;
+  let {socket, publicInfo} = options;
 
   return {
     data: function () {
       return {
-        mainInfo,
+        publicInfo,
         walletAddress: null,
         amount: null,
         error: null,
@@ -35,13 +35,13 @@ function getComponent(options) {
           this.error = 'Could not execute the withdrawal. The amount was not provided or was invalid.';
           return;
         }
-        if (mainInfo.cryptocurrency.unit == null) {
+        if (publicInfo.cryptocurrency.unit == null) {
           this.error = 'Could not execute the withdrawal. The cryptocurrency unit value could not be determined.';
           return;
         }
         let walletAddress = this.walletAddress.trim();
         let unitAmount = parseFloat(this.amount);
-        let totalAmount = Math.round(unitAmount * parseInt(mainInfo.cryptocurrency.unit));
+        let totalAmount = Math.round(unitAmount * parseInt(publicInfo.cryptocurrency.unit));
         let totalAmountString = totalAmount.toString();
 
         try {
@@ -80,7 +80,7 @@ function getComponent(options) {
               </div>
               <div class="field">
                 <label class="label" for="make-withdrawal-amount">
-                  Amount ({{mainInfo.cryptocurrency.symbol}})
+                  Amount ({{publicInfo.cryptocurrency.symbol}})
                 </label>
                 <input id="make-withdrawal-amount" type="text" v-model="amount" class="input" @keydown.enter="sendWithdrawal">
               </div>

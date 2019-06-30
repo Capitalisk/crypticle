@@ -6,51 +6,51 @@ import getMakeTransferComponent from '/components/component-make-transfer.js';
 import getMakeWithdrawalComponent from '/components/component-make-withdrawal.js';
 
 function getPageComponent(pageOptions) {
-  let {socket, mainInfo} = pageOptions;
+  let {socket, publicInfo} = pageOptions;
 
   return {
     components: {
       'component-account': getAccountComponent({
         socket,
-        mainInfo
+        publicInfo
       }),
       'component-settled-deposits': getDepositsComponent({
         socket,
-        mainInfo,
+        publicInfo,
         type: 'settled'
       }),
       'component-pending-deposits': getDepositsComponent({
         socket,
-        mainInfo,
+        publicInfo,
         type: 'pending'
       }),
       'component-settled-withdrawals': getWithdrawalsComponent({
         socket,
-        mainInfo,
+        publicInfo,
         type: 'settled'
       }),
       'component-pending-withdrawals': getWithdrawalsComponent({
         socket,
-        mainInfo,
+        publicInfo,
         type: 'pending'
       }),
       'component-settled-transfers': getTransfersComponent({
         socket,
-        mainInfo,
+        publicInfo,
         type: 'settled'
       }),
       'component-pending-transfers': getTransfersComponent({
         socket,
-        mainInfo,
+        publicInfo,
         type: 'pending'
       }),
       'component-make-transfer': getMakeTransferComponent({
         socket,
-        mainInfo
+        publicInfo
       }),
       'component-make-withdrawal': getMakeWithdrawalComponent({
         socket,
-        mainInfo
+        publicInfo
       })
     },
     data: function () {

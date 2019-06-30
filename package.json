@@ -1,7 +1,7 @@
 {
   "name": "crypticle",
-  "description": "Blockchain token to centralized credit converter",
-  "version": "1.0.0",
+  "description": "Scalable multi-tenant pegged off-chain payment microservice with realtime API",
+  "version": "1.0.8",
   "contributors": [
     {
       "name": "Jonathan Gros-Dubois",
@@ -9,9 +9,8 @@
     }
   ],
   "dependencies": {
-    "@liskhq/lisk-passphrase": "^2.0.0",
     "ag-crud-rethink": "^2.4.2",
-    "agc-broker-client": "^5.4.1",
+    "agc-broker-client": "^6.0.0",
     "async-stream-emitter": "^3.0.3",
     "asyngular-client": "^6.0.0",
     "asyngular-server": "^6.0.0",
@@ -21,6 +20,7 @@
     "dpos-offline": "^2.0.7",
     "eetase": "^3.0.1",
     "express": "^4.16.3",
+    "fs-extra": "^8.0.1",
     "inquirer": "^6.3.1",
     "jsonschema": "^1.2.4",
     "morgan": "^1.7.0",
@@ -32,6 +32,7 @@
     "tweetnacl": "^1.0.1",
     "uuid": "^3.3.2",
     "writable-consumable-stream": "^1.1.1",
+    "@liskhq/lisk-passphrase": "^2.0.0",
     "@liskhq/lisk-cryptography": "latest",
     "@liskhq/lisk-api-client": "latest",
     "@liskhq/lisk-transactions": "latest"
@@ -48,5 +49,8 @@
     "start": "node server.js",
     "start:watch": "./node_modules/nodemon/bin/nodemon.js server.js",
     "start:docker": "./node_modules/nodemon/bin/nodemon.js /usr/src/app/server.js"
+  },
+  "bin": {
+    "crypticle": "bin/cli.js"
   }
 }

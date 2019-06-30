@@ -1,7 +1,7 @@
 import AGCollection from '/node_modules/ag-collection/ag-collection.js';
 
 function getComponent(options) {
-  let {socket, mainInfo} = options;
+  let {socket, publicInfo} = options;
 
   return {
     data: function () {
@@ -25,7 +25,7 @@ function getComponent(options) {
       })();
 
       return {
-        mainInfo,
+        publicInfo,
         accountUsername: null,
         accountId: null,
         dropdownActive: false,
@@ -84,13 +84,13 @@ function getComponent(options) {
           this.error = 'Could not execute the transfer. The amount was not provided or was invalid.';
           return;
         }
-        if (mainInfo.cryptocurrency.unit == null) {
+        if (publicInfo.cryptocurrency.unit == null) {
           this.error = 'Could not execute the transfer. The cryptocurrency unit value could not be determined.';
           return;
         }
         let accountId = this.accountId.trim();
         let unitAmount = parseFloat(this.amount);
-        let totalAmount = Math.round(unitAmount * parseInt(mainInfo.cryptocurrency.unit));
+        let totalAmount = Math.round(unitAmount * parseInt(publicInfo.cryptocurrency.unit));
         let totalAmountString = totalAmount.toString();
 
         try {
@@ -111,12 +111,12 @@ function getComponent(options) {
           this.error = 'Could not execute the debit. The amount was not provided or was invalid.';
           return;
         }
-        if (mainInfo.cryptocurrency.unit == null) {
+        if (publicInfo.cryptocurrency.unit == null) {
           this.error = 'Could not execute the debit. The cryptocurrency unit value could not be determined.';
           return;
         }
         let unitAmount = parseFloat(this.amount);
-        let totalAmount = Math.round(unitAmount * parseInt(mainInfo.cryptocurrency.unit));
+        let totalAmount = Math.round(unitAmount * parseInt(publicInfo.cryptocurrency.unit));
         let totalAmountString = totalAmount.toString();
 
         try {
@@ -169,7 +169,7 @@ function getComponent(options) {
               </div>
               <div class="field">
                 <label class="label" for="make-transfer-amount">
-                  Amount ({{mainInfo.cryptocurrency.symbol}})
+                  Amount ({{publicInfo.cryptocurrency.symbol}})
                 </label>
                 <input id="make-transfer-amount" type="text" v-model="amount" class="input" @keydown.enter="sendTransfer">
               </div>
@@ -200,7 +200,7 @@ function getComponent(options) {
               </div>
               <div class="field">
                 <label class="label" for="make-transfer-amount">
-                  Amount ({{mainInfo.cryptocurrency.symbol}})
+                  Amount ({{publicInfo.cryptocurrency.symbol}})
                 </label>
                 <input id="make-transfer-amount" type="text" v-model="amount" class="input" @keydown.enter="sendDebit">
               </div>
