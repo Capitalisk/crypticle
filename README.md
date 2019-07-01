@@ -43,8 +43,8 @@ The service is designed to be deployed and scaled on a Kubernetes cluster.
 
 You will need the following software installed in order to deploy to a K8s cluster:
 - Node.js version 11 or higher. [Download Node.js](https://nodejs.org/en/).
-- `docker` cli. [Install Docker](https://docs.docker.com/install/).
-- `kubectl` cli. [Install Kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/).
+- `docker` CLI. [Install Docker](https://docs.docker.com/install/).
+- `kubectl` CLI. [Install Kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/).
 
 - If using Rancher, you will need to install the Rancher server on a remote machine of your choice; you will then be able to create your cluster from the Rancher control panel. [Install Rancher](https://rancher.com/quick-start/).
 - If using GKE, you will need the `gcloud` command from the Google Cloud SDK. [Install Google Cloud SDK](https://cloud.google.com/sdk/docs/quickstarts).
