@@ -23,6 +23,7 @@ if (commandRawArgsString.length) {
 
 let arg1 = argv._[1];
 let force = argv.force ? true : false;
+let gke = argv.gke ? true : false;
 let targetBlockchain = (argv.b || 'rise').toLowerCase();
 
 let dockerUsername, dockerPassword;
@@ -721,9 +722,36 @@ if (command === 'create') {
         deploySuccess();
       } else {
         let kubeFiles = fs.readdirSync(kubernetesDirPath);
-        let serviceAndDeploymentKubeFiles = kubeFiles.filter((configFilePath) => {
-          return configFilePath !== ingressKubeFileName && isYAMLFile(configFilePath) && configFilePath !== localPathStorageConfigFileName;
+        let serviceAndDeploymentKubeFiles = kubeFiles.filter((configFileName) => {
+          return configFileName !== ingressKubeFileName && isYAMLFile(configFileName) && configFileName !== localPathStorageConfigFileName;
         });
+        if (gke) {
+          let gkeKubeFiles = fs.readdirSync(path.resolve(kubernetesDirPath, 'gke'));
+          let gkeK8sfileSet = new Set(gkeKubeFiles);
+          serviceAndDeploymentKubeFiles = serviceAndDeploymentKubeFiles.filter((configFileName) => {
+            return !gkeK8sfileSet.has(configFileName);
+          });
+          let nginxMandatoryFile = 'ingress-nginx-mandatory.yaml';
+          gkeKubeFiles.sort((a, b) => {
+            if (a === nginxMandatoryFile) {
+              return -1;
+            }
+            if (b === nginxMandatoryFile) {
+              return 1;
+            }
+            return 0;
+          });
+          let gkeKubeFilePaths = gkeKubeFiles.map((configFileName) => {
+            return path.join('gke', configFileName);
+          });
+
+          serviceAndDeploymentKubeFiles = serviceAndDeploymentKubeFiles.concat(gkeKubeFilePaths);
+
+          execSync(
+            'kubectl create clusterrolebinding cluster-admin-binding --clusterrole cluster-admin --user $(gcloud config get-value account)',
+            {stdio: 'inherit'}
+          );
+        }
         // Create StorageClass first.
         serviceAndDeploymentKubeFiles.unshift(localPathStorageConfigFileName);
         serviceAndDeploymentKubeFiles.forEach((configFilePath) => {
@@ -840,6 +868,13 @@ if (command === 'create') {
       execSync(`kubectl delete -f ${absolutePath}`, {stdio: 'inherit'});
     } catch (err) {}
   });
+
+  try {
+    execSync(
+      'kubectl delete clusterrolebinding cluster-admin-binding',
+      {stdio: 'inherit'}
+    );
+  } catch (err) {}
 
   successMessage(`The '${serviceName}' service was undeployed successfully.`);
 

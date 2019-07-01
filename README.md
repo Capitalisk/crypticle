@@ -37,20 +37,39 @@ After a Crypticle node has been attached to a specific Blockchain and has starte
 
 ## Deploy and scale on Kubernetes from the command line
 
-The service is designed to be deployed and scaled on Kubernetes.
-Transaction processing can be automatically sharded across available nodes.
-Follow these steps to deploy Crypticle to a K8s cluster:
+The service is designed to be deployed and scaled on a Kubernetes cluster.
 
-- Make sure that you have [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) and [docker](https://docs.docker.com/install/) installed
-- Setup your Kubernetes cluster with multiple nodes on your provider ([Rancher](https://rancher.com/) is recommended) (3 is ideal for testing)
-- Get the `Kubeconfig` from your K8s control panel (or cloud provider) and paste it into the `~/.kube/config` file on your local machine
-- Install the `crypticle` CLI tool with `npm install -g crypticle`
-- Create your project directory with `crypticle create myproject`
-- Navigate to your project directory with `cd myproject`
-- Upload configs to your K8s cluster using `kubectl create configmap crypticle-config --from-file=blockchains/rise/config.prod.json --from-file=blockchains/rise/config.dev.json` (replace `/rise/` with your blockchain name)
-- Upload secrets `SECRET_SIGNUP_KEY`, `AUTH_KEY` and `BLOCKCHAIN_WALLET_PASSPHRASE` to your K8s cluster with `kubectl create secret generic crypticle-secret --from-literal=SECRET_SIGNUP_KEY=313e7cc1-ad75-4030-a927-6a09f39c1603 --from-literal=AUTH_KEY=15d16361-6402-41a5-8840-d2a330b8ea40 --from-literal=BLOCKCHAIN_WALLET_PASSPHRASE="drastic spot aerobic web wave tourist library first scout fatal inherit arrange"`
-- If your custom `adapter.js` file has any dependencies, make sure that they are all inside the `blockchains/node_modules/` directory (to allow them to build correctly)
-- Use `crypticle deploy` to build your Docker image containing your custom adapter logic and your config files and then deploy it to your K8s cluster
+Note that you need the following software installed in order to deploy to a K8s cluster:
+- Node.js version 11 or higher. [Download Node.js](https://nodejs.org/en/).
+- `docker` cli. [Install Docker](https://docs.docker.com/install/).
+- `kubectl` cli. [Install Kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/).
+
+- If using Rancher, you will need to install the Rancher server on a remote machine of your choice; you will then be able to create your cluster from the Rancher control panel. [Install Rancher](https://rancher.com/quick-start/).
+- If using GKE, you will need the `gcloud` command from the Google Cloud SDK. [Install Google Cloud SDK](https://cloud.google.com/sdk/docs/quickstarts).
+
+Once you have the required software, follow these steps to deploy Crypticle to a K8s cluster (this approach works best with [Rancher](https://rancher.com/)):
+
+- Make sure that you have [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) and [docker](https://docs.docker.com/install/) installed.
+- Setup your Kubernetes cluster with multiple nodes on your provider ([Rancher](https://rancher.com/) is recommended) (3 is ideal for testing).
+- Get the `Kubeconfig` from your K8s control panel (or cloud provider) and paste it into the `~/.kube/config` file on your local machine.
+- Install the `crypticle` CLI tool with `npm install -g crypticle`.
+- Create your project directory with `crypticle create myproject`.
+- Navigate to your project directory with `cd myproject`.
+- Upload configs to your K8s cluster using `kubectl create configmap crypticle-config --from-file=blockchains/rise/config.prod.json --from-file=blockchains/rise/config.dev.json` (replace `/rise/` with your blockchain name).
+- Upload secrets `SECRET_SIGNUP_KEY`, `AUTH_KEY` and `BLOCKCHAIN_WALLET_PASSPHRASE` to your K8s cluster with `kubectl create secret generic crypticle-secret --from-literal=SECRET_SIGNUP_KEY=313e7cc1-ad75-4030-a927-6a09f39c1603 --from-literal=AUTH_KEY=15d16361-6402-41a5-8840-d2a330b8ea40 --from-literal=BLOCKCHAIN_WALLET_PASSPHRASE="drastic spot aerobic web wave tourist library first scout fatal inherit arrange"` (replace the values with your own).
+- If your custom `adapter.js` file has any dependencies, make sure that they are all inside the `blockchains/node_modules/` directory (to allow them to build correctly).
+- Use `crypticle deploy` to build your Docker image containing your custom adapter logic and your config files and then deploy it to your K8s cluster.
+- To access the Crypticle app (after deployment has completed), use `kubectl describe ingress agc-ingress` to get ingress IP addresses; you can copy and paste any of them directly into your browser's address bar.
+
+### GKE differences
+
+- Before you execute any of the commands above, make sure that you have the `gcloud` command installed (see [quickstart guides](https://cloud.google.com/sdk/docs/quickstarts)). Check that `gcloud` is installed using the `gcloud -v` command (it should show you a list of version numbers).
+- Create a K8s cluster from your GKE control panel.
+- Once your cluster is ready, go to the `Clusters` section and click on the `Connect` button next to your cluster; then run the provided `gcloud container clusters ...` command in your terminal.
+- Follow all the steps above with the following differences:
+  - Skip the step where you need to set the `~/.kube/config` file content; the `gcloud` command above from GKE should take care of this automatically.
+  - Instead of `crypticle deploy`, use `crypticle deploy --gke` (this will cause `.yaml` files from the `kubernetes/gke/` directory to override those in the main `kubernetes/` directory).
+  - To access the Crypticle app (after deployment has completed), go to the `Services & Ingress` section and click on the link from the `ingress-nginx` service.
 
 ## Scaling on K8s
 
