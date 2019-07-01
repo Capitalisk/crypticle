@@ -67,7 +67,7 @@ Once you have the required software, follow these steps to deploy Crypticle to a
 - Before you execute any of the commands above, make sure that you have the `gcloud` command installed (see [quickstart guides](https://cloud.google.com/sdk/docs/quickstarts)). Check that `gcloud` is installed using the `gcloud -v` command (it should show you a list of version numbers).
 - Create a K8s cluster from your GKE control panel.
 - Once your cluster is ready, go to the `Clusters` section and click on the `Connect` button next to your cluster; then run the provided `gcloud container clusters ...` command in your terminal.
-- Follow all the steps above with the following differences:
+- Follow all the deployment steps above with the following differences:
   - Skip the step where you need to set the `~/.kube/config` file content; the `gcloud` command above from GKE should take care of this automatically.
   - Instead of `crypticle deploy`, use `crypticle deploy --gke` (this will cause `.yaml` files from the `kubernetes/gke/` directory to override those in the main `kubernetes/` directory).
   - To access the Crypticle app (after deployment has completed), go to the `Services & Ingress` section and click on the link from the `ingress-nginx` service.
