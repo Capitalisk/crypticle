@@ -75,7 +75,7 @@ Once you have the required software, follow these steps to deploy Crypticle to a
 ## Scaling on K8s
 
 You can scale any `Deployment` or the RethinkDB `StatefulSet` using standard `kubectl scale ... --replicas=...` commands.
-Be very careful when scaling down the RethinkDB `StatefulSet` as this may cause data loss if not done carefully.
+Be very careful when scaling down the RethinkDB `StatefulSet` as this may cause data loss if the underlying persistent volumes are removed.
 
 ## Sharding transaction processing in the database
 
