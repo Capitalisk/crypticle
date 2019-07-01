@@ -39,13 +39,17 @@ After a Crypticle node has been attached to a specific Blockchain and has starte
 
 The service is designed to be deployed and scaled on a Kubernetes cluster.
 
-Note that you need the following software installed in order to deploy to a K8s cluster:
+### Software requirements
+
+You will need the following software installed in order to deploy to a K8s cluster:
 - Node.js version 11 or higher. [Download Node.js](https://nodejs.org/en/).
 - `docker` cli. [Install Docker](https://docs.docker.com/install/).
 - `kubectl` cli. [Install Kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/).
 
 - If using Rancher, you will need to install the Rancher server on a remote machine of your choice; you will then be able to create your cluster from the Rancher control panel. [Install Rancher](https://rancher.com/quick-start/).
 - If using GKE, you will need the `gcloud` command from the Google Cloud SDK. [Install Google Cloud SDK](https://cloud.google.com/sdk/docs/quickstarts).
+
+### Deployment steps
 
 Once you have the required software, follow these steps to deploy Crypticle to a K8s cluster (this approach works best with [Rancher](https://rancher.com/)):
 
