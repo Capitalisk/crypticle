@@ -1,7 +1,7 @@
 {
   "name": "crypticle",
   "description": "Scalable multi-tenant pegged off-chain payment microservice with realtime API",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "contributors": [
     {
       "name": "Jonathan Gros-Dubois",
