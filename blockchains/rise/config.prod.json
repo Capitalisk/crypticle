@@ -1,5 +1,5 @@
 {
-  "databaseName": "crypticle_rise",
+  "databaseName": "crypticle_rise_prod",
   "databaseHost": "rethinkdb-proxy",
   "databasePort": 28015,
   "authTokenExpiry": 30000,
