@@ -15,7 +15,7 @@ spec:
         role: replica
     spec:
       containers:
-      - image: rosskukulinski/rethinkdb-kubernetes:2.3.5
+      - image: socketcluster/rethinkdb-kubernetes:v2.3.5
         args:
           - "--cache-size"
           - "100"
