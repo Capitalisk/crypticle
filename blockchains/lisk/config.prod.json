@@ -1,5 +1,5 @@
 {
-  "databaseName": "lisk_prod",
+  "databaseName": "crypticle_lisk_prod",
   "databaseHost": "rethinkdb-proxy",
   "databasePort": 28015,
   "authTokenExpiry": 30000,
