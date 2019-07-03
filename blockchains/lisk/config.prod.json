@@ -1,0 +1,34 @@
+{
+  "databaseName": "lisk_prod",
+  "databaseHost": "rethinkdb-proxy",
+  "databasePort": 28015,
+  "authTokenExpiry": 30000,
+  "authTokenRenewalInterval": 20000,
+  "maxSocketBackpressure": 1000,
+  "transactionSettlementInterval": 5000,
+  "withdrawalProcessingInterval": 20000,
+  "maxTransactionSettlementsPerAccount": 10,
+  "maxConcurrentWithdrawalsPerAccount": 10,
+  "maxConcurrentDebitsPerAccount": 50,
+  "blockchainSync": true,
+  "blockchainNodeAddress": "https://mainnet.lisk.io",
+  "blockPollInterval": 5000,
+  "blockFetchLimit": 100,
+  "blockchainWithdrawalMaxAttempts": 20,
+  "bcryptPasswordRounds": 10,
+  "publicInfo": {
+    "cryptocurrency": {
+      "name": "Lisk",
+      "symbol": "LSK",
+      "unit": "100000000"
+    },
+    "mainWalletAddress": "606085525141988367L",
+    "requiredDepositBlockConfirmations": 102,
+    "requiredWithdrawalBlockConfirmations": 102,
+    "paginationShowTotalCounts": false,
+    "maxRecordDisplayAge": 2592000000,
+    "maxPageSize": 100,
+    "alwaysRequireSecretSignupKey": false,
+    "enableAdminAccountSignup": true
+  }
+}
