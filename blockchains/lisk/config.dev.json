@@ -8,7 +8,7 @@
   "authTokenRenewalInterval": 20000,
   "maxSocketBackpressure": 1000,
   "transactionSettlementInterval": 5000,
-  "withdrawalProcessingInterval": 20000,
+  "withdrawalProcessingInterval": 8000,
   "maxTransactionSettlementsPerAccount": 10,
   "maxConcurrentWithdrawalsPerAccount": 5,
   "maxConcurrentDebitsPerAccount": 50,
@@ -25,7 +25,7 @@
       "symbol": "LSK",
       "unit": "100000000"
     },
-    "mainWalletAddress": "606085525141988367L",
+    "mainWalletAddress": "5572024383106046591L",
     "requiredDepositBlockConfirmations": 3,
     "requiredWithdrawalBlockConfirmations": 3,
     "paginationShowTotalCounts": false,

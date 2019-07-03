@@ -6,7 +6,7 @@
   "authTokenRenewalInterval": 20000,
   "maxSocketBackpressure": 1000,
   "transactionSettlementInterval": 5000,
-  "withdrawalProcessingInterval": 20000,
+  "withdrawalProcessingInterval": 8000,
   "maxTransactionSettlementsPerAccount": 10,
   "maxConcurrentWithdrawalsPerAccount": 10,
   "maxConcurrentDebitsPerAccount": 50,
