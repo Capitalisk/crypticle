@@ -93,8 +93,11 @@ class AccountService extends AsyncStreamEmitter {
 
     (async () => {
       if (this.syncFromBlockHeight != null) {
+        let state;
         try {
-          let state = await this.readStateFromFile();
+          state = await this.readStateFromFile();
+        } catch (error) {}
+        try {
           await this.writeStateToFile({
             ...state,
             syncFromBlockHeight: this.syncFromBlockHeight
