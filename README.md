@@ -56,6 +56,7 @@ Once you have the required software, follow these steps to deploy Crypticle to a
 - Install the `crypticle` CLI tool with `npm install -g crypticle`.
 - Create your project directory with `crypticle create myproject`.
 - Navigate to your project directory with `cd myproject`.
+- Make sure that your production config file (e.g. `blockchains/rise/config.prod.json` for a Rise project) contains the correct values; this config is the one which will be used by default in the K8s cluster.
 - Upload configs to your K8s cluster using `kubectl create configmap crypticle-config --from-file=blockchains/rise/config.prod.json --from-file=blockchains/rise/config.dev.json` (replace `/rise/` with your blockchain name).
 - Upload secrets `SECRET_SIGNUP_KEY`, `AUTH_KEY` and `BLOCKCHAIN_WALLET_PASSPHRASE` to your K8s cluster with `kubectl create secret generic crypticle-secret --from-literal=SECRET_SIGNUP_KEY=313e7cc1-ad75-4030-a927-6a09f39c1603 --from-literal=AUTH_KEY=15d16361-6402-41a5-8840-d2a330b8ea40 --from-literal=BLOCKCHAIN_WALLET_PASSPHRASE="drastic spot aerobic web wave tourist library first scout fatal inherit arrange"` (replace the values with your own).
 - If your custom `adapter.js` file has any dependencies, make sure that they are all inside the `blockchains/node_modules/` directory (to allow them to build correctly).
