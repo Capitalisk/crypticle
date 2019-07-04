@@ -51,7 +51,7 @@ You will need the following software installed in order to deploy to a K8s clust
 
 Once you have the required software, follow these steps to deploy Crypticle to a K8s cluster (this approach works best with [Rancher](https://rancher.com/)):
 
-- Setup your Kubernetes cluster with multiple nodes on your provider ([Rancher](https://rancher.com/) is recommended) (3 is ideal for testing).
+- Setup your Kubernetes cluster with multiple nodes on your provider (3 is ideal for testing).
 - Get the `Kubeconfig` from your K8s control panel (or cloud provider) and paste it into the `~/.kube/config` file on your local machine (replace the whole file content).
 - Install the `crypticle` CLI tool with `npm install -g crypticle`.
 - Create your project directory with `crypticle create myproject`.
