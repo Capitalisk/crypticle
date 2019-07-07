@@ -3,6 +3,7 @@ const path = require('path');
 const util = require('util');
 const uuid = require('uuid');
 const bcrypt = require('bcryptjs');
+const Cryptr = require('cryptr');
 const {getShardKey, getShardRange} = require('../utils/sharding');
 const AsyncStreamEmitter = require('async-stream-emitter');
 const WritableConsumableStream = require('writable-consumable-stream');
@@ -31,6 +32,7 @@ class AccountService extends AsyncStreamEmitter {
     this.blockchainWithdrawalMaxAttempts = options.blockchainWithdrawalMaxAttempts;
     this.secretSignupKey = options.secretSignupKey;
     this.bcryptPasswordRounds = options.bcryptPasswordRounds;
+    this.storageEncryptionKey = options.storageEncryptionKey;
 
     this.mainWalletAddress = options.publicInfo.mainWalletAddress;
     this.requiredDepositBlockConfirmations = options.publicInfo.requiredDepositBlockConfirmations;
@@ -466,8 +468,8 @@ class AccountService extends AsyncStreamEmitter {
       }
 
       if (isWalletAddressAvailable) {
-        credentials.depositWalletPassphrase = wallet.passphrase;
-        credentials.depositWalletPrivateKey = wallet.privateKey;
+        let cryptr = new Cryptr(this.storageEncryptionKey);
+        credentials.depositWalletEncryptedPassphrase = cryptr.encrypt(wallet.passphrase);
         credentials.depositWalletPublicKey = wallet.publicKey;
         break;
       }
@@ -825,13 +827,15 @@ class AccountService extends AsyncStreamEmitter {
       return;
     }
 
+    let cryptr = new Cryptr(this.storageEncryptionKey);
+    let depositWalletPassphrase = cryptr.decrypt(targetAccount.depositWalletEncryptedPassphrase);
     let signedTransaction = await this.blockchainAdapter.signTransaction(
       {
         kind: 'send',
         amount: amount.toString(),
         recipient: this.mainWalletAddress
       },
-      targetAccount.depositWalletPassphrase
+      depositWalletPassphrase
     );
     await this.blockchainAdapter.sendTransaction(signedTransaction);
   }

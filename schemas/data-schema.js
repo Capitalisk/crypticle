@@ -19,8 +19,7 @@ let allowedAccountUpdateFields = {
 let allowedAdminAccountUpdateFields = {
   username: true,
   depositWalletAddress: true,
-  depositWalletPassphrase: true,
-  depositWalletPrivateKey: true,
+  depositWalletEncryptedPassphrase: true,
   depositWalletPublicKey: true,
   password: true,
   nationalCurrency: true,
@@ -32,8 +31,7 @@ let allowedAdminAccountUpdateFields = {
 let allowedAdminAccountReadFields = {
   username: true,
   depositWalletAddress: true,
-  depositWalletPassphrase: true,
-  depositWalletPrivateKey: true,
+  depositWalletEncryptedPassphrase: true,
   depositWalletPublicKey: true,
   nationalCurrency: true,
   passwordResetKey: true,
@@ -156,11 +154,11 @@ function getSchema(options) {
 
   return {
     Account: {
+
       fields: {
         username: type.string(),
         depositWalletAddress: type.string(),
-        depositWalletPassphrase: type.string(),
-        depositWalletPrivateKey: type.string(),
+        depositWalletEncryptedPassphrase: type.string(),
         depositWalletPublicKey: type.string(),
         password: type.string(),
         nationalCurrency: type.string().default('USD'),

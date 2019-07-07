@@ -12,7 +12,7 @@
   "maxConcurrentDebitsPerAccount": 50,
   "blockchainSync": true,
   "blockchainNodeAddress": "https://mainnet.lisk.io",
-  "blockPollInterval": 5000,
+  "blockPollInterval": 4000,
   "blockFetchLimit": 100,
   "blockchainWithdrawalMaxAttempts": 20,
   "bcryptPasswordRounds": 10,

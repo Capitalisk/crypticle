@@ -1,9 +1,7 @@
 {
-  "secretSignupKey": "313e7cc1-ad75-4030-a927-6a09f39c1603",
   "databaseName": "crypticle_lisk_dev",
   "databaseHost": "127.0.0.1",
   "databasePort": 28015,
-  "authKey": "15d16361-6402-41a5-8840-d2a330b8ea40",
   "authTokenExpiry": 3600000,
   "authTokenRenewalInterval": 20000,
   "maxSocketBackpressure": 1000,
@@ -12,10 +10,9 @@
   "maxTransactionSettlementsPerAccount": 10,
   "maxConcurrentWithdrawalsPerAccount": 5,
   "maxConcurrentDebitsPerAccount": 50,
-  "blockchainWalletPassphrase": "seven help fluid old donate nation duck romance thumb verb trumpet flower",
   "blockchainSync": true,
   "blockchainNodeAddress": "https://testnet.lisk.io",
-  "blockPollInterval": 5000,
+  "blockPollInterval": 4000,
   "blockFetchLimit": 100,
   "blockchainWithdrawalMaxAttempts": 20,
   "bcryptPasswordRounds": 10,
@@ -33,5 +30,9 @@
     "maxPageSize": 100,
     "alwaysRequireSecretSignupKey": false,
     "enableAdminAccountSignup": true
-  }
+  },
+  "secretSignupKey": "313e7cc1-ad75-4030-a927-6a09f39c1603",
+  "storageEncryptionKey": "0111394e-3b3e-4eb3-9759-21741cf055c7",
+  "blockchainWalletPassphrase": "seven help fluid old donate nation duck romance thumb verb trumpet flower",
+  "authKey": "15d16361-6402-41a5-8840-d2a330b8ea40"
 }

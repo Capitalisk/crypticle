@@ -17,7 +17,12 @@ const getRPCSchema = require('./schemas/rpc-schema');
 const ENVIRONMENT = process.env.ENV || 'dev';
 const BLOCKCHAIN = process.env.BLOCKCHAIN || 'rise';
 const SYNC_FROM_BLOCK_HEIGHT = parseInt(process.env.SYNC_FROM_BLOCK_HEIGHT) || null;
-const {SECRET_SIGNUP_KEY, AUTH_KEY, BLOCKCHAIN_WALLET_PASSPHRASE} = process.env;
+const {
+  SECRET_SIGNUP_KEY,
+  AUTH_KEY,
+  BLOCKCHAIN_WALLET_PASSPHRASE,
+  STORAGE_ENCRYPTION_KEY
+} = process.env;
 
 const ASYNGULAR_PORT = process.env.ASYNGULAR_PORT || 8000;
 const ASYNGULAR_WS_ENGINE = process.env.ASYNGULAR_WS_ENGINE || 'ws';
@@ -62,20 +67,22 @@ if (
   (
     envConfig.secretSignupKey ||
     envConfig.authKey ||
-    envConfig.blockchainWalletPassphrase
+    envConfig.blockchainWalletPassphrase ||
+    envConfig.storageEncryptionKey
   )
 ) {
   throw new Error(
-    'The secretSignupKey, authKey and blockchainWalletPassphrase properties ' +
-    'should not be present in the config file for a production environment. ' +
-    'Use SECRET_SIGNUP_KEY, AUTH_KEY and BLOCKCHAIN_WALLET_PASSPHRASE ' +
-    'environment variables instead.'
+    'The secretSignupKey, authKey, blockchainWalletPassphrase and storageEncryptionKey ' +
+    'properties should not be present in the config file for a production environment. ' +
+    'Use SECRET_SIGNUP_KEY, AUTH_KEY, BLOCKCHAIN_WALLET_PASSPHRASE and ' +
+    'STORAGE_ENCRYPTION_KEY environment variables instead.'
   );
 }
 
 let secretSignupKey = envConfig.secretSignupKey || SECRET_SIGNUP_KEY;
 let authKey = envConfig.authKey || AUTH_KEY;
 let blockchainWalletPassphrase = envConfig.blockchainWalletPassphrase || BLOCKCHAIN_WALLET_PASSPHRASE;
+let storageEncryptionKey = envConfig.storageEncryptionKey || STORAGE_ENCRYPTION_KEY;
 
 if (secretSignupKey == null) {
   throw new Error(
@@ -208,6 +215,7 @@ let accountService = new AccountService({
   shardInfo,
   blockchainWalletPassphrase,
   secretSignupKey,
+  storageEncryptionKey,
   blockchainAdapterPath: path.resolve(__dirname, 'blockchains', BLOCKCHAIN, `adapter.js`),
   syncFromBlockHeight: SYNC_FROM_BLOCK_HEIGHT
 });
