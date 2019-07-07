@@ -53,6 +53,7 @@ Once you have the required software, follow these steps to deploy Crypticle to a
 
 - Setup your Kubernetes cluster with multiple nodes on your provider (3 is ideal for testing).
 - Get the `Kubeconfig` from your K8s control panel (or cloud provider) and paste it into the `~/.kube/config` file on your local machine (replace the whole file content).
+- Open a new terminal window/tab to make sure that `kubectl` has the latest environment.
 - Install the `crypticle` CLI tool with `npm install -g crypticle`.
 - Create your project directory with `crypticle create myproject`.
 - Navigate to your project directory with `cd myproject`.

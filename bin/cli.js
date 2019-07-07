@@ -419,6 +419,15 @@ if (command === 'create') {
           }
         }
       });
+      containers[serviceWorkerContainerIndex].env.push({
+        name: 'STORAGE_ENCRYPTION_KEY',
+        valueFrom: {
+          secretKeyRef: {
+            name: 'crypticle-secret',
+            key: 'STORAGE_ENCRYPTION_KEY'
+          }
+        }
+      });
       initContainers.push({
         name: 'blockchain-src-container',
         image: '', // image name will be generated during deployment
