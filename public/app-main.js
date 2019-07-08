@@ -18,7 +18,6 @@ let pageOptions = {
     requiredDepositBlockConfirmations: null,
     requiredWithdrawalBlockConfirmations: null,
     paginationShowTotalCounts: false,
-    maxRecordDisplayAge: null,
     alwaysRequireSecretSignupKey: false,
     enableAdminAccountSignup: false
   }

@@ -20,6 +20,7 @@ function getComponent(options) {
         viewParams: {
           accountId: socket.authToken && socket.authToken.accountId
         },
+        viewPrimaryKeys: ['accountId'],
         fields: ['transactionId', 'amount', 'height', 'toWalletAddress', 'attemptCount', 'canceled', 'createdDate'],
         pageOffset: 0,
         pageSize: 10,

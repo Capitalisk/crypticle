@@ -4,17 +4,18 @@
 
 ## This project is in alpha and has not yet been battle-tested.
 
-A multi-tenant hot wallet manager and off-chain payment microservice. Crypticle lets users convert value between blockchain tokens and pegged credit which can be efficiently spent and/or transferred between accounts within the context of a centralized service/platform. The credit is entrusted to the service provider and is pegged to the value of the underlying blockchain tokens - This credit can be used to support high-thoughput off-chain transactions (related to a specific service or a group of services). Any unused credit can be converted back into trustless blockchain tokens at any time.
+A multi-tenant off-chain payment microservice with support for transaction sharding. Crypticle lets users convert value between blockchain tokens and pegged credit which can be efficiently spent and/or transferred between accounts within the context of a centralized service/platform. The credit is entrusted to the service provider and is pegged to the value of the underlying blockchain tokens - This credit can be used to support an unlimited rate of off-chain transactions. Any unused credit can be converted back into trustless blockchain tokens at any time.
 
-The goal of this project is to automate the payment and accounting layer for SaaS services and platforms using blockchain technology.
-By reducing the friction involved in converting back and forth between trustless blockchain tokens and entrusted credit, users can choose their level of risk exposure when using a paid service from an unfamiliar third-party.
+The goal of this project is to provide a fast, simple and scalable off-chain mechanism for spending and receiving blockchain tokens.
+By reducing the friction involved in converting back and forth between trustless blockchain tokens and entrusted pegged credit, users can choose their level of risk exposure when it comes to their spending money.
 
 Some potential use cases:
 
-- Exchanges
-- Marketplaces
-- SaaS platforms
-- Games
+- Exchange
+- Marketplace
+- SaaS platform
+- Game currency
+- Centralized currency which is pegged to a cryptocurrency
 
 After a Crypticle node has been attached to a specific Blockchain and has started accepting deposits from users, it becomes difficult for a Crypticle service provider to move away from that blockchain without violating the implicit agreement that they have with their users. Attaching services to a specific blockchain using Crypticle should therefore help to create sustainable demand for the underlying blockchain token.
 

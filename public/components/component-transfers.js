@@ -19,6 +19,7 @@ function getComponent(options) {
         viewParams: {
           accountId: socket.authToken && socket.authToken.accountId
         },
+        viewPrimaryKeys: ['accountId'],
         fields: ['type', 'recordType', 'amount', 'counterpartyAccountId', 'data', 'canceled', 'createdDate'],
         pageOffset: 0,
         pageSize: 10,

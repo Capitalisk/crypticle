@@ -116,7 +116,6 @@ if (blockchainWalletPassphrase == null) {
 
 const dataSchema = getDataSchema({
   dbName: databaseName,
-  maxRecordDisplayAge: envConfig.publicInfo.maxRecordDisplayAge,
   maxPageSize: envConfig.publicInfo.maxPageSize
 });
 

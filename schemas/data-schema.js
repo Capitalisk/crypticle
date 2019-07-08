@@ -5,16 +5,13 @@ const type = thinky.type;
 let allowedAccountReadFields = {
   username: true,
   depositWalletAddress: true,
-  nationalCurrency: true,
   active: true,
   admin: true,
   balance: true,
   createdDate: true
 };
 
-let allowedAccountUpdateFields = {
-  nationalCurrency: true
-};
+let allowedAccountUpdateFields = {};
 
 let allowedAdminAccountUpdateFields = {
   username: true,
@@ -22,7 +19,6 @@ let allowedAdminAccountUpdateFields = {
   depositWalletEncryptedPassphrase: true,
   depositWalletPublicKey: true,
   password: true,
-  nationalCurrency: true,
   passwordResetKey: true,
   passwordResetExpiry: true,
   active: true
@@ -33,7 +29,6 @@ let allowedAdminAccountReadFields = {
   depositWalletAddress: true,
   depositWalletEncryptedPassphrase: true,
   depositWalletPublicKey: true,
-  nationalCurrency: true,
   passwordResetKey: true,
   passwordResetExpiry: true,
   active: true,
@@ -152,16 +147,21 @@ function getSchema(options) {
     throw error;
   }
 
+  function computeDateFromParams(params, r) {
+    if (typeof params.fromAge === 'number') {
+      return r.now().sub(params.fromAge);
+    }
+    return typeof params.fromCreatedDate === 'string' ? new Date(params.fromCreatedDate) : r.minval;
+  }
+
   return {
     Account: {
-
       fields: {
         username: type.string(),
         depositWalletAddress: type.string(),
         depositWalletEncryptedPassphrase: type.string(),
         depositWalletPublicKey: type.string(),
         password: type.string(),
-        nationalCurrency: type.string().default('USD'),
         passwordResetKey: type.string().optional(),
         passwordResetExpiry: type.date().optional(),
         maxConcurrentWithdrawals: type.number().optional(),
@@ -254,10 +254,11 @@ function getSchema(options) {
           }
         },
         accountTransfersPendingView: {
-          paramFields: ['accountId'],
+          paramFields: ['accountId', 'fromCreatedDate', 'fromAge'],
+          primaryKeys: ['accountId'],
           affectingFields: ['settled'],
           transform: function (fullTableQuery, r, params) {
-            let startTime = r.now().sub(options.maxRecordDisplayAge / 1000);
+            let startTime = computeDateFromParams(params, r);
             return fullTableQuery
             .between(
               [params.accountId, 'transfer', false, startTime],
@@ -268,10 +269,11 @@ function getSchema(options) {
           }
         },
         accountTransfersSettledView: {
-          paramFields: ['accountId'],
+          paramFields: ['accountId', 'fromCreatedDate', 'fromAge'],
+          primaryKeys: ['accountId'],
           affectingFields: ['settled'],
           transform: function (fullTableQuery, r, params) {
-            let startTime = r.now().sub(options.maxRecordDisplayAge / 1000);
+            let startTime = computeDateFromParams(params, r);
             return fullTableQuery
             .between(
               [params.accountId, 'transfer', true, startTime],
@@ -324,10 +326,11 @@ function getSchema(options) {
       },
       views: {
         accountDepositsPendingView: {
-          paramFields: ['accountId'],
+          paramFields: ['accountId', 'fromCreatedDate', 'fromAge'],
+          primaryKeys: ['accountId'],
           affectingFields: ['settled'],
           transform: function (fullTableQuery, r, params) {
-            let startTime = r.now().sub(options.maxRecordDisplayAge / 1000);
+            let startTime = computeDateFromParams(params, r);
             return fullTableQuery
             .between(
               [params.accountId, false, startTime],
@@ -338,10 +341,11 @@ function getSchema(options) {
           }
         },
         accountDepositsSettledView: {
-          paramFields: ['accountId'],
+          paramFields: ['accountId', 'fromCreatedDate', 'fromAge'],
+          primaryKeys: ['accountId'],
           affectingFields: ['settled'],
           transform: function (fullTableQuery, r, params) {
-            let startTime = r.now().sub(options.maxRecordDisplayAge / 1000);
+            let startTime = computeDateFromParams(params, r);
             return fullTableQuery
             .between(
               [params.accountId, true, startTime],
@@ -390,10 +394,11 @@ function getSchema(options) {
       },
       views: {
         accountWithdrawalsPendingView: {
-          paramFields: ['accountId'],
+          paramFields: ['accountId', 'fromCreatedDate', 'fromAge'],
+          primaryKeys: ['accountId'],
           affectingFields: ['settled'],
           transform: function (fullTableQuery, r, params) {
-            let startTime = r.now().sub(options.maxRecordDisplayAge / 1000);
+            let startTime = computeDateFromParams(params, r);
             return fullTableQuery
             .between(
               [params.accountId, false, startTime],
@@ -404,10 +409,11 @@ function getSchema(options) {
           }
         },
         accountWithdrawalsSettledView: {
-          paramFields: ['accountId'],
+          paramFields: ['accountId', 'fromCreatedDate', 'fromAge'],
+          primaryKeys: ['accountId'],
           affectingFields: ['settled'],
           transform: function (fullTableQuery, r, params) {
-            let startTime = r.now().sub(options.maxRecordDisplayAge / 1000);
+            let startTime = computeDateFromParams(params, r);
             return fullTableQuery
             .between(
               [params.accountId, true, startTime],
