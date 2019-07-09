@@ -13,7 +13,7 @@
     "@liskhq/lisk-cryptography": "^2.0.0",
     "@liskhq/lisk-passphrase": "^2.0.0",
     "@liskhq/lisk-transactions": "^2.0.0",
-    "ag-crud-rethink": "^2.4.3",
+    "ag-crud-rethink": "^2.5.0",
     "agc-broker-client": "^6.0.0",
     "async-stream-emitter": "^3.0.3",
     "asyngular-client": "^6.0.0",

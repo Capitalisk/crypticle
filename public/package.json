@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.html",
   "dependencies": {
-    "ag-collection": "^1.4.3",
-    "ag-model": "^1.1.0",
+    "ag-collection": "^1.4.5",
+    "ag-model": "^1.1.2",
     "async-stream-emitter": "^3.0.3",
     "asyngular-client": "^6.0.0",
     "bulma": "^0.7.5",
