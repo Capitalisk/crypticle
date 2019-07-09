@@ -316,7 +316,7 @@ function getPageComponent(pageOptions) {
     (async () => {
       for await (let data of lastSettledTransactionsChannel) {
         // This loop will iterate once when whenever the view has been
-        // modified (e.g. a new transaction was added). The data variable is always undefined.
+        // modified (e.g. a new transaction was added).
         // It's a good time to re-fetch the latest account balance.
         let balance = await socket.invoke('getBalance');
       }
