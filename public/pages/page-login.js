@@ -12,14 +12,14 @@ function getPageComponent(pageOptions) {
     data: function () {
       return {
         error: null,
-        username: '',
+        accountId: '',
         password: ''
       };
     },
     methods: {
       login: async function () {
         var details = {
-          username: this.username,
+          accountId: this.accountId,
           password: this.password
         };
         try {
@@ -42,10 +42,10 @@ function getPageComponent(pageOptions) {
           <span>{{error}}</span>
         </div>
         <div class="field">
-          <label class="label" for="login-form-username">
-            Username
+          <label class="label" for="login-form-account-id">
+            Account ID
           </label>
-          <input id="login-form-username" type="text" v-model="username" class="input" @keydown.enter="login">
+          <input id="login-form-account-id" type="text" v-model="accountId" class="input" @keydown.enter="login">
         </div>
         <div class="field">
           <label class="label" for="login-form-password">

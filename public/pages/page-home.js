@@ -28,7 +28,7 @@ function getPageComponent(pageOptions) {
           <pre class="code-snippet"><code>
     try {
       let {accountId} = await socket.invoke('signup', {
-        username: 'alice123',
+        accountId: 'alice123',
         password: 'password123',
         admin: false,
         secretSignupKey: 'f502b122-5d7a-48cc-a0df-82d2a82465bd'
@@ -38,7 +38,7 @@ function getPageComponent(pageOptions) {
     }
           </code></pre>
           <ul class="list">
-            <li class="list-item"><code>username</code> is the account username.</li>
+            <li class="list-item"><code>accountId</code> is the account id.</li>
             <li class="list-item"><code>password</code> is the account password.</li>
             <li class="list-item"><code>admin</code> is a boolean which indicates whether or not the account should have admin privileges.</li>
             <li class="list-item">
@@ -68,7 +68,7 @@ function getPageComponent(pageOptions) {
           <pre class="code-snippet"><code>
     try {
       let {accountId} = await socket.invoke('login', {
-        username: 'alice123',
+        accountId: 'alice123',
         password: 'password123'
       });
     } catch (error) {
@@ -76,7 +76,7 @@ function getPageComponent(pageOptions) {
     }
           </code></pre>
           <ul class="list">
-            <li class="list-item"><code>username</code> is the account username.</li>
+            <li class="list-item"><code>accountId</code> is the account id.</li>
             <li class="list-item"><code>password</code> is the account password.</li>
           </ul>
           <p>
@@ -89,7 +89,7 @@ function getPageComponent(pageOptions) {
           <pre class="code-snippet"><code>
     let {creditId, debitId} = await socket.invoke('transfer', {
       amount: '1000000000',
-      toAccountId: '18b50e59-f3a1-4b57-8f0b-7daeba7259ad',
+      toAccountId: 'alice123',
       data: 'Notes...'
     });
           </code></pre>
@@ -160,14 +160,14 @@ function getPageComponent(pageOptions) {
           <pre class="code-snippet"><code>
     try {
       let {accountId} = await socket.invoke('adminImpersonate', {
-        username: 'alice123'
+        accountId: 'alice123'
       });
     } catch (error) {
       // Handle impersonation failure.
     }
           </code></pre>
           <ul class="list">
-            <li class="list-item"><code>username</code> is the username of the account to impersonate.</li>
+            <li class="list-item"><code>accountId</code> is the id of the account to impersonate.</li>
           </ul>
           <p>
             The <code>Promise</code> will resolve with an object containing the <code>accountId</code> or which will be rejected if the impersonate operation fails on the server.
@@ -179,8 +179,8 @@ function getPageComponent(pageOptions) {
           <pre class="code-snippet"><code>
     let {creditId, debitId} = await socket.invoke('adminTransfer', {
       amount: '20000000',
-      fromAccountId: '213288af-9239-494d-844d-d064ced6f9ea',
-      toAccountId: '18b50e59-f3a1-4b57-8f0b-7daeba7259ad',
+      fromAccountId: 'bob456',
+      toAccountId: 'alice123',
       data: 'Notes...'
     });
           </code></pre>
@@ -200,7 +200,7 @@ function getPageComponent(pageOptions) {
           <pre class="code-snippet"><code>
     let {debitId} = await socket.invoke('adminDebit', {
       amount: '1000000000',
-      fromAccountId: '213288af-9239-494d-844d-d064ced6f9ea',
+      fromAccountId: 'bob456',
       data: 'Notes...'
     });
           </code></pre>
@@ -218,7 +218,7 @@ function getPageComponent(pageOptions) {
           <pre class="code-snippet"><code>
     let {creditId} = await socket.invoke('adminCredit', {
       amount: '1000000000',
-      toAccountId: '213288af-9239-494d-844d-d064ced6f9ea',
+      toAccountId: 'alice123',
       data: 'Notes...'
     });
           </code></pre>
@@ -235,7 +235,7 @@ function getPageComponent(pageOptions) {
           <h5 class="title is-5">Get balance</h5>
           <pre class="code-snippet"><code>
     let balance = await socket.invoke('adminGetBalance', {
-      accountId: '213288af-9239-494d-844d-d064ced6f9ea'
+      accountId: 'bob456'
     });
           </code></pre>
           <ul class="list">
@@ -251,7 +251,7 @@ function getPageComponent(pageOptions) {
           <pre class="code-snippet"><code>
     let {withdrawalId} = await socket.invoke('adminWithdraw', {
       amount: '234000000',
-      fromAccountId: '7667174938767705051R',
+      fromAccountId: 'bob456',
       toWalletAddress: '6942317426094516776R'
     });
           </code></pre>
@@ -307,17 +307,17 @@ function getPageComponent(pageOptions) {
 
           <pre class="code-snippet"><code>
     // This example shows how to detect when a transaction has been added to the
-    // 'lastSettledTransactions' view for the account with ID 213288af-9239-494d-844d-d064ced6f9ea.
+    // 'lastSettledTransactions' view for our account with ID 'bob456'.
 
     let lastSettledTransactionsChannel = socket.subscribe(
-      '<b>crud>lastSettledTransactions({"accountId":"213288af-9239-494d-844d-d064ced6f9ea"}):Transaction</b>'
+      '<b>crud>lastSettledTransactions({"accountId":"bob456"}):Transaction</b>'
     );
 
     (async () => {
       for await (let data of lastSettledTransactionsChannel) {
         // This loop will iterate once when whenever the view has been
         // modified (e.g. a new transaction was added).
-        // It's a good time to re-fetch the latest account balance.
+        // It's a good time to re-fetch our latest account balance.
         let balance = await socket.invoke('getBalance');
       }
     })();

@@ -12,6 +12,10 @@
   height: 30px;
 }
 
+.app-wrapper .navbar .navbar-brand {
+  margin-left: 0px;
+}
+
 .navbar-logo-area {
   display: flex;
   flex-direction: row;

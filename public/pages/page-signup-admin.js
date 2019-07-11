@@ -8,14 +8,14 @@ function getPageComponent(pageOptions) {
       this.accountCollection = new AGCollection({
         socket,
         type: 'Account',
-        fields: ['username', 'password'],
+        fields: ['password'],
         writeOnly: true
       });
 
       return {
         success: null,
         error: null,
-        username: '',
+        accountId: '',
         password: '',
         secretSignupKey: null,
         showConsoleLink: false,
@@ -28,7 +28,7 @@ function getPageComponent(pageOptions) {
     methods: {
       signup: async function () {
         let details = {
-          username: this.username,
+          accountId: this.accountId,
           password: this.password,
           admin: true,
           secretSignupKey: this.secretSignupKey
@@ -58,10 +58,10 @@ function getPageComponent(pageOptions) {
         </div>
         <div v-if="showConsoleLink" class="field"><a href="#/console">Click here</a> to go to the console.</div>
         <div class="field">
-          <label class="label" for="signup-form-username">
-            Username
+          <label class="label" for="signup-form-account-id">
+            Account ID
           </label>
-          <input id="signup-form-username" type="text" v-model="username" class="input" @keydown.enter="signup">
+          <input id="signup-form-account-id" type="text" v-model="accountId" class="input" @keydown.enter="signup">
         </div>
         <div class="field">
           <label class="label" for="signup-form-password">

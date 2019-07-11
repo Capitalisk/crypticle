@@ -355,10 +355,15 @@ function renewAuthToken(socket) {
             value: accountData
           });
         } catch (error) {
+          if (error.name === 'DuplicatePrimaryKeyError') {
+            error = new Error('The specified account ID was already taken.');
+            error.name = 'AccountIdTakenError';
+            error.isClientError = true;
+          }
           if (error.isClientError) {
             request.error(error);
           } else {
-            let clientError = new Error('Failed to signup.');
+            let clientError = new Error('Server error.');
             clientError.name = 'SignupError';
             clientError.isClientError = true;
             request.error(clientError);
@@ -387,7 +392,7 @@ function renewAuthToken(socket) {
           if (error.isClientError) {
             request.error(error);
           } else {
-            let clientError = new Error('Failed to login.');
+            let clientError = new Error('Server error.');
             clientError.name = 'LoginError';
             clientError.isClientError = true;
             request.error(clientError);
@@ -396,7 +401,6 @@ function renewAuthToken(socket) {
           continue;
         }
         let token = {
-          username: accountData.username,
           accountId: accountData.id
         };
         if (accountData.maxConcurrentDebits != null) {
@@ -582,12 +586,12 @@ function renewAuthToken(socket) {
 
         let accountData;
         try {
-          accountData = await accountService.verifyLoginCredentialsUsername(request.data);
+          accountData = await accountService.verifyLoginCredentialsAccountId(request.data);
         } catch (error) {
           if (error.isClientError) {
             request.error(error);
           } else {
-            let clientError = new Error(`Failed to login as user ${request.data.username}.`);
+            let clientError = new Error(`Failed to login to account ${request.data.accountId}.`);
             clientError.name = 'AdminLoginError';
             clientError.isClientError = true;
             request.error(clientError);
@@ -599,8 +603,8 @@ function renewAuthToken(socket) {
         let isOwnAdminAccount = accountData.id === realAccountId;
         if (accountData.admin && !isOwnAdminAccount) {
           let clientError = new Error(
-            `Failed to login as user ${
-              request.data.username
+            `Failed to login to account ${
+              request.data.accountId
             } because other admin accounts cannot be impersonated.`
           );
           clientError.name = 'AdminLoginError';
@@ -610,7 +614,6 @@ function renewAuthToken(socket) {
           continue;
         }
         let token = {
-          username: accountData.username,
           accountId: accountData.id,
           admin: true
         };

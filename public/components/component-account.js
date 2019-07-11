@@ -10,7 +10,7 @@ function getComponent(options) {
         socket,
         type: 'Account',
         id: socket.authToken && socket.authToken.accountId,
-        fields: ['username', 'balance', 'depositWalletAddress', 'admin']
+        fields: ['balance', 'depositWalletAddress', 'admin']
       });
       (async () => {
         for await (let {error} of this.accountModel.listener('error')) {
@@ -38,7 +38,7 @@ function getComponent(options) {
     },
     computed: {
       accountBalance: function () {
-        if (this.account.username == null) {
+        if (this.account.balance == null) {
           return 'Loading...';
         }
         return `${this.toBlockchainUnits(this.account.balance)} ${this.publicInfo.cryptocurrency.symbol}`;
@@ -56,10 +56,6 @@ function getComponent(options) {
             </tr>
             <tr v-if="isImpersonating" class="table-row-success">
               <td colspan="2">This account is being impersonated.</td>
-            </tr>
-            <tr>
-              <td><b>Username</b></td>
-              <td>{{account.username}}</td>
             </tr>
             <tr>
               <td><b>Account ID</b></td>

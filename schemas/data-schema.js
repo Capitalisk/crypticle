@@ -3,7 +3,6 @@ const thinky = agCrudRethink.thinky;
 const type = thinky.type;
 
 let allowedAccountReadFields = {
-  username: true,
   depositWalletAddress: true,
   active: true,
   admin: true,
@@ -14,7 +13,6 @@ let allowedAccountReadFields = {
 let allowedAccountUpdateFields = {};
 
 let allowedAdminAccountUpdateFields = {
-  username: true,
   depositWalletAddress: true,
   depositWalletEncryptedPassphrase: true,
   depositWalletPublicKey: true,
@@ -25,7 +23,6 @@ let allowedAdminAccountUpdateFields = {
 };
 
 let allowedAdminAccountReadFields = {
-  username: true,
   depositWalletAddress: true,
   depositWalletEncryptedPassphrase: true,
   depositWalletPublicKey: true,
@@ -96,14 +93,7 @@ function getSchema(options) {
     }
 
     if (
-      query.view === 'usernameSearchView' &&
-      (req.action === 'read' || req.action === 'subscribe')
-    ) {
-      return;
-    }
-
-    if (
-      query.field === 'username' &&
+      query.view === 'accountIdSearchView' &&
       (req.action === 'read' || req.action === 'subscribe')
     ) {
       return;
@@ -157,7 +147,6 @@ function getSchema(options) {
   return {
     Account: {
       fields: {
-        username: type.string(),
         depositWalletAddress: type.string(),
         depositWalletEncryptedPassphrase: type.string(),
         depositWalletPublicKey: type.string(),
@@ -172,12 +161,12 @@ function getSchema(options) {
         balance: type.string().default('0'),
         createdDate: type.date()
       },
-      indexes: ['username', 'depositWalletAddress'],
+      indexes: ['depositWalletAddress'],
       access: {
         pre: accountAccessController
       },
       views: {
-        usernameSearchView: {
+        accountIdSearchView: {
           paramFields: ['searchString'],
           primaryKeys: [],
           transform: function (fullTableQuery, r, params) {
@@ -188,12 +177,12 @@ function getSchema(options) {
             .between(
               params.searchString,
               r.maxval,
-              {index: 'username', rightBound: 'closed'}
+              {index: 'id', rightBound: 'closed'}
             )
-            .orderBy({index: 'username'})
+            .orderBy({index: 'id'})
             .limit(20)
             .filter((doc) => {
-              return doc('username').match(`^${params.searchString}`);
+              return doc('id').match(`^${params.searchString}`);
             });
           }
         }

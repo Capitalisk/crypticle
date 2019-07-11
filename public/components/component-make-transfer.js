@@ -8,12 +8,12 @@ function getComponent(options) {
       this.accountCollection = new AGCollection({
         socket,
         type: 'Account',
-        view: 'usernameSearchView',
+        view: 'accountIdSearchView',
         viewParams: {
           searchString: '',
         },
         viewPrimaryKeys: null,
-        fields: ['username'],
+        fields: [],
         pageOffset: 0,
         realtimeCollection: false,
         pageSize: 4
@@ -26,7 +26,6 @@ function getComponent(options) {
 
       return {
         publicInfo,
-        accountUsername: null,
         accountId: null,
         dropdownActive: false,
         amount: null,
@@ -57,22 +56,22 @@ function getComponent(options) {
       },
       clearForm: function () {
         this.error = null;
-        this.accountUsername = null;
         this.accountId = null;
         this.amount = null;
         this.data = null;
       },
+      hideDropdown: function () {
+        this.dropdownActive = false;
+      },
       searchForAccount: function () {
-        this.accountId = null;
         this.dropdownActive = true;
         this.accountCollection.viewParams = {
-          searchString: this.accountUsername
+          searchString: this.accountId
         };
         this.accountCollection.reloadCurrentPage();
       },
-      selectAccount: function (username, accountId) {
+      selectAccount: function (accountId) {
         this.dropdownActive = false;
-        this.accountUsername = username;
         this.accountId = accountId;
       },
       sendTransfer: async function () {
@@ -133,7 +132,7 @@ function getComponent(options) {
       }
     },
     template: `
-      <div class="component-container container is-fullhd">
+      <div class="component-container container is-fullhd" @click="hideDropdown">
         <input type="button" class="button is-primary" value="Make a transfer" @click="openTransferModal" />
         <input type="button" class="button is-primary" value="Make a debit" @click="openDebitModal" />
 
@@ -152,15 +151,15 @@ function getComponent(options) {
                 <div v-bind:class="{'dropdown': true, 'is-active': dropdownActive && accounts.length > 0, 'make-transfer-dropdown': true}">
                   <div class="dropdown-trigger make-transfer-dropdown-trigger">
                     <label class="label" for="make-transfer-account-id">
-                      To account <span v-if="accountId" class="make-transfer-account-id-display">({{accountId}})</span><span v-if="!accountId" class="make-transfer-account-id-display">(search by username)</span>
+                      To account</span>
                     </label>
-                    <input id="make-transfer-account-id" type="text" class="input make-transfer-account-id-input" v-model="accountUsername" @keydown.enter="sendTransfer" @input="searchForAccount">
+                    <input id="make-transfer-account-id" type="text" class="input make-transfer-account-id-input" v-model="accountId" @keydown.enter="sendTransfer" @input="searchForAccount">
                   </div>
                   <div class="dropdown-menu make-transfer-dropdown-menu" id="dropdown-menu" role="menu">
                     <div class="dropdown-content">
                       <template v-for="account of accounts">
-                        <a href="javascript:void(0);" class="dropdown-item" @click="selectAccount(account.username, account.id)">
-                          {{account.username}}
+                        <a href="javascript:void(0);" class="dropdown-item" @click="selectAccount(account.id)">
+                          {{account.id}}
                         </a>
                       </template>
                     </div>

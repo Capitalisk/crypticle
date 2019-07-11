@@ -408,14 +408,15 @@ class AccountService extends AsyncStreamEmitter {
       throw accountCreateError;
     }
 
-    if (!credentials || credentials.username == null || credentials.password == null) {
+    if (!credentials || credentials.accountId == null || credentials.password == null) {
       let error = new Error('Account credentials were not provided.');
       error.name = 'NoCredentialsProvidedError';
       error.isClientError = true;
       throw error;
     }
 
-    credentials.username = credentials.username.trim();
+    credentials.id = credentials.accountId.trim();
+    delete credentials.accountId;
     credentials.active = true;
 
     // Add password salt.
@@ -423,29 +424,6 @@ class AccountService extends AsyncStreamEmitter {
     // Only store the hash of the password.
     credentials.password = await this.hashPassword(credentials.password, passwordSalt);
     credentials.createdDate = this.thinky.r.now();
-
-    let isUsernameAvailable = false;
-    try {
-      // Verify that wallet address is not already taken.
-      isUsernameAvailable = await this.thinky.r.table('Account')
-      .getAll(credentials.username, {index: 'username'})
-      .isEmpty()
-      .run();
-    } catch (error) {
-      let badLookupError = new Error('Failed to check against existing account data in the database.');
-      badLookupError.name = 'BadAccountLookupError';
-      badLookupError.isClientError = true;
-      throw badLookupError;
-    }
-
-    if (!isUsernameAvailable) {
-      let alreadyTakenError = new Error(
-        `An account with the username ${credentials.username} already exists.`
-      );
-      alreadyTakenError.name = 'SignUpUsernameTakenError';
-      alreadyTakenError.isClientError = true;
-      throw alreadyTakenError;
-    }
 
     let walletCreateAttempts = 0;
     while (true) {
@@ -506,30 +484,31 @@ class AccountService extends AsyncStreamEmitter {
     return credentials;
   }
 
-  async verifyLoginCredentialsUsername(credentials) {
-    if (!credentials || typeof credentials.username !== 'string') {
-      let err = new Error('Username was in an invalid format');
+  async verifyLoginCredentialsAccountId(credentials) {
+    if (!credentials || typeof credentials.accountId !== 'string') {
+      let err = new Error('Account ID was in an invalid format');
       err.name = 'InvalidCredentialsError';
       err.isClientError = true;
       throw err;
     }
-    credentials.username = credentials.username.trim();
+    credentials.id = credentials.accountId.trim();
+    delete credentials.accountId;
 
-    let results = await this.thinky.r.table('Account')
-    .getAll(credentials.username, {index: 'username'})
+    let result = await this.thinky.r.table('Account')
+    .get(credentials.id)
     .run();
 
-    if (!results || !results[0]) {
-      let err = new Error('Invalid username.');
+    if (!result) {
+      let err = new Error('Invalid user id.');
       err.name = 'InvalidCredentialsError';
       err.isClientError = true;
       throw err;
     }
-    return results[0];
+    return result;
   }
 
   async verifyLoginCredentials(credentials) {
-    let accountData = await this.verifyLoginCredentialsUsername(credentials);
+    let accountData = await this.verifyLoginCredentialsAccountId(credentials);
 
     if (accountData.active === false) {
       let accountInactiveError = new Error('Your account is currently disabled.');

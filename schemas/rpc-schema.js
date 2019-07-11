@@ -1,12 +1,12 @@
-let usernameSchema = {
+let accountIdSchema = {
   type: 'string',
   minLength: 3,
-  maxLength: 30
+  maxLength: 40
 };
 let passwordSchema = {
   type: 'string',
   minLength: 7,
-  maxLength: 50
+  maxLength: 100
 };
 let uuidSchema = {
   type: 'string',
@@ -33,20 +33,20 @@ let requestSchema = {
   signup: {
     type: 'object',
     properties: {
-      username: usernameSchema,
+      accountId: accountIdSchema,
       password: passwordSchema,
       admin: {type: 'boolean'},
       secretSignupKey: customDataSchema
     },
-    required: ['username', 'password']
+    required: ['accountId', 'password']
   },
   login: {
     type: 'object',
     properties: {
-      username: usernameSchema,
+      accountId: accountIdSchema,
       password: passwordSchema
     },
-    required: ['username', 'password']
+    required: ['accountId', 'password']
   },
   withdraw: {
     type: 'object',
@@ -60,7 +60,7 @@ let requestSchema = {
     type: 'object',
     properties: {
       amount: amountSchema,
-      toAccountId: uuidSchema,
+      toAccountId: accountIdSchema,
       data: customDataSchema,
       debitId: uuidSchema,
       creditId: uuidSchema
@@ -80,15 +80,15 @@ let requestSchema = {
   adminImpersonate: {
     type: 'object',
     properties: {
-      username: usernameSchema
+      accountId: accountIdSchema
     },
-    required: ['username']
+    required: ['accountId']
   },
   adminWithdraw: {
     type: 'object',
     properties: {
       amount: amountSchema,
-      fromAccountId: uuidSchema,
+      fromAccountId: accountIdSchema,
       toWalletAddress: walletAddressSchema,
     },
     required: ['amount', 'fromAccountId', 'toWalletAddress']
@@ -97,8 +97,8 @@ let requestSchema = {
     type: 'object',
     properties: {
       amount: amountSchema,
-      fromAccountId: uuidSchema,
-      toAccountId: uuidSchema,
+      fromAccountId: accountIdSchema,
+      toAccountId: accountIdSchema,
       data: customDataSchema,
       debitId: uuidSchema,
       creditId: uuidSchema
@@ -109,7 +109,7 @@ let requestSchema = {
     type: 'object',
     properties: {
       amount: amountSchema,
-      fromAccountId: uuidSchema,
+      fromAccountId: accountIdSchema,
       data: customDataSchema,
       debitId: uuidSchema
     },
@@ -119,7 +119,7 @@ let requestSchema = {
     type: 'object',
     properties: {
       amount: amountSchema,
-      toAccountId: uuidSchema,
+      toAccountId: accountIdSchema,
       data: customDataSchema,
       creditId: uuidSchema
     },
@@ -128,7 +128,7 @@ let requestSchema = {
   adminGetBalance: {
     type: 'object',
     properties: {
-      accountId: uuidSchema
+      accountId: accountIdSchema
     },
     required: ['accountId']
   }
