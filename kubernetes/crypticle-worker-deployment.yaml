@@ -15,7 +15,7 @@ spec:
       containers:
         -
           name: crypticle-worker
-          image: 'socketcluster/crypticle:v1.4.0'
+          image: 'socketcluster/crypticle:v2.0.0'
           ports:
             -
               name: worker-port
