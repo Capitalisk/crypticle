@@ -5,6 +5,7 @@ const type = thinky.type;
 let allowedAccountReadFields = {
   depositWalletAddress: true,
   active: true,
+  withdrawalsDisabled: true,
   admin: true,
   balance: true,
   createdDate: true
