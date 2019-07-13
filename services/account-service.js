@@ -452,7 +452,7 @@ class AccountService extends AsyncStreamEmitter {
         break;
       }
       if (++walletCreateAttempts >= MAX_WALLET_CREATE_ATTEMPTS) {
-        let accountCreateError = new Error('Failed to generate an account wallet');
+        let accountCreateError = new Error('Failed to generate an account wallet.');
         accountCreateError.name = 'AccountCreateError';
         accountCreateError.isClientError = true;
         throw accountCreateError;
@@ -486,7 +486,7 @@ class AccountService extends AsyncStreamEmitter {
 
   async verifyLoginCredentialsAccountId(credentials) {
     if (!credentials || typeof credentials.accountId !== 'string') {
-      let err = new Error('Account ID was in an invalid format');
+      let err = new Error('Account ID was in an invalid format.');
       err.name = 'InvalidCredentialsError';
       err.isClientError = true;
       throw err;
@@ -876,7 +876,7 @@ class AccountService extends AsyncStreamEmitter {
           transfer.toAccountId
         } because the sender account cannot have more than ${
           maxConcurrentDebits
-        } concurrent pending debit transactions`
+        } concurrent pending debit transactions.`
       );
       error.name = 'MaxConcurrentDebitsError';
       error.isClientError = true;
@@ -959,6 +959,32 @@ class AccountService extends AsyncStreamEmitter {
     withdrawal.toWalletAddress: The blockchain wallet address to send the tokens to.
   */
   async attemptWithdrawal(withdrawal, maxConcurrentWithdrawals) {
+    let account = await this.thinky.r.table('Account').get(withdrawal.fromAccountId).run();
+    if (!account) {
+      let error = Error(
+        `Failed to withdraw to wallet address ${
+          withdrawal.toWalletAddress
+        } from account ${
+          withdrawal.fromAccountId
+        } because no account with this ID could be found.`
+      );
+      error.name = 'AccountNotFoundError';
+      error.isClientError = true;
+      throw error;
+    }
+    if (account.withdrawalsDisabled) {
+      let error = Error(
+        `Failed to withdraw to wallet address ${
+          withdrawal.toWalletAddress
+        } from account ${
+          withdrawal.fromAccountId
+        } because withdrawals are currently disabled for this account.`
+      );
+      error.name = 'AccountWithdrawalsDisabledError';
+      error.isClientError = true;
+      throw error;
+    }
+
     if (maxConcurrentWithdrawals == null) {
       maxConcurrentWithdrawals = this.maxConcurrentWithdrawalsPerAccount;
     }
@@ -971,7 +997,7 @@ class AccountService extends AsyncStreamEmitter {
           withdrawal.fromAccountId
         } because the account cannot have more than ${
           maxConcurrentWithdrawals
-        } concurrent pending withdrawals`
+        } concurrent pending withdrawals.`
       );
       error.name = 'MaxConcurrentWithdrawalsError';
       error.isClientError = true;

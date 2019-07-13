@@ -19,7 +19,8 @@ let allowedAdminAccountUpdateFields = {
   password: true,
   passwordResetKey: true,
   passwordResetExpiry: true,
-  active: true
+  active: true,
+  withdrawalsDisabled: true
 };
 
 let allowedAdminAccountReadFields = {
@@ -29,6 +30,7 @@ let allowedAdminAccountReadFields = {
   passwordResetKey: true,
   passwordResetExpiry: true,
   active: true,
+  withdrawalsDisabled: true,
   admin: true,
   balance: true,
   createdDate: true
@@ -156,6 +158,7 @@ function getSchema(options) {
         maxConcurrentWithdrawals: type.number().optional(),
         maxConcurrentDebits: type.number().optional(),
         maxSocketBackpressure: type.number().optional(),
+        withdrawalsDisabled: type.boolean().default(false),
         active: type.boolean().default(true),
         admin: type.boolean().default(false),
         balance: type.string().default('0'),
