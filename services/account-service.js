@@ -499,7 +499,7 @@ class AccountService extends AsyncStreamEmitter {
     .run();
 
     if (!result) {
-      let err = new Error('Invalid user id.');
+      let err = new Error('Invalid account id.');
       err.name = 'InvalidCredentialsError';
       err.isClientError = true;
       throw err;
