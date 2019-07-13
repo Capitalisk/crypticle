@@ -1,7 +1,7 @@
 FROM node:11.13.0-slim
 
 LABEL maintainer="Jonathan Gros-Dubois"
-LABEL version="2.0.0"
+LABEL version="2.0.1"
 LABEL description="Docker file for Crypticle."
 
 RUN mkdir -p /usr/src/
