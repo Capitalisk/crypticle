@@ -966,7 +966,7 @@ class AccountService extends AsyncStreamEmitter {
           withdrawal.toWalletAddress
         } from account ${
           withdrawal.fromAccountId
-        } because no account with this ID could be found.`
+        } because no account with that ID could be found.`
       );
       error.name = 'AccountNotFoundError';
       error.isClientError = true;
