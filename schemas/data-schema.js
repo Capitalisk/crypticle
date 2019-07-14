@@ -69,6 +69,11 @@ function getSchema(options) {
     let isOwnAccount = req.authToken && req.authToken.accountId === query.id;
     let isAdmin = req.authToken && req.authToken.admin;
     let isView = !!query.view;
+    let isIdRead = req.action === 'read' && query.field === 'id';
+
+    if (isIdRead) {
+      return;
+    }
 
     if (isOwnAccount) {
       if (req.action === 'read' || req.action === 'subscribe') {
