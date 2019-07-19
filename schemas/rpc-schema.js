@@ -29,7 +29,7 @@ let customDataSchema = {
 };
 
 let requestSchema = {
-  getMainInfo: {},
+  getPublicInfo: {},
   signup: {
     type: 'object',
     properties: {

@@ -19,14 +19,16 @@ let pageOptions = {
     requiredWithdrawalBlockConfirmations: null,
     paginationShowTotalCounts: false,
     alwaysRequireSecretSignupKey: false,
-    enableAdminAccountSignup: false
+    enableAdminAccountSignup: false,
+    withdrawalFees: null,
+    depositFees: null
   }
 };
 
 (async () => {
   let publicInfo;
   try {
-    publicInfo = await socket.invoke('getMainInfo');
+    publicInfo = await socket.invoke('getPublicInfo');
   } catch (error) {
     console.error(error);
   }

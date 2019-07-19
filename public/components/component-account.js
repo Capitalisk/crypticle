@@ -71,6 +71,18 @@ function getComponent(options) {
               </td>
               <td>{{account.depositWalletAddress}}</td>
             </tr>
+            <tr>
+              <td>
+                <b>Deposit fees</b>
+              </td>
+              <td>{{toBlockchainUnits(publicInfo.depositFees)}} {{publicInfo.cryptocurrency.symbol}}</td>
+            </tr>
+            <tr>
+              <td>
+                <b>Withdrawal fees</b>
+              </td>
+              <td>{{toBlockchainUnits(publicInfo.withdrawalFees)}} {{publicInfo.cryptocurrency.symbol}}</td>
+            </tr>
           </tbody>
         </table>
       </div>

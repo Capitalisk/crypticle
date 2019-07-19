@@ -14,6 +14,13 @@ function getComponent(options) {
       };
     },
     methods: {
+      toBlockchainUnits: function (amount, recordType) {
+        let value = Number(amount) / Number(publicInfo.cryptocurrency.unit);
+        if (recordType === 'debit') {
+          value *= -1;
+        }
+        return Math.round(value * 10000) / 10000;
+      },
       openModal: function () {
         this.isModalActive = true;
       },
@@ -65,7 +72,7 @@ function getComponent(options) {
           <div class="modal-background"></div>
           <div class="modal-card">
             <header class="modal-card-head">
-              <span class="modal-card-title">Make a withdrawal</span>
+              <span class="modal-card-title">Make a withdrawal (fees: {{toBlockchainUnits(publicInfo.withdrawalFees)}} {{publicInfo.cryptocurrency.symbol}})</span>
               <button class="delete" aria-label="close" @click="closeModal"></button>
             </header>
             <section class="modal-card-body">

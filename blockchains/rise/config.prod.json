@@ -2,7 +2,7 @@
   "databaseName": "crypticle_rise_prod",
   "databaseHost": "rethinkdb-proxy",
   "databasePort": 28015,
-  "authTokenExpiry": 30000,
+  "authTokenExpiry": 600000,
   "authTokenRenewalInterval": 20000,
   "maxSocketBackpressure": 1000,
   "transactionSettlementInterval": 5000,
@@ -28,6 +28,8 @@
     "paginationShowTotalCounts": false,
     "maxPageSize": 100,
     "alwaysRequireSecretSignupKey": false,
-    "enableAdminAccountSignup": true
+    "enableAdminAccountSignup": true,
+    "withdrawalFees": "10000000",
+    "depositFees": "20000000"
   }
 }

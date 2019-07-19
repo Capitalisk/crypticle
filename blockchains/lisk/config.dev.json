@@ -28,7 +28,9 @@
     "paginationShowTotalCounts": false,
     "maxPageSize": 100,
     "alwaysRequireSecretSignupKey": false,
-    "enableAdminAccountSignup": true
+    "enableAdminAccountSignup": true,
+    "withdrawalFees": "10000000",
+    "depositFees": "20000000"
   },
   "secretSignupKey": "313e7cc1-ad75-4030-a927-6a09f39c1603",
   "storageEncryptionKey": "0111394e-3b3e-4eb3-9759-21741cf055c7",

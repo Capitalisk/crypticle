@@ -421,7 +421,7 @@ function renewAuthToken(socket) {
     })();
 
     (async () => {
-      for await (let request of socket.procedure('getMainInfo')) {
+      for await (let request of socket.procedure('getPublicInfo')) {
         try {
           validateRPCSchema(request);
         } catch (error) {
@@ -429,7 +429,6 @@ function renewAuthToken(socket) {
           console.error(error);
           continue;
         }
-
         request.end(envConfig.publicInfo);
       }
     })();
