@@ -21,7 +21,9 @@ let pageOptions = {
     alwaysRequireSecretSignupKey: false,
     enableAdminAccountSignup: false,
     withdrawalFees: null,
-    depositFees: null
+    depositFees: null,
+    termsOfServiceURL: null,
+    privacyPolicyURL: null
   }
 };
 

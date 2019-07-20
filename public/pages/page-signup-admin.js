@@ -78,6 +78,11 @@ function getPageComponent(pageOptions) {
         <div class="field">
           <input type="button" class="button is-medium is-link" value="Sign up" @click="signup">
         </div>
+        <div class="terms-footer">
+          <a v-if="publicInfo.termsOfServiceURL" v-bind:href="publicInfo.termsOfServiceURL" target="_blank">Terms of service</a>
+          <span v-if="publicInfo.termsOfServiceURL && publicInfo.privacyPolicyURL" class="terms-footer-separator">|</span>
+          <a v-if="publicInfo.privacyPolicyURL" v-bind:href="publicInfo.privacyPolicyURL" target="_blank">Privacy policy</a>
+        </div>
       </div>
     `
   };

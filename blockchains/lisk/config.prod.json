@@ -30,6 +30,8 @@
     "alwaysRequireSecretSignupKey": false,
     "enableAdminAccountSignup": true,
     "withdrawalFees": "10000000",
-    "depositFees": "20000000"
+    "depositFees": "20000000",
+    "termsOfServiceURL": null,
+    "privacyPolicyURL": null
   }
 }

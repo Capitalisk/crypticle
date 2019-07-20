@@ -130,3 +130,13 @@ a[disabled="disabled"] {
 .make-transfer-dropdown-menu {
   width: 100%;
 }
+
+.terms-footer {
+  margin-top: 10px;
+  float: right;
+}
+
+.terms-footer-separator {
+  margin-left: 5px;
+  margin-right: 5px;
+}
