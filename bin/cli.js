@@ -84,6 +84,8 @@ let showCorrectUsage = function () {
   console.log('  create <service-name>       Create a new service config tree in your working directory');
   console.log('    -b <blockchain-name>      The name of the blockchain to use (lowercase), defaults to rise');
   console.log('  run <path>                  [requires docker] Run the service at path inside a container on your local machine');
+  console.log('    -c                        Use the container network instead of the host network');
+  console.log('    -p <port-number>          The port number on which to expose the service - Only works with container network');
   console.log('  restart <path>              [requires docker] Restart the service at path');
   console.log('  stop <path>                 [requires docker] Stop the service');
   console.log('  list                        [requires docker] List all running Docker containers on your local machine');
@@ -93,11 +95,11 @@ let showCorrectUsage = function () {
   console.log('  deploy-update <path>        [requires kubectl] Deploy update to an service which was previously deployed');
   console.log('  undeploy <path>             [requires kubectl] Shutdown all core services running on your cluster');
   console.log('  add-tls-secret              [requires kubectl] Upload a TLS key and cert pair to your cluster');
-  console.log(`    -s                        Optional secret name; defaults to "${DEFAULT_TLS_SECRET_NAME}"`);
-  console.log('    -k                        Path to a key file');
-  console.log('    -c                        Path to a certificate file');
+  console.log(`    -s <secret-name>          Optional secret name; defaults to "${DEFAULT_TLS_SECRET_NAME}"`);
+  console.log('    -k <path>                 Path to a key file');
+  console.log('    -c <path>                 Path to a certificate file');
   console.log('  remove-tls-secret           [requires kubectl] Remove a TLS key and cert pair from your cluster');
-  console.log(`    -s                        Optional secret name; defaults to "${DEFAULT_TLS_SECRET_NAME}"`);
+  console.log(`    -s <secret-name>          Optional secret name; defaults to "${DEFAULT_TLS_SECRET_NAME}"`);
   console.log('');
   let extraMessage = 'Note that the path in the commands above is optional - If not provided, ' +
     'crypticle will use the current working directory as the path.';
@@ -484,6 +486,7 @@ if (command === 'create') {
   let absoluteBlockchainSrcPath = path.resolve(absoluteProjectPath, 'blockchains');
   let serviceName = path.parse(absoluteProjectPath).base;
 
+  let hostNetwork = !argv.c;
   let portNumber = Number(argv.p) || 8000;
   let envVarList;
   if (argv.e === undefined) {
@@ -508,13 +511,25 @@ if (command === 'create') {
     envFlagString += ' ';
   }
 
+  let portString = '';
+  let networkString = '';
+
+  if (hostNetwork) {
+    networkString = ' --network=host';
+    if (portNumber !== 8000) {
+      portString = ` -p ${portNumber}:8000`;
+    }
+  } else {
+    portString = ` -p ${portNumber}:8000`;
+  }
+
   try {
     execSync(`docker stop ${serviceName}`, {stdio: 'ignore'});
     execSync(`docker rm ${serviceName}`, {stdio: 'ignore'});
   } catch (e) {}
 
-  let dockerCommand = `docker run -d -p ${portNumber}:8000 -v ${absoluteProjectPath}/blockchains/:/usr/src/blockchains/ ` +
-    `${envFlagString}--name ${serviceName} --network=host socketcluster/crypticle:v2.0.3`;
+  let dockerCommand = `docker run -d${portString} -v ${absoluteProjectPath}/blockchains/:/usr/src/blockchains/ ` +
+    `${envFlagString}--name ${serviceName}${networkString} socketcluster/crypticle:v2.0.3`;
   try {
     execSync(dockerCommand, {stdio: 'inherit'});
     successMessage(`Service "${serviceName}" is running at http://localhost:${portNumber}`);
