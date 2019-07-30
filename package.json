@@ -1,13 +1,14 @@
 {
   "name": "crypticle",
   "description": "Scalable multi-tenant pegged off-chain payment microservice with realtime API",
-  "version": "2.0.5",
+  "version": "2.0.6",
   "contributors": [
     {
       "name": "Jonathan Gros-Dubois",
       "email": "grosjona@yahoo.com.au"
     }
   ],
+  "license": "AGPL-3.0",
   "dependencies": {
     "ag-crud-rethink": "^2.5.0",
     "agc-broker-client": "^6.0.0",
