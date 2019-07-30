@@ -1,7 +1,7 @@
 {
   "name": "crypticle",
   "description": "Scalable multi-tenant pegged off-chain payment microservice with realtime API",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "contributors": [
     {
       "name": "Jonathan Gros-Dubois",
@@ -9,20 +9,14 @@
     }
   ],
   "dependencies": {
-    "@liskhq/lisk-api-client": "^2.0.0",
-    "@liskhq/lisk-cryptography": "^2.0.0",
-    "@liskhq/lisk-passphrase": "^2.0.0",
-    "@liskhq/lisk-transactions": "^2.0.0",
     "ag-crud-rethink": "^2.5.0",
     "agc-broker-client": "^6.0.0",
     "async-stream-emitter": "^3.0.3",
-    "asyngular-client": "^6.0.0",
-    "asyngular-server": "^6.0.0",
+    "asyngular-client": "^6.1.0",
+    "asyngular-server": "^6.1.0",
     "bcryptjs": "^2.4.3",
-    "bip39": "^3.0.1",
     "connect": "^3.6.6",
     "cryptr": "^4.0.2",
-    "dpos-offline": "^2.0.7",
     "eetase": "^3.0.1",
     "express": "^4.16.3",
     "fs-extra": "^8.0.1",
@@ -30,11 +24,9 @@
     "jsonschema": "^1.2.4",
     "morgan": "^1.7.0",
     "nodemon": "^1.18.9",
-    "risejs": "^1.5.1",
     "sc-errors": "^2.0.0",
     "sc-hasher": "^1.0.1",
     "serve-static": "^1.13.2",
-    "tweetnacl": "^1.0.1",
     "uuid": "^3.3.2",
     "writable-consumable-stream": "^1.1.1",
     "yamljs": "^0.3.0"
