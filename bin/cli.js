@@ -466,6 +466,8 @@ if (command === 'create') {
       setupMessage();
       if (
         copyDirRecursive(blockchainsSourceDir, blockchainsDestDir) &&
+        copyDirRecursive(blockchainsSourcePackageFile, blockchainsDestPackageFile) &&
+        copyDirRecursive(blockchainsSourcePackageLockFile, blockchainsDestPackageLockFile) &&
         copyDirRecursive(kubernetesSourceDir, kubernetesDestDir) &&
         copyDirRecursive(dockerfileSourceFile, dockerfileDestFile) &&
         copyDirRecursive(dockerignoreSourceFile, dockerignoreDestFile)
