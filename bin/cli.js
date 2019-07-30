@@ -507,7 +507,11 @@ if (command === 'create') {
     return value.split('=')[0] === 'BLOCKCHAIN';
   });
   if (!isBlockchainSpecified) {
-    let blockchain = (fs.readdirSync(absoluteBlockchainSrcPath)[0] || 'rise').toLowerCase();
+    let blockchainDirs = fs.readdirSync(absoluteBlockchainSrcPath).filter((fileName) => {
+      return fileName !== 'package.json' && fileName !== 'package-lock.json' && fileName !== 'node_modules';
+    });
+    let selectedBlockchain = blockchainDirs[0] || 'rise';
+    let blockchain = selectedBlockchain.toLowerCase();
     envFlagList.push(`-e "BLOCKCHAIN=${blockchain}"`);
   }
   let envFlagString = envFlagList.join(' ');
