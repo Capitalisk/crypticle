@@ -205,8 +205,6 @@ let blockchainsSourceDir = path.resolve(__dirname, '..', 'blockchains', sourceBl
 let blockchainsDestDir = path.resolve(destDir, 'blockchains', targetBlockchain);
 let blockchainsSourcePackageFile = path.resolve(__dirname, '..', 'blockchains', 'package.json');
 let blockchainsDestPackageFile = path.resolve(destDir, 'blockchains','package.json');
-let blockchainsSourcePackageLockFile = path.resolve(__dirname, '..', 'blockchains', 'package-lock.json');
-let blockchainsDestPackageLockFile = path.resolve(destDir, 'blockchains','package-lock.json');
 let kubernetesSourceDir = path.resolve(__dirname, '..', 'kubernetes');
 let kubernetesDestDir = path.resolve(destDir, 'kubernetes');
 let deploymentYAMLRegex = /-deployment\.yaml$/;
@@ -262,7 +260,6 @@ let confirmReplaceSetup = function (confirm) {
       rmdirRecursive(destDir) &&
       copyDirRecursive(blockchainsSourceDir, blockchainsDestDir) &&
       copyDirRecursive(blockchainsSourcePackageFile, blockchainsDestPackageFile) &&
-      copyDirRecursive(blockchainsSourcePackageLockFile, blockchainsDestPackageLockFile) &&
       copyDirRecursive(kubernetesSourceDir, kubernetesDestDir) &&
       copyDirRecursive(dockerfileSourceFile, dockerfileDestFile) &&
       copyDirRecursive(dockerignoreSourceFile, dockerignoreDestFile)
@@ -467,7 +464,6 @@ if (command === 'create') {
       if (
         copyDirRecursive(blockchainsSourceDir, blockchainsDestDir) &&
         copyDirRecursive(blockchainsSourcePackageFile, blockchainsDestPackageFile) &&
-        copyDirRecursive(blockchainsSourcePackageLockFile, blockchainsDestPackageLockFile) &&
         copyDirRecursive(kubernetesSourceDir, kubernetesDestDir) &&
         copyDirRecursive(dockerfileSourceFile, dockerfileDestFile) &&
         copyDirRecursive(dockerignoreSourceFile, dockerignoreDestFile)
