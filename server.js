@@ -15,7 +15,7 @@ const getDataSchema = require('./schemas/data-schema');
 const getRPCSchema = require('./schemas/rpc-schema');
 
 const ENVIRONMENT = process.env.ENV || 'dev';
-const BLOCKCHAIN = process.env.BLOCKCHAIN || 'rise';
+const BLOCKCHAIN = process.env.BLOCKCHAIN || 'lisk';
 const SYNC_FROM_BLOCK_HEIGHT = parseInt(process.env.SYNC_FROM_BLOCK_HEIGHT) || null;
 const {
   SECRET_SIGNUP_KEY,

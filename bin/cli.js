@@ -24,7 +24,7 @@ if (commandRawArgsString.length) {
 let arg1 = argv._[1];
 let force = argv.force ? true : false;
 let gke = argv.gke ? true : false;
-let targetBlockchain = (argv.b || 'rise').toLowerCase();
+let targetBlockchain = (argv.b || 'lisk').toLowerCase();
 
 let dockerUsername, dockerPassword;
 let saveDockerAuthDetails = null;
@@ -82,7 +82,7 @@ let showCorrectUsage = function () {
   console.log();
   console.log('Commands:');
   console.log('  create <service-name>       Create a new service config tree in your working directory');
-  console.log('    -b <blockchain-name>      The name of the blockchain to use (lowercase), defaults to rise');
+  console.log('    -b <blockchain-name>      The name of the blockchain to use (lowercase), defaults to lisk');
   console.log('  run <path>                  [requires docker] Run the service at path inside a container on your local machine');
   console.log('    -c                        Use the container network instead of the host network');
   console.log('    -p <port-number>          The port number on which to expose the service - Only works with container network');
@@ -192,7 +192,7 @@ let supportedBlockchains = {
   'lisk': true
 };
 
-let sourceBlockchainDir = supportedBlockchains[targetBlockchain] ? targetBlockchain : 'rise';
+let sourceBlockchainDir = supportedBlockchains[targetBlockchain] ? targetBlockchain : 'lisk';
 
 let wd = process.cwd();
 
@@ -510,7 +510,7 @@ if (command === 'create') {
     let blockchainDirs = fs.readdirSync(absoluteBlockchainSrcPath).filter((fileName) => {
       return fileName !== 'package.json' && fileName !== 'package-lock.json' && fileName !== 'node_modules';
     });
-    let selectedBlockchain = blockchainDirs[0] || 'rise';
+    let selectedBlockchain = blockchainDirs[0] || 'lisk';
     let blockchain = selectedBlockchain.toLowerCase();
     envFlagList.push(`-e "BLOCKCHAIN=${blockchain}"`);
   }
