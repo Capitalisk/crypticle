@@ -14,7 +14,6 @@ const writeFile = util.promisify(fs.writeFile);
 const STATE_FILE_PATH = path.resolve(__dirname, '..', 'state.json');
 
 const MAX_WALLET_CREATE_ATTEMPTS = 10;
-const HIGH_BACKPRESSURE_THRESHOLD = 10;
 
 class AccountService extends AsyncStreamEmitter {
   constructor(options) {
@@ -1245,12 +1244,9 @@ class AccountService extends AsyncStreamEmitter {
     }
     // Sync block by block.
     this._blockIntervalRef = setInterval(async () => {
-      this.blockProcessingStream.write({time: Date.now()});
-      if (this.blockProcessingStream.getBackpressure() > HIGH_BACKPRESSURE_THRESHOLD) {
-        let error = new Error(
-          'The block processing getBackpressure is too high. This may cause delays in processing deposits. Consider increasing the blockPollInterval config option.'
-        );
-        this.emit('error', {error});
+      let backpressure = this.blockProcessingStream.getBackpressure();
+      if (backpressure < 1) {
+        this.blockProcessingStream.write({time: Date.now()});
       }
     }, this.blockPollInterval);
   }
@@ -1260,12 +1256,9 @@ class AccountService extends AsyncStreamEmitter {
       clearInterval(this._settlementIntervalRef);
     }
     this._settlementIntervalRef = setInterval(async () => {
-      this.settlementProcessingStream.write({time: Date.now()});
-      if (this.settlementProcessingStream.getBackpressure() > HIGH_BACKPRESSURE_THRESHOLD) {
-        let error = new Error(
-          'The settlement processing getBackpressure is too high. This may cause delays in performing transaction settlements.'
-        );
-        this.emit('error', {error});
+      let backpressure = this.settlementProcessingStream.getBackpressure();
+      if (backpressure < 1) {
+        this.settlementProcessingStream.write({time: Date.now()});
       }
     }, this.settlementInterval);
   }
@@ -1275,12 +1268,9 @@ class AccountService extends AsyncStreamEmitter {
       clearInterval(this._withdrawalIntervalRef);
     }
     this._withdrawalIntervalRef = setInterval(async () => {
-      this.withdrawalProcessingStream.write({time: Date.now()});
-      if (this.withdrawalProcessingStream.getBackpressure() > HIGH_BACKPRESSURE_THRESHOLD) {
-        let error = new Error(
-          'The withdrawal processing getBackpressure is too high. This may cause delays in processing withdrawals.'
-        );
-        this.emit('error', {error});
+      let backpressure = this.withdrawalProcessingStream.getBackpressure();
+      if (backpressure < 1) {
+        this.withdrawalProcessingStream.write({time: Date.now()});
       }
     }, this.withdrawalInterval);
   }
