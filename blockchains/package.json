@@ -10,7 +10,7 @@
     "@liskhq/lisk-api-client": "^2.0.0",
     "@liskhq/lisk-cryptography": "^2.0.0",
     "@liskhq/lisk-passphrase": "^2.0.0",
-    "@liskhq/lisk-transactions": "^2.0.0",
+    "@liskhq/lisk-transactions": "^5.2.2",
     "bip39": "^3.0.1",
     "dpos-offline": "^2.0.7",
     "risejs": "^1.5.1",
